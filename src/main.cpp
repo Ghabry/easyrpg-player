@@ -22,6 +22,7 @@
 #include "graphics.h"
 #include "input.h"
 #include "audio.h"
+#include "debugger.h"
 #include <cstdlib>
 
 #ifdef PSP
@@ -32,6 +33,7 @@ int main(int argc, char* argv[]) {
 	Graphics::Init();
 	Input::Init();
 	Audio::Init();
+	Debugger::Init();
 
 	Player::Run();
 	

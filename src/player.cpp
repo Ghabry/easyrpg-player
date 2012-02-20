@@ -31,6 +31,7 @@
 #include "scene_title.h"
 #include "scene_battle.h"
 #include "utils.h"
+#include "debugger.h"
 #include <algorithm>
 #include <set>
 #include <locale>
@@ -91,7 +92,6 @@ void Player::Init(int argc, char *argv[]) {
 		debug_flag = args.find("testplay") != args.end();
 		hide_title_flag = args.find("hidetitle") != args.end();
 	}
-
 
 #ifdef _DEBUG
 	debug_flag = true;
@@ -162,6 +162,10 @@ void Player::Update() {
 		Graphics::fps_on_screen = !Graphics::fps_on_screen;
 	}
 
+	if (debug_flag && Input::IsTriggered(Input::DEBUG_MENU)) {
+		Debugger::Open();
+	}
+
 	DisplayUi->ProcessEvents();
 
 	if (exit_flag) {
@@ -175,6 +179,8 @@ void Player::Update() {
 
 ////////////////////////////////////////////////////////////
 void Player::Exit() {
+	Debugger::Shutdown();
+
 	Main_Data::Cleanup();
 	Graphics::Quit();
 	Audio::Quit();

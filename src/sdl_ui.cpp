@@ -44,11 +44,13 @@
 #ifdef USE_SDL_TTF
 #include <SDL_ttf.h>
 #endif
+#include "debugger.h"
 #include <cstdlib>
 #include <cstring>
 
 ///////////////////////////////////////////////////////////
 static int FilterUntilFocus(const SDL_Event* evnt);
+static int FilterUntilDebugContinue(const SDL_Event* evnt);
 
 #if defined(USE_KEYBOARD) && defined(SUPPORT_KEYBOARD)
 	static Input::Keys::InputKey SdlKey2InputKey(SDLKey sdlkey);
@@ -426,7 +428,6 @@ void SdlUi::ProcessEvents() {
 	// Poll SDL events and process them
 	while (SDL_PollEvent(&evnt)) {
 		ProcessEvent(evnt);
-
 		if (Player::exit_flag)
 			break;
 	}
@@ -575,11 +576,22 @@ void SdlUi::ProcessEvent(SDL_Event &evnt) {
 			ProcessJoystickAxisEvent(evnt);
 			return;
 	}
+
+	if (evnt.type >= SDL_USEREVENT && evnt.type <= SDL_NUMEVENTS-1)
+	{
+		ProcessUserEvent(evnt);
+		return;
+	}
 }
 
 ///////////////////////////////////////////////////////////
 void SdlUi::ProcessActiveEvent(SDL_Event &evnt) {
-#ifdef PAUSE_GAME_WHEN_FOCUS_LOST
+#if defined(PAUSE_GAME_WHEN_FOCUS_LOST)
+	if (Debugger::IsDebuggerRunning())
+	{
+		return;
+	}
+
 	switch(evnt.active.state) {
 		case SDL_APPINPUTFOCUS:
 			if (!evnt.active.gain) {
@@ -609,7 +621,6 @@ void SdlUi::ProcessActiveEvent(SDL_Event &evnt) {
 				Player::Resume();
 			}
 			return;
-#endif
 
 #if defined(USE_MOUSE) && defined(SUPPORT_MOUSE)
 		case SDL_APPMOUSEFOCUS:
@@ -617,6 +628,7 @@ void SdlUi::ProcessActiveEvent(SDL_Event &evnt) {
 			return;
 #endif
 	}
+#endif
 }
 
 ///////////////////////////////////////////////////////////
@@ -781,6 +793,21 @@ void SdlUi::ProcessJoystickAxisEvent(SDL_Event &evnt) {
 		}
 	}
 #endif
+}
+
+///////////////////////////////////////////////////////////
+void SdlUi::ProcessUserEvent(SDL_Event &evnt) {
+	switch (evnt.type) {
+	case SDL_USEREVENT_EASYRPG_DEBUGGER:
+		if (evnt.user.code == Debugger::PlayerCode_suspend) {
+			Debugger::SendEventToDebugger(Debugger::DebuggerCode_suspended);
+			SDL_SetEventFilter(&FilterUntilDebugContinue);
+			SDL_WaitEvent(NULL);
+			SDL_SetEventFilter(NULL);
+		} else if (evnt.user.code == Debugger::PlayerCode_terminate) {
+			Debugger::Shutdown();
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////
@@ -988,6 +1015,10 @@ Input::Keys::InputKey SdlJKey2InputKey(int button_index) {
 
 ///////////////////////////////////////////////////
 int FilterUntilFocus(const SDL_Event* evnt) {
+	if (Debugger::IsDebuggerRunning()) {
+		return 1;
+	}
+
 	switch (evnt->type) {
 	case SDL_QUIT:
 		Player::exit_flag = true;
@@ -995,6 +1026,23 @@ int FilterUntilFocus(const SDL_Event* evnt) {
 
 	case SDL_ACTIVEEVENT:
 		return evnt->active.state & SDL_APPINPUTFOCUS;
+
+	default:
+		return 0;
+	}
+}
+
+int FilterUntilDebugContinue(const SDL_Event* evnt) {
+	switch (evnt->type) {
+	case SDL_QUIT:
+		Player::exit_flag = true;
+		return 1;
+
+	case SDL_USEREVENT_EASYRPG_DEBUGGER:
+		switch (evnt->user.code) {
+		case Debugger::PlayerCode_continue:
+			return 1;
+		}
 
 	default:
 		return 0;

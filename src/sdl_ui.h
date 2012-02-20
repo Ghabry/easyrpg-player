@@ -110,7 +110,7 @@ protected:
 	void ProcessJoystickButtonEvent(SDL_Event &evnt);
 	void ProcessJoystickHatEvent(SDL_Event &evnt);
 	void ProcessJoystickAxisEvent(SDL_Event &evnt);
-
+	void ProcessUserEvent(SDL_Event &evnt);
 	//@}
 
 	///////////////////////////////////////////////////////
