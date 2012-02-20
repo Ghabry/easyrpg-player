@@ -1,0 +1,84 @@
+/////////////////////////////////////////////////////////////////////////////
+// This file is part of EasyRPG Player.
+//
+// EasyRPG Player is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// EasyRPG Player is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
+/////////////////////////////////////////////////////////////////////////////
+
+#ifdef EASYRPG_DEBUGGER
+
+/////////////////////////////////////////////////////////////////////////////
+// Headers
+/////////////////////////////////////////////////////////////////////////////
+#include "debugger_mainframe.h"
+#include "debugger.h"
+#include "player.h"
+
+const wxEventType DebuggerMainFrame::PlayerEvent = wxNewEventType();
+
+BEGIN_EVENT_TABLE(DebuggerMainFrame, wxFrame)
+	EVT_COMMAND(Debugger::DebuggerCode_suspended, DebuggerMainFrame::PlayerEvent, DebuggerMainFrame::OnPlayerSuspendedEvent)
+	EVT_COMMAND(Debugger::DebuggerCode_close, DebuggerMainFrame::PlayerEvent, DebuggerMainFrame::OnPlayerCloseEvent)
+	EVT_COMMAND(wxID_ANY, DebuggerMainFrame::PlayerEvent, DebuggerMainFrame::OnOtherPlayerEvent)
+END_EVENT_TABLE()
+
+DebuggerMainFrame::DebuggerMainFrame() : DebuggerMainFrameGui(0) {
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void DebuggerMainFrame::OnRunToolClicked(wxCommandEvent& event) {
+	if (toolbar->GetToolState(DEBUGGER_TOOL_RUN)) {
+		Debugger::player_suspended = false;
+		Debugger::SendEventToPlayer(Debugger::PlayerCode_continue);
+	}
+}
+
+void DebuggerMainFrame::OnPauseToolClicked(wxCommandEvent& event) {
+	if (toolbar->GetToolState(DEBUGGER_TOOL_PAUSE)) {
+		this->Enable(false);
+		Debugger::SendEventToPlayer(Debugger::PlayerCode_suspend);
+	}
+}
+
+void DebuggerMainFrame::OnFrameClose(wxCloseEvent& event) {
+	if (!event.CanVeto()) {
+		Debugger::SendEventToPlayer(Debugger::PlayerCode_continue);
+		Destroy();
+	} else {
+		event.Veto();
+		Debugger::SendEventToPlayer(Debugger::PlayerCode_continue);
+		Debugger::SendEventToPlayer(Debugger::PlayerCode_terminate);
+	}
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+void DebuggerMainFrame::OnPlayerSuspendedEvent(wxCommandEvent& event) {
+	this->Enable(true);
+	Debugger::player_suspended = true;
+	OnOtherPlayerEvent(event);
+}
+
+void DebuggerMainFrame::OnPlayerCloseEvent(wxCommandEvent& event) {
+	if (event.GetId() == Debugger::DebuggerCode_close) {
+		Close(true);
+	}
+}
+
+void DebuggerMainFrame::OnOtherPlayerEvent(wxCommandEvent& event) {
+	panel->HandleWindowEvent(event);
+}
+
+
+
+#endif
