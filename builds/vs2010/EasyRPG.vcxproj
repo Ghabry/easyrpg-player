@@ -426,6 +426,12 @@
     <ClCompile Include="..\..\src\cache.cpp" />
     <ClCompile Include="..\..\src\channel.cpp" />
     <ClCompile Include="..\..\src\color.cpp" />
+    <ClCompile Include="..\..\src\debugger.cpp" />
+    <ClCompile Include="..\..\src\debugger_main.cpp" />
+    <ClCompile Include="..\..\src\debugger_mainframe.cpp" />
+    <ClCompile Include="..\..\src\debugger_mainframe_gui.cpp" />
+    <ClCompile Include="..\..\src\debugger_mainpanel.cpp" />
+    <ClCompile Include="..\..\src\debugger_mainpanel_gui.cpp" />
     <ClCompile Include="..\..\src\effects.cpp" />
     <ClCompile Include="..\..\src\filefinder_basic.cpp" />
     <ClCompile Include="..\..\src\filefinder_unix.cpp" />
@@ -569,6 +575,12 @@
     <ClInclude Include="..\..\src\channel.h" />
     <ClInclude Include="..\..\src\color.h" />
     <ClInclude Include="..\..\src\baseui.h" />
+    <ClInclude Include="..\..\src\debugger.h" />
+    <ClInclude Include="..\..\src\debugger_main.h" />
+    <ClInclude Include="..\..\src\debugger_mainframe.h" />
+    <ClInclude Include="..\..\src\debugger_mainframe_gui.h" />
+    <ClInclude Include="..\..\src\debugger_mainpanel.h" />
+    <ClInclude Include="..\..\src\debugger_mainpanel_gui.h" />
     <ClInclude Include="..\..\src\drawable.h" />
     <ClInclude Include="..\..\src\exfont.h" />
     <ClInclude Include="..\..\src\filefinder.h" />

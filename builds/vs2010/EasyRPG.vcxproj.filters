@@ -70,6 +70,12 @@
     <Filter Include="Source Files\Engine\Game\Battle">
       <UniqueIdentifier>{8dd8555e-8e3f-4df1-abfc-77acf985f743}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Debugger">
+      <UniqueIdentifier>{661ca3de-c8d7-458f-9dcd-8cee73f896d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Debugger\Gui">
+      <UniqueIdentifier>{80c66509-4017-4ece-8e27-2d24e9191ebd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\cache.cpp">
@@ -498,6 +504,24 @@
     <ClCompile Include="..\..\src\scene_load.cpp">
       <Filter>Source Files\Engine\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\debugger_main.cpp">
+      <Filter>Source Files\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\debugger_mainframe.cpp">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\debugger_mainframe_gui.cpp">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\debugger_mainpanel.cpp">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\debugger_mainpanel_gui.cpp">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\debugger.cpp">
+      <Filter>Source Files\Debugger</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\cache.h">
@@ -925,6 +949,24 @@
     </ClInclude>
     <ClInclude Include="..\..\src\scene_load.h">
       <Filter>Source Files\Engine\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\debugger_main.h">
+      <Filter>Source Files\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\debugger_mainframe_gui.h">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\debugger_mainframe.h">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\debugger_mainpanel.h">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\debugger_mainpanel_gui.h">
+      <Filter>Source Files\Debugger\Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\debugger.h">
+      <Filter>Source Files\Debugger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
