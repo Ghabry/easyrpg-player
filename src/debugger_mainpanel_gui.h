@@ -22,9 +22,9 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class DebuggerMainPanelGui
+/// Class Debugger_MainPanelGui
 ///////////////////////////////////////////////////////////////////////////////
-class DebuggerMainPanelGui : public wxPanel 
+class Debugger_MainPanelGui : public wxPanel 
 {
 	private:
 	
@@ -35,8 +35,8 @@ class DebuggerMainPanelGui : public wxPanel
 	
 	public:
 		
-		DebuggerMainPanelGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
-		~DebuggerMainPanelGui();
+		Debugger_MainPanelGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxTAB_TRAVERSAL );
+		~Debugger_MainPanelGui();
 	
 };
 

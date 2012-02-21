@@ -24,33 +24,36 @@
 #include "debugger.h"
 #include "player.h"
 
-const wxEventType DebuggerMainFrame::PlayerEvent = wxNewEventType();
+/////////////////////////////////////////////////////////////////////////////
+const wxEventType Debugger_MainFrame::PlayerEvent = wxNewEventType();
 
-BEGIN_EVENT_TABLE(DebuggerMainFrame, wxFrame)
-	EVT_COMMAND(Debugger::DebuggerCode_suspended, DebuggerMainFrame::PlayerEvent, DebuggerMainFrame::OnPlayerSuspendedEvent)
-	EVT_COMMAND(Debugger::DebuggerCode_close, DebuggerMainFrame::PlayerEvent, DebuggerMainFrame::OnPlayerCloseEvent)
-	EVT_COMMAND(wxID_ANY, DebuggerMainFrame::PlayerEvent, DebuggerMainFrame::OnOtherPlayerEvent)
+BEGIN_EVENT_TABLE(Debugger_MainFrame, wxFrame)
+	EVT_COMMAND(Debugger::DebuggerCode_suspended, Debugger_MainFrame::PlayerEvent, Debugger_MainFrame::OnPlayerSuspendedEvent)
+	EVT_COMMAND(Debugger::DebuggerCode_close, Debugger_MainFrame::PlayerEvent, Debugger_MainFrame::OnPlayerCloseEvent)
+	EVT_COMMAND(wxID_ANY, Debugger_MainFrame::PlayerEvent, Debugger_MainFrame::OnOtherPlayerEvent)
 END_EVENT_TABLE()
 
-DebuggerMainFrame::DebuggerMainFrame() : DebuggerMainFrameGui(0) {
+/////////////////////////////////////////////////////////////////////////////
+Debugger_MainFrame::Debugger_MainFrame() : Debugger_MainFrameGui(0) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-void DebuggerMainFrame::OnRunToolClicked(wxCommandEvent& event) {
+// Gui events
+void Debugger_MainFrame::OnRunToolClicked(wxCommandEvent& event) {
 	if (toolbar->GetToolState(DEBUGGER_TOOL_RUN)) {
 		Debugger::player_suspended = false;
 		Debugger::SendEventToPlayer(Debugger::PlayerCode_continue);
 	}
 }
 
-void DebuggerMainFrame::OnPauseToolClicked(wxCommandEvent& event) {
+void Debugger_MainFrame::OnPauseToolClicked(wxCommandEvent& event) {
 	if (toolbar->GetToolState(DEBUGGER_TOOL_PAUSE)) {
 		this->Enable(false);
 		Debugger::SendEventToPlayer(Debugger::PlayerCode_suspend);
 	}
 }
 
-void DebuggerMainFrame::OnFrameClose(wxCloseEvent& event) {
+void Debugger_MainFrame::OnFrameClose(wxCloseEvent& event) {
 	if (!event.CanVeto()) {
 		Debugger::SendEventToPlayer(Debugger::PlayerCode_continue);
 		Destroy();
@@ -63,19 +66,20 @@ void DebuggerMainFrame::OnFrameClose(wxCloseEvent& event) {
 
 
 /////////////////////////////////////////////////////////////////////////////
-void DebuggerMainFrame::OnPlayerSuspendedEvent(wxCommandEvent& event) {
+// Player events
+void Debugger_MainFrame::OnPlayerSuspendedEvent(wxCommandEvent& event) {
 	this->Enable(true);
 	Debugger::player_suspended = true;
 	OnOtherPlayerEvent(event);
 }
 
-void DebuggerMainFrame::OnPlayerCloseEvent(wxCommandEvent& event) {
+void Debugger_MainFrame::OnPlayerCloseEvent(wxCommandEvent& event) {
 	if (event.GetId() == Debugger::DebuggerCode_close) {
 		Close(true);
 	}
 }
 
-void DebuggerMainFrame::OnOtherPlayerEvent(wxCommandEvent& event) {
+void Debugger_MainFrame::OnOtherPlayerEvent(wxCommandEvent& event) {
 	panel->HandleWindowEvent(event);
 }
 

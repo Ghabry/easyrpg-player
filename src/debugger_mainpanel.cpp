@@ -17,25 +17,28 @@
 
 #ifdef EASYRPG_DEBUGGER
 
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Headers
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 #include "debugger_mainpanel.h"
 #include "debugger_mainframe.h"
 #include "debugger.h"
 #include "player.h"
 #include "game_switches.h"
 
-BEGIN_EVENT_TABLE(DebuggerMainPanel, wxPanel)
-	EVT_COMMAND(Debugger::DebuggerCode_suspended, DebuggerMainFrame::PlayerEvent, DebuggerMainPanel::OnPlayerSuspendedEvent)
+/////////////////////////////////////////////////////////////////////////////
+BEGIN_EVENT_TABLE(Debugger_MainPanel, wxPanel)
+	EVT_COMMAND(Debugger::DebuggerCode_suspended, Debugger_MainFrame::PlayerEvent, Debugger_MainPanel::OnPlayerSuspendedEvent)
 END_EVENT_TABLE()
 
-DebuggerMainPanel::DebuggerMainPanel(wxWindow* parent) :
-	DebuggerMainPanelGui(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL),
+/////////////////////////////////////////////////////////////////////////////
+Debugger_MainPanel::Debugger_MainPanel(wxWindow* parent) :
+	Debugger_MainPanelGui(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL),
 	first_suspend(true) {
 }
 
-void DebuggerMainPanel::OnPlayerSuspendedEvent(wxCommandEvent& event) {
+/////////////////////////////////////////////////////////////////////////////
+void Debugger_MainPanel::OnPlayerSuspendedEvent(wxCommandEvent& event) {
 	if (first_suspend) {
 		first_suspend = false;
 	}

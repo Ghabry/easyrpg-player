@@ -28,16 +28,16 @@
 #define DEBUGGER_TOOL_PAUSE 1001
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Class DebuggerMainFrameGui
+/// Class Debugger_MainFrameGui
 ///////////////////////////////////////////////////////////////////////////////
-class DebuggerMainFrameGui : public wxFrame 
+class Debugger_MainFrameGui : public wxFrame 
 {
 	private:
 	
 	protected:
 		wxToolBar* toolbar;
 		wxPanel* m_panel1;
-		DebuggerMainPanel* panel;
+		Debugger_MainPanel* panel;
 		
 		// Virtual event handlers, overide them in your derived class
 		virtual void OnFrameClose( wxCloseEvent& event ) { event.Skip(); }
@@ -47,8 +47,8 @@ class DebuggerMainFrameGui : public wxFrame
 	
 	public:
 		
-		DebuggerMainFrameGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("EasyRPG Debugger"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
-		~DebuggerMainFrameGui();
+		Debugger_MainFrameGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("EasyRPG Debugger"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 500,300 ), long style = wxDEFAULT_FRAME_STYLE|wxTAB_TRAVERSAL );
+		~Debugger_MainFrameGui();
 	
 };
 

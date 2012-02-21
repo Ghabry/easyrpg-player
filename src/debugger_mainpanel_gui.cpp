@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
-DebuggerMainPanelGui::DebuggerMainPanelGui( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
+Debugger_MainPanelGui::Debugger_MainPanelGui( wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style ) : wxPanel( parent, id, pos, size, style )
 {
 	wxBoxSizer* bSizer3;
 	bSizer3 = new wxBoxSizer( wxHORIZONTAL );
@@ -39,7 +39,7 @@ DebuggerMainPanelGui::DebuggerMainPanelGui( wxWindow* parent, wxWindowID id, con
 	this->Layout();
 }
 
-DebuggerMainPanelGui::~DebuggerMainPanelGui()
+Debugger_MainPanelGui::~Debugger_MainPanelGui()
 {
 }
 #endif

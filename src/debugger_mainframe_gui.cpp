@@ -9,7 +9,7 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
-DebuggerMainFrameGui::DebuggerMainFrameGui( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
+Debugger_MainFrameGui::Debugger_MainFrameGui( wxWindow* parent, wxWindowID id, const wxString& title, const wxPoint& pos, const wxSize& size, long style ) : wxFrame( parent, id, title, pos, size, style )
 {
 	this->SetSizeHints( wxDefaultSize, wxDefaultSize );
 	
@@ -29,7 +29,7 @@ DebuggerMainFrameGui::DebuggerMainFrameGui( wxWindow* parent, wxWindowID id, con
 	fgSizer1->SetFlexibleDirection( wxBOTH );
 	fgSizer1->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	panel = new DebuggerMainPanel(this);
+	panel = new Debugger_MainPanel(this);
 	fgSizer1->Add( panel, 0, wxALL|wxEXPAND, 0 );
 	
 	m_panel1->SetSizer( fgSizer1 );
@@ -43,17 +43,17 @@ DebuggerMainFrameGui::DebuggerMainFrameGui( wxWindow* parent, wxWindowID id, con
 	this->Centre( wxBOTH );
 	
 	// Connect Events
-	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DebuggerMainFrameGui::OnFrameClose ) );
-	this->Connect( DEBUGGER_TOOL_RUN, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( DebuggerMainFrameGui::OnRunToolClicked ) );
-	this->Connect( DEBUGGER_TOOL_PAUSE, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( DebuggerMainFrameGui::OnPauseToolClicked ) );
+	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( Debugger_MainFrameGui::OnFrameClose ) );
+	this->Connect( DEBUGGER_TOOL_RUN, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( Debugger_MainFrameGui::OnRunToolClicked ) );
+	this->Connect( DEBUGGER_TOOL_PAUSE, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( Debugger_MainFrameGui::OnPauseToolClicked ) );
 }
 
-DebuggerMainFrameGui::~DebuggerMainFrameGui()
+Debugger_MainFrameGui::~Debugger_MainFrameGui()
 {
 	// Disconnect Events
-	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( DebuggerMainFrameGui::OnFrameClose ) );
-	this->Disconnect( DEBUGGER_TOOL_RUN, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( DebuggerMainFrameGui::OnRunToolClicked ) );
-	this->Disconnect( DEBUGGER_TOOL_PAUSE, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( DebuggerMainFrameGui::OnPauseToolClicked ) );
+	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( Debugger_MainFrameGui::OnFrameClose ) );
+	this->Disconnect( DEBUGGER_TOOL_RUN, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( Debugger_MainFrameGui::OnRunToolClicked ) );
+	this->Disconnect( DEBUGGER_TOOL_PAUSE, wxEVT_COMMAND_TOOL_CLICKED, wxCommandEventHandler( Debugger_MainFrameGui::OnPauseToolClicked ) );
 	
 }
 #endif

@@ -17,28 +17,32 @@
 
 #ifdef EASYRPG_DEBUGGER
 
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 // Headers
-////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 #include "debugger_main.h"
 #include "debugger_mainframe.h"
 #include "debugger.h"
 
-IMPLEMENT_APP_NO_MAIN(DebuggerApp)
+// wxWidgets entrypoint for wxEntry
+IMPLEMENT_APP_NO_MAIN(Debugger_App)
 
-bool DebuggerApp::OnInit() {
-	Debugger::frame = new DebuggerMainFrame();
+/////////////////////////////////////////////////////////////////////////////
+bool Debugger_App::OnInit() {
+	Debugger::frame = new Debugger_MainFrame();
 	Debugger::frame->Show();
 	return true;
 }
 
-DebuggerThread::DebuggerThread() : wxThread(wxTHREAD_JOINABLE) {
+/////////////////////////////////////////////////////////////////////////////
+Debugger_Thread::Debugger_Thread() : wxThread(wxTHREAD_JOINABLE) {
 	if(wxTHREAD_NO_ERROR == Create()) {
 		Run();
 	}
 }
 
-void* DebuggerThread::Entry() {
+/////////////////////////////////////////////////////////////////////////////
+void* Debugger_Thread::Entry() {
 	wxEntry(0, NULL);
 	return static_cast<ExitCode>(NULL);
 }

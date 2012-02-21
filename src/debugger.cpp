@@ -28,12 +28,14 @@
 #include "output.h"
 #endif
 
+/////////////////////////////////////////////////////////////////////////////
 namespace Debugger {
 	bool player_suspended;
-	DebuggerMainFrame* frame;
-	DebuggerThread* thread;
+	Debugger_MainFrame* frame;
+	Debugger_Thread* thread;
 }
 
+/////////////////////////////////////////////////////////////////////////////
 void Debugger::Init() {
 #ifdef EASYRPG_DEBUGGER
 	player_suspended = false;
@@ -43,16 +45,18 @@ void Debugger::Init() {
 #endif
 }
 
+/////////////////////////////////////////////////////////////////////////////
 void Debugger::Open() {
 #ifdef EASYRPG_DEBUGGER
 	if (!frame)
 	{
 		Output::Debug("Debugger started");
-		thread = new DebuggerThread();
+		thread = new Debugger_Thread();
 	}
 #endif
 }
 
+/////////////////////////////////////////////////////////////////////////////
 bool Debugger::IsDebuggerRunning() {
 #ifdef EASYRPG_DEBUGGER
 	return frame != NULL;
@@ -61,7 +65,7 @@ bool Debugger::IsDebuggerRunning() {
 #endif
 }
 
-
+/////////////////////////////////////////////////////////////////////////////
 bool Debugger::IsPlayerSuspended() {
 #ifdef EASYRPG_DEBUGGER
 	return player_suspended;
@@ -70,7 +74,7 @@ bool Debugger::IsPlayerSuspended() {
 #endif
 }
 
-
+/////////////////////////////////////////////////////////////////////////////
 void Debugger::Shutdown() {
 #ifdef EASYRPG_DEBUGGER
 	if (frame) {
@@ -82,6 +86,7 @@ void Debugger::Shutdown() {
 #endif
 }
 
+/////////////////////////////////////////////////////////////////////////////
 void Debugger::SendEventToPlayer(Debugger::PlayerCode code, int data, int data2) {
 #ifdef EASYRPG_DEBUGGER
 	SDL_Event dbgEvent;
@@ -95,9 +100,10 @@ void Debugger::SendEventToPlayer(Debugger::PlayerCode code, int data, int data2)
 #endif
 }
 
+/////////////////////////////////////////////////////////////////////////////
 void Debugger::SendEventToDebugger(DebuggerCode code, int data, int data2) {
 #ifdef EASYRPG_DEBUGGER
-	wxCommandEvent event(DebuggerMainFrame::PlayerEvent, code);
+	wxCommandEvent event(Debugger_MainFrame::PlayerEvent, code);
 	event.SetInt(data);
 	event.SetExtraLong(data2);
 	wxPostEvent(Debugger::frame, event);
