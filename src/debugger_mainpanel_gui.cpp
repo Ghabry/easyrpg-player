@@ -14,7 +14,6 @@ Debugger_MainPanelGui::Debugger_MainPanelGui( wxWindow* parent, wxWindowID id, c
 	wxBoxSizer* bSizer3;
 	bSizer3 = new wxBoxSizer( wxHORIZONTAL );
 	
-	m_panel1 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxFlexGridSizer* fgSizer1;
 	fgSizer1 = new wxFlexGridSizer( 1, 2, 0, 0 );
 	fgSizer1->AddGrowableCol( 0 );
@@ -24,16 +23,13 @@ Debugger_MainPanelGui::Debugger_MainPanelGui( wxWindow* parent, wxWindowID id, c
 	fgSizer1->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
 	wxArrayString switches_listChoices;
-	switches_list = new wxCheckListBox( m_panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, switches_listChoices, 0 );
+	switches_list = new wxCheckListBox( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, switches_listChoices, 0 );
 	fgSizer1->Add( switches_list, 0, wxALL|wxEXPAND, 5 );
 	
-	variables_list = new wxListBox( m_panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
+	variables_list = new wxListBox( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, NULL, 0 ); 
 	fgSizer1->Add( variables_list, 0, wxALL|wxEXPAND, 5 );
 	
-	m_panel1->SetSizer( fgSizer1 );
-	m_panel1->Layout();
-	fgSizer1->Fit( m_panel1 );
-	bSizer3->Add( m_panel1, 1, wxEXPAND | wxALL, 5 );
+	bSizer3->Add( fgSizer1, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( bSizer3 );
 	this->Layout();

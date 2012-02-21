@@ -21,7 +21,6 @@ Debugger_MainFrameGui::Debugger_MainFrameGui( wxWindow* parent, wxWindowID id, c
 	wxBoxSizer* bSizer1;
 	bSizer1 = new wxBoxSizer( wxVERTICAL );
 	
-	m_panel1 = new wxPanel( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxFlexGridSizer* fgSizer1;
 	fgSizer1 = new wxFlexGridSizer( 1, 1, 0, 0 );
 	fgSizer1->AddGrowableCol( 0 );
@@ -32,10 +31,7 @@ Debugger_MainFrameGui::Debugger_MainFrameGui( wxWindow* parent, wxWindowID id, c
 	panel = new Debugger_MainPanel(this);
 	fgSizer1->Add( panel, 0, wxALL|wxEXPAND, 0 );
 	
-	m_panel1->SetSizer( fgSizer1 );
-	m_panel1->Layout();
-	fgSizer1->Fit( m_panel1 );
-	bSizer1->Add( m_panel1, 1, wxEXPAND | wxALL, 0 );
+	bSizer1->Add( fgSizer1, 1, wxEXPAND, 5 );
 	
 	this->SetSizer( bSizer1 );
 	this->Layout();

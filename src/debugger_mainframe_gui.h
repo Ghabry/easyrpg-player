@@ -19,7 +19,6 @@
 #include <wx/settings.h>
 #include "debugger_mainpanel.h"
 #include <wx/sizer.h>
-#include <wx/panel.h>
 #include <wx/frame.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -36,7 +35,6 @@ class Debugger_MainFrameGui : public wxFrame
 	
 	protected:
 		wxToolBar* toolbar;
-		wxPanel* m_panel1;
 		Debugger_MainPanel* panel;
 		
 		// Virtual event handlers, overide them in your derived class

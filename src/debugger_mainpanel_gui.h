@@ -29,7 +29,6 @@ class Debugger_MainPanelGui : public wxPanel
 	private:
 	
 	protected:
-		wxPanel* m_panel1;
 		wxCheckListBox* switches_list;
 		wxListBox* variables_list;
 	
