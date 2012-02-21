@@ -42,6 +42,7 @@ Debugger_MainFrame::Debugger_MainFrame() : Debugger_MainFrameGui(0) {
 void Debugger_MainFrame::OnRunToolClicked(wxCommandEvent& event) {
 	if (toolbar->GetToolState(DEBUGGER_TOOL_RUN)) {
 		Debugger::player_suspended = false;
+		panel->PlayerContinued();
 		Debugger::SendEventToPlayer(Debugger::PlayerCode_continue);
 	}
 }

@@ -23,8 +23,10 @@
 #include "debugger_mainpanel.h"
 #include "debugger_mainframe.h"
 #include "debugger.h"
-#include "player.h"
+#include "game_map.h"
+#include "game_switches.h"
 #include "main_data.h"
+#include "player.h"
 
 /////////////////////////////////////////////////////////////////////////////
 BEGIN_EVENT_TABLE(Debugger_MainPanel, wxPanel)
@@ -35,10 +37,27 @@ END_EVENT_TABLE()
 Debugger_MainPanel::Debugger_MainPanel(wxWindow* parent) :
 	Debugger_MainPanelGui(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL),
 	first_suspend(true) {
+		switches_list->Enable(false);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+void Debugger_MainPanel::PlayerContinued() {
+	switches_list->Enable(false);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+void Debugger_MainPanel::OnSwitchesListToggled(wxCommandEvent& event) {
+	if (Debugger::IsPlayerSuspended()) {
+		Game_Switches[event.GetInt() + 1] = switches_list->IsChecked(event.GetInt());
+		Game_Map::SetNeedRefresh(true);
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////
 void Debugger_MainPanel::OnPlayerSuspendedEvent(wxCommandEvent& event) {
+	switches_list->Enable(true);
+
 	std::vector<bool>& switches = Main_Data::game_data.system.switches;
 	size_t i = 0;
 

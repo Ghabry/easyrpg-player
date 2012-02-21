@@ -31,6 +31,10 @@ class Debugger_MainPanelGui : public wxPanel
 	protected:
 		wxCheckListBox* switches_list;
 		wxListBox* variables_list;
+		
+		// Virtual event handlers, overide them in your derived class
+		virtual void OnSwitchesListToggled( wxCommandEvent& event ) { event.Skip(); }
+		
 	
 	public:
 		

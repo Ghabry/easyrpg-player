@@ -33,9 +33,15 @@ Debugger_MainPanelGui::Debugger_MainPanelGui( wxWindow* parent, wxWindowID id, c
 	
 	this->SetSizer( bSizer3 );
 	this->Layout();
+	
+	// Connect Events
+	switches_list->Connect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( Debugger_MainPanelGui::OnSwitchesListToggled ), NULL, this );
 }
 
 Debugger_MainPanelGui::~Debugger_MainPanelGui()
 {
+	// Disconnect Events
+	switches_list->Disconnect( wxEVT_COMMAND_CHECKLISTBOX_TOGGLED, wxCommandEventHandler( Debugger_MainPanelGui::OnSwitchesListToggled ), NULL, this );
+	
 }
 #endif
