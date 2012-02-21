@@ -24,7 +24,7 @@
 #include "debugger_mainframe.h"
 #include "debugger.h"
 #include "player.h"
-#include "game_switches.h"
+#include "main_data.h"
 
 /////////////////////////////////////////////////////////////////////////////
 BEGIN_EVENT_TABLE(Debugger_MainPanel, wxPanel)
@@ -39,24 +39,38 @@ Debugger_MainPanel::Debugger_MainPanel(wxWindow* parent) :
 
 /////////////////////////////////////////////////////////////////////////////
 void Debugger_MainPanel::OnPlayerSuspendedEvent(wxCommandEvent& event) {
+	std::vector<bool>& switches = Main_Data::game_data.system.switches;
+	size_t i = 0;
+
 	if (first_suspend) {
 		first_suspend = false;
-	}
-	/*m_button1->Enable(true);
-	m_button1->SetLabel(wxT("continue"));
 
-	m_checkList1->Clear();
-	for (size_t i = 0; i < Main_Data::game_data.system.switches.size(); ++i) {
-		m_checkList1->Append(wxString::Format(wxT("%04d: %s"), i+1, wxString::FromUTF8(Data::switches[i].name.c_str())));
-		if (Main_Data::game_data.system.switches[i]) {
-			m_checkList1->Check(i, true);
+		size_t i = 0;
+		for (std::vector<bool>::iterator it = switches.begin(); it != switches.end(); ++it) {
+			switches_list->Append(
+				wxString::Format(wxT("%04d: %s"), i+1, wxString::FromUTF8(Data::switches[i].name.c_str())));
+			if (*it) {
+				switches_list->Check(i, true);
+			}
+			++i;
 		}
-	}*/
- 
+	} else {
+		for (std::vector<bool>::iterator it = switches.begin(); it != switches.end(); ++it) {
+			if (switches_list->IsChecked(i) != *it) {
+				switches_list->Check(i, *it);
+			}
+			++i;
+		}
+	}
 
-	///Game_Switches::isValidSwitch()
-
-	//m_checkList1->Append
+	variables_list->Clear();
+	std::vector<uint32>& variables = Main_Data::game_data.system.variables;
+	i = 0;
+	for (std::vector<uint32>::iterator it = variables.begin(); it != variables.end(); ++it) {
+		variables_list->Append(
+			wxString::Format(wxT("%04d: %s (%d)"), i+1, wxString::FromUTF8(Data::variables[i].name.c_str()), *it));
+		++i;
+	}
 }
 
 #endif
