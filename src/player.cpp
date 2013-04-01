@@ -32,6 +32,10 @@
 #include "bot_ui.h"
 #include "lua_bot.h"
 
+// If you get errors because this file is missing you forgot to execute
+// resources/revision.sh (or .cmd) in your build system
+#include "revision.h"
+
 #include <algorithm>
 #include <set>
 #include <locale>
@@ -39,6 +43,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #ifdef GEKKO
 	#include <fat.h>
@@ -130,10 +135,13 @@ void Player::Init(int argc, char *argv[]) {
 #endif
 
 	if(! DisplayUi) {
+		std::stringstream title;
+		title << GAME_TITLE << " " << PLAYER_REVISION;
+
 		DisplayUi = BaseUi::CreateUi
 			(SCREEN_TARGET_WIDTH,
 			 SCREEN_TARGET_HEIGHT,
-			 GAME_TITLE,
+			 title.str(),
 			 !window_flag,
 			 RUN_ZOOM);
 	}

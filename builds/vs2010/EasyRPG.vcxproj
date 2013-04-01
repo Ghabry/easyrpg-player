@@ -98,6 +98,9 @@
       <AdditionalDependencies>freetype.lib;jpeg.lib;libexpat.lib;libmad.lib;libogg.lib;libpng.lib;libvorbis.lib;libvorbisfile.lib;mikmod.lib;native_midi.lib;SDL.lib;SDLmain.lib;SDL_image.lib;SDL_mixer.lib;zlib.lib;winmm.lib;dxguid.lib;pixman.lib;shinonome.lib;readers.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\..\resources\revision.cmd</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -141,6 +144,9 @@
       <SubSystem>Windows</SubSystem>
       <Profile>true</Profile>
     </Link>
+    <PreBuildEvent>
+      <Command>$(ProjectDir)..\..\resources\revision.cmd</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>

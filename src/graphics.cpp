@@ -29,6 +29,7 @@
 #include "drawable.h"
 #include "util_macro.h"
 #include "player.h"
+#include "revision.h"
 
 namespace Graphics {
 	bool fps_on_screen;
@@ -242,7 +243,7 @@ void Graphics::UpdateTitle() {
 	if (DisplayUi->IsFullscreen()) return;
 
 	std::stringstream title;
-	title << GAME_TITLE;
+	title << GAME_TITLE << " " << PLAYER_REVISION;
 
 	if (!fps_on_screen) {
 		title << " - FPS " << fps;
