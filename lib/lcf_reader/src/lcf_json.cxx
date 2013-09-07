@@ -10,6 +10,8 @@
 #include <boost/range/algorithm/sort.hpp>
 #include <boost/range/numeric.hpp>
 
+#include <ciso646>
+
 namespace {
 
 namespace sym = LCF::sym;
@@ -207,7 +209,7 @@ void LCF::save_element(picojson const& data, picojson const& schema, std::ostrea
 	} else if(type == sym::array2d) {
 		save_array2d(data, actual_schema(schema, sym::array2d), os);
 	} else if(type == sym::event) {
-		boost::for_each(data.a(), bind(save_event_command, _1, boost::ref(os)));
+		boost::for_each(data.a(), std::bind(save_event_command, _1, boost::ref(os)));
 	} else if(type == sym::int8array) { save_array<uint8_t>(data.a(), os); }
 	else if(type == sym::int16array) { save_array<int16_t>(data.a(), os); }
 	else if(type == sym::int32array) { save_array<int32_t>(data.a(), os); }

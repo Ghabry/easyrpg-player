@@ -16,6 +16,7 @@
 #include <boost/optional.hpp>
 
 #include <cassert>
+#include <ciso646>
 
 #ifndef EASYRPG_SHARED_PTR
 #  include <boost/shared_ptr.hpp>
@@ -220,7 +221,7 @@ static method_info const method_info_end = { NULL, NULL, MRB_ARGS_NONE() };
 inline RClass* register_methods(mrb_state* M, RClass* cls, method_info const* infos) {
 	bool has_init = false;
 	for(; infos->name; ++infos) {
-		has_init = has_init || std::string(infos->name) == "initialize";
+		has_init = has_init || !std::string(infos->name).compare("initialize");
 		mrb_define_method(M, cls, infos->name, infos->function, infos->spec);
 	}
 	if(not has_init) {

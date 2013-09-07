@@ -173,6 +173,26 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\audio.cpp" />
     <ClCompile Include="..\..\src\baseui.cpp" />
+    <ClCompile Include="..\..\src\binding\audio.cpp" />
+    <ClCompile Include="..\..\src\binding\bitmap.cpp" />
+    <ClCompile Include="..\..\src\binding\cache.cpp" />
+    <ClCompile Include="..\..\src\binding\color.cpp" />
+    <ClCompile Include="..\..\src\binding\filefinder.cpp" />
+    <ClCompile Include="..\..\src\binding\font.cpp" />
+    <ClCompile Include="..\..\src\binding\gem.cpp" />
+    <ClCompile Include="..\..\src\binding\graphics.cpp" />
+    <ClCompile Include="..\..\src\binding\image_io.cpp" />
+    <ClCompile Include="..\..\src\binding\input.cpp" />
+    <ClCompile Include="..\..\src\binding\keys.cpp" />
+    <ClCompile Include="..\..\src\binding\output.cpp" />
+    <ClCompile Include="..\..\src\binding\plane.cpp" />
+    <ClCompile Include="..\..\src\binding\rect.cpp" />
+    <ClCompile Include="..\..\src\binding\sprite.cpp" />
+    <ClCompile Include="..\..\src\binding\text.cpp" />
+    <ClCompile Include="..\..\src\binding\tilemap.cpp" />
+    <ClCompile Include="..\..\src\binding\tone.cpp" />
+    <ClCompile Include="..\..\src\binding\utils.cpp" />
+    <ClCompile Include="..\..\src\binding\window.cpp" />
     <ClCompile Include="..\..\src\bitmap.cpp" />
     <ClCompile Include="..\..\src\bitmap_screen.cpp" />
     <ClCompile Include="..\..\src\cache.cpp" />

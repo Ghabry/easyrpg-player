@@ -33,6 +33,7 @@
 #include "picojson_fwd.hxx"
 
 #include <cassert>
+#include <ciso646>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>

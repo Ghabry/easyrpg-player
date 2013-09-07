@@ -2,7 +2,7 @@
 #define LCF_STREAM_HXX
 
 #include <iosfwd>
-
+#include "stdint.h"
 
 namespace LCF {
 	bool is_eof(std::istream& is);

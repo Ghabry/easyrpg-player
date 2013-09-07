@@ -51,6 +51,9 @@
     <Filter Include="Source Files\Settings">
       <UniqueIdentifier>{36029a79-f366-4072-aafe-fe9606e929ec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Ruby Binding">
+      <UniqueIdentifier>{3db1585d-79d2-41dd-b82f-ff93b37e687a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\resources\player.rc">
@@ -141,6 +144,66 @@
     </ClCompile>
     <ClCompile Include="..\..\src\audio.cpp">
       <Filter>Source Files\Backend\Audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\gem.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\graphics.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\image_io.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\input.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\keys.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\output.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\plane.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\rect.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\sprite.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\text.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\tilemap.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\tone.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\utils.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\window.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\audio.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\bitmap.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\cache.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\color.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\filefinder.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\binding\font.cpp">
+      <Filter>Source Files\Ruby Binding</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

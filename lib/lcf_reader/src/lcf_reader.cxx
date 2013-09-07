@@ -16,6 +16,7 @@
 #include <boost/optional.hpp>
 
 #include <algorithm>
+#include <ciso646>
 #include <fstream>
 #include <sstream>
 #include <iterator>

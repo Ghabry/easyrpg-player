@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <ciso646>
 #include "shinonome.hxx"
 
 #include <mruby.h>

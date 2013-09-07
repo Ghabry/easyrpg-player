@@ -1,10 +1,54 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\gothic.cxx" />
-    <ClCompile Include="..\..\mincho.cxx" />
+    <Filter Include="Header">
+      <UniqueIdentifier>{f57b0d53-3386-4e7e-bd86-6418a9c4cbea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{ca320d67-d2d8-44f6-a66f-bd99392b16fc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\shinonome.hxx" />
+    <ClInclude Include="..\..\include\lcf_reader_fwd.hxx">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\lcf_stream.hxx">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\lcf_sym.hxx">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\picojson.hxx">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\picojson_fwd.hxx">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\lcf_change.hxx">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\lcf_reader.hxx">
+      <Filter>Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\lcf_json.cxx">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lcf_reader.cxx">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lcf_stream.cxx">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\lcf_sym.cxx">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\schema.cxx">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gem.cxx">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
