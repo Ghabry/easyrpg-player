@@ -121,4 +121,5 @@ std::string Utils::ToNfcString(std::string const& str) {
 	EASYRPG_SHARED_PTR<uint8_t> const result(
 		utf8proc_NFC(reinterpret_cast<uint8_t const*>(str.c_str())), &std::free);
 	return std::string(reinterpret_cast<char*>(result.get()));
+	return str;
 }

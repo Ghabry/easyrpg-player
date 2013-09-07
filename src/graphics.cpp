@@ -93,7 +93,7 @@ void Graphics_::UpdateTitle(double const fps) {
 	if (DisplayUi->IsFullscreen()) return;
 
 	std::ostringstream title(GAME_TITLE, std::ios::out | std::ios::ate);
-	if (not fps_on_screen) {
+	if (!fps_on_screen) {
 		title << " - FPS " << std::setprecision(4) << current_fps_;
 	}
 
@@ -207,7 +207,9 @@ void Graphics_::UpdateTransition() {
 
 	int percentage = transition_frame * 100 / transition_duration;
 
-	if(!screen1 or !screen2) { return; }
+	if (!screen1 || !screen2) {
+		return;
+	}
 
 	switch (transition_type) {
 	case TransitionFadeIn:

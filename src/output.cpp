@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cstdarg>
 #include <ctime>
+#include <ciso646>
 
 #include <iomanip>
 #include <iostream>
@@ -177,8 +178,9 @@ void Output_::Update() {
 }
 
 boost::optional<std::string> Output_::TakeScreenshot() {
-	if(frame_screenshot_ and FileFinder().Exists(*frame_screenshot_))
-	{ return frame_screenshot_; }
+	if (frame_screenshot_ && FileFinder().Exists(*frame_screenshot_)) {
+		return frame_screenshot_;
+	}
 
 	unsigned index = 0;
 	std::string p;

@@ -145,7 +145,7 @@ Rect Font::GetSize(std::string const& non_nfc_txt) const {
 		append_font_size(
 			ret,
 			boost::next(i) != end and *i == '$'
-			? ++i, (std::isalpha(*i)? Rect(0, 0, pixel_size(), pixel_size()):
+			? ++i, (isalpha(*i)? Rect(0, 0, pixel_size(), pixel_size()):
 					*i == '$'? Rect(0, 0, pixel_size() / 2, pixel_size()):
 					(--i, GetSize(*i)))
 			: GetSize(*i));

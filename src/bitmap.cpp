@@ -25,6 +25,7 @@
 
 #include <pixman.h>
 
+#include <ciso646>
 #include <cmath>
 #include <sstream>
 #include <fstream>

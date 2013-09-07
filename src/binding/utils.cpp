@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "binding.hxx"
+#include "output.h"
 
 #include <mruby/array.h>
 #include <mruby/hash.h>
@@ -62,7 +63,7 @@ mrb_value drives(mrb_state* M, mrb_value) {
 #ifdef _WIN32
 	wchar_t drives[MAX_PATH + 1] = {0};
 	if(GetLogicalDriveStringsW(MAX_PATH, drives) == 0) {
-		Output::Warning("cannot get drives");
+		Output().Warning("cannot get drives");
 		return mrb_hash_new(M);
 	}
 
@@ -72,7 +73,7 @@ mrb_value drives(mrb_state* M, mrb_value) {
 	while(*ptr != 0) {
 		wchar_t const* const d = ptr;
 		size_t const size = std::wcslen(ptr);
-		ptr += size
+		ptr += size;
 
 		wchar_t buf[MAX_PATH + 1] = {0};
 		GetVolumeInformationW(d, buf, MAX_PATH, NULL, NULL, NULL, NULL, 0);

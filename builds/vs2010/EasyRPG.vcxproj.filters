@@ -306,5 +306,8 @@
     <ClInclude Include="..\..\include\utils.h">
       <Filter>Source Files\Tools</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\player_ruby.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

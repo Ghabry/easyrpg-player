@@ -201,7 +201,7 @@ std::string GetFontsPath() {
 #ifdef UNICODE
 			WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS | WC_COMPOSITECHECK, path, MAX_PATH, fpath, MAX_PATH, NULL, NULL);
 #endif
-			fonts_path = FileFinder_::MakePath(fpath, "");
+			fonts_path = FileFinder().MakePath(fpath, "");
 		}
 
 		init = true;

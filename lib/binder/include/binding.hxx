@@ -196,7 +196,7 @@ RClass* define_class(mrb_state* M, char const* name, RClass* outer = NULL, RClas
 		assert(mruby_data_type<T>::data.dfree == &disposer_newer<T>::deleter);
 
 		if(outer != M->object_class) {
-			assert(mruby_data_type<T>::outer == to_cxx_str(M, mrb_class_path(M, outer)));
+			assert(!mruby_data_type<T>::outer.compare(to_cxx_str(M, mrb_class_path(M, outer))));
 		}
 	}
 

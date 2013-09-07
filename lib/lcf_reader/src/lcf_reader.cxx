@@ -29,7 +29,7 @@ std::ios::openmode const write_flag = std::ios::binary | std::ios::out;
 std::ios::openmode const read_flag = std::ios::binary | std::ios::in;
 
 using boost::lexical_cast;
-using boost::bind;
+using namespace boost;
 using boost::optional;
 using boost::ref;
 
@@ -357,7 +357,7 @@ template<class T>
 T LCF::element::to() const {
 	if(stream_) { stream_->seekg(base_); }
 	T const ret = to_impl<T>();
-	if(stream_) { assert(stream_->tellg() == int(base_ + size_)); }
+	if (stream_) { assert((size_t)stream_->tellg() == int(base_ + size_)); }
 	return ret;
 }
 
@@ -581,12 +581,12 @@ void save_element(std::ostream& os, LCF::element const& e,
 
 	change_list ch_list;
 	boost::remove_copy_if(ch, std::back_inserter(ch_list),
-						  bind(contains, boost::cref(k), _1) == false);
+						  boost::bind(contains, boost::cref(k), _1) == false);
 
 	if(ch_list.empty()) { e.write(os); }
 	else if(ch_list.back()->key.size() == k.size()) {
 		LCF::save_element(ch_list.back()->value, e.schema(), os);
-		ch.remove_if(bind(remove_function, boost::cref(ch_list), _1));
+		ch.remove_if(boost::bind(remove_function, boost::cref(ch_list), _1));
 	}
 	else if(ch_list.back()->key.size() > k.size()) {
 		if(type == sym::array1d) {
@@ -602,7 +602,7 @@ void save_element(std::ostream& os, LCF::element const& e,
 				ary.to_json(jsn);
 				apply_changes(jsn, ch_list, k);
 				LCF::save_array1d(jsn, e.schema(), os);
-				ch.remove_if(bind(remove_function, boost::cref(ch_list), _1));
+				ch.remove_if(boost::bind(remove_function, boost::cref(ch_list), _1));
 			} else {
 				for(LCF::array1d::const_iterator i = ary.begin(); i != ary.end(); ++i) {
 					k.push_back(i->second.schema()[sym::name].s());
@@ -634,7 +634,7 @@ void save_element(std::ostream& os, LCF::element const& e,
 				ary.to_json(jsn);
 				apply_changes(jsn, ch_list, k);
 				LCF::save_array2d(jsn, e.schema(), os);
-				ch.remove_if(bind(remove_function, boost::cref(ch_list), _1));
+				ch.remove_if(boost::bind(remove_function, boost::cref(ch_list), _1));
 			} else {
 				LCF::ber(os, ary.size());
 
@@ -669,7 +669,7 @@ void save_element(std::ostream& os, LCF::element const& e,
 void LCF::lcf_file::get(key_list const& k, picojson& ret, size_t r) const {
 	vector<change> const& ch = changes(r);
 	vector<change>::const_reverse_iterator const c =
-			std::find_if(ch.rbegin(), ch.rend(), bind(& ::is_related, boost::cref(k), _1));
+			std::find_if(ch.rbegin(), ch.rend(), boost::bind(& ::is_related, boost::cref(k), _1));
 
 	if(c == ch.rend()) { find(root(r), k.begin(), k.end(), ret); }
 	else if(c->key.size() <= k.size()) {
@@ -678,7 +678,7 @@ void LCF::lcf_file::get(key_list const& k, picojson& ret, size_t r) const {
 	else if(c->key.size() > k.size()) {
 		change_list ch_list;
 		boost::remove_copy_if(ch, std::back_inserter(ch_list),
-							  bind(& ::is_related, boost::cref(k), _1) == false);
+							  boost::bind(& ::is_related, boost::cref(k), _1) == false);
 
 		picojson(picojson::object_type, bool()).swap(ret);
 		apply_changes(ret, ch_list, k);

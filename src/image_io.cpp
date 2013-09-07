@@ -7,6 +7,7 @@
 #include <png.h>
 #include <zlib.h>
 
+#include <ciso646>
 #include <fstream>
 
 #include <boost/scope_exit.hpp>

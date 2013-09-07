@@ -18,7 +18,7 @@ namespace sym = LCF::sym;
 using LCF::ber_size;
 using LCF::ber;
 using boost::lexical_cast;
-using boost::bind;
+using namespace boost;
 using boost::optional;
 
 size_t calculate_array1d_size(picojson const& data, picojson const& schema) {
@@ -209,7 +209,7 @@ void LCF::save_element(picojson const& data, picojson const& schema, std::ostrea
 	} else if(type == sym::array2d) {
 		save_array2d(data, actual_schema(schema, sym::array2d), os);
 	} else if(type == sym::event) {
-		boost::for_each(data.a(), std::bind(save_event_command, _1, boost::ref(os)));
+		boost::for_each(data.a(), boost::bind(save_event_command, _1, boost::ref(os)));
 	} else if(type == sym::int8array) { save_array<uint8_t>(data.a(), os); }
 	else if(type == sym::int16array) { save_array<int16_t>(data.a(), os); }
 	else if(type == sym::int32array) { save_array<int32_t>(data.a(), os); }

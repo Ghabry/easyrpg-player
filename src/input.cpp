@@ -36,7 +36,7 @@ Input_::Input_()
 		, wait_input(false)
 {
 	static bool button_initialized = false;
-	if(not button_initialized) {
+	if (!button_initialized) {
 		button_initialized = true;
 		InitButtons();
 	}

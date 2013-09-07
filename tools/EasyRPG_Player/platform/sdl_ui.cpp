@@ -41,6 +41,7 @@
 #include "utils.h"
 #include "matrix.h"
 
+#include <bitset>
 #include <cstdlib>
 #include <cstring>
 #include <SDL.h>
@@ -375,14 +376,14 @@ void SdlUi::ProcessEvents() {
 static pixman_format_code_t to_pixman_format(SDL_PixelFormat const& f) {
 	Uint8 const shifts[3] = { f.Rshift, f.Gshift, f.Bshift };
 	Uint8 const max_shift = *std::max_element(shifts, shifts + 3);
-	int const alpha_count = std::bitset<32>(f.Amask).count();
+	int const alpha_count = std::bitset<32>((int32_t)f.Amask).count();
 
 	int t =
-			(f.Rshift > f.Gshift and f.Gshift > f.Bshift)
-			? (alpha_count > 0 and max_shift < f.Ashift
+			(f.Rshift > f.Gshift && f.Gshift > f.Bshift)
+			? (alpha_count > 0 && max_shift < f.Ashift
 			   ? PIXMAN_TYPE_ARGB : PIXMAN_TYPE_RGBA):
-			(f.Rshift < f.Gshift and f.Gshift < f.Bshift)
-			? (alpha_count > 0  and max_shift < f.Ashift
+			(f.Rshift < f.Gshift && f.Gshift < f.Bshift)
+			? (alpha_count > 0  && max_shift < f.Ashift
 			   ? PIXMAN_TYPE_ABGR : PIXMAN_TYPE_BGRA):
 			-1; // invalid type
 
@@ -402,13 +403,13 @@ static pixman_format_code_t to_pixman_format(SDL_PixelFormat const& f) {
 	return
 			pixman_format_code_t(PIXMAN_FORMAT(
 				f.BitsPerPixel, t, alpha_count,
-				std::bitset<32>(f.Rmask).count(),
-				std::bitset<32>(f.Gmask).count(),
-				std::bitset<32>(f.Bmask).count()));
+				std::bitset<32>((int32_t)f.Rmask).count(),
+				std::bitset<32>((int32_t)f.Gmask).count(),
+				std::bitset<32>((int32_t)f.Bmask).count()));
 }
 
 void SdlUi::UpdateDisplay() {
-	if(SDL_MUSTLOCK(screen) and SDL_LockSurface(screen) < 0) {
+	if (SDL_MUSTLOCK(screen) && SDL_LockSurface(screen) < 0) {
 		return;
 	}
 
@@ -429,7 +430,7 @@ void SdlUi::UpdateDisplay() {
 	pixman_image_composite(PIXMAN_OP_SRC, buffer->image(), NULL, img.get(),
 						   0, 0, 0, 0, 0, 0, screen->w, screen->h);
 
-	if(SDL_MUSTLOCK(screen)) {
+	if (SDL_MUSTLOCK(screen)) {
 		SDL_UnlockSurface(screen);
 	}
 
@@ -691,13 +692,13 @@ void SdlUi::SetAppIcon() {
 	SDL_VERSION(&wminfo.version)
 
 	if (SDL_GetWMInfo(&wminfo) < 0)
-		Output::Error("Wrong SDL version");
+		Output().Error("Wrong SDL version");
 
 	HINSTANCE handle = GetModuleHandle(NULL);
 	HICON icon = LoadIcon(handle, MAKEINTRESOURCE(23456));
 
 	if (icon == NULL)
-		Output::Error("Couldn't load icon.");
+		Output().Error("Couldn't load icon.");
 
 	SetClassLongPtr(wminfo.window, GCLP_HICON, (LONG_PTR) icon);
 #endif
