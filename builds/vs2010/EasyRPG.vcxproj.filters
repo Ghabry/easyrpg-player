@@ -58,25 +58,13 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\audio.cpp">
-      <Filter>Source Files\Backend\Audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\background.cpp">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\bitmap.cpp">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\bitmap_screen.cpp">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\bitmap_utils.cpp">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\color.cpp">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\effects.cpp">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\font.cpp">
@@ -86,18 +74,6 @@
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\hslrgb.cpp">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\image_jpg.cpp">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\image_png.cpp">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\image_xyz.cpp">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\image_bmp.cpp">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\sprite.cpp">
@@ -130,278 +106,14 @@
     <ClCompile Include="..\..\src\input.cpp">
       <Filter>Source Files\Backend\Input</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\input_buttons_desktop.cpp">
-      <Filter>Source Files\Backend\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\input_buttons_dingoo.cpp">
-      <Filter>Source Files\Backend\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\input_buttons_gekko.cpp">
-      <Filter>Source Files\Backend\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\input_buttons_gph.cpp">
-      <Filter>Source Files\Backend\Input</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\input_buttons_psp.cpp">
-      <Filter>Source Files\Backend\Input</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\baseui.cpp">
       <Filter>Source Files\Backend\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\sdl_ui.cpp">
-      <Filter>Source Files\Backend\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\al_audio.cpp">
-      <Filter>Source Files\Backend\Audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\sdl_audio.cpp">
-      <Filter>Source Files\Backend\Audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_vehicle.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_actor.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_actors.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_battle.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_battler.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_character.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_commonevent.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_enemy.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_event.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_interpreter.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_interpreter_battle.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_interpreter_map.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_map.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_message.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_party.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_picture.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_player.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_screen.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_system.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_targets.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_temp.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_troop.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\game_unit.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_title.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_actortarget.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_battle.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_end.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_equip.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_file.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_gameover.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_item.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_load.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_logo.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_map.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_menu.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_name.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_order.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_save.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_shop.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_skill.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\scene_status.cpp">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\sprite_character.cpp">
-      <Filter>Source Files\Engine\Sprite</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\spriteset_map.cpp">
-      <Filter>Source Files\Engine\Sprite</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_actorinfo.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_actorstatus.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_actortarget.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_base.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_battlecommand.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_battleitem.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_battleoption.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_battleskill.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_battlestatus.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_command.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_equip.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_equipitem.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_equipstatus.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_face.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_gold.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_help.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_item.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_keyboard.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_menustatus.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_message.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_name.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_numberinput.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_savefile.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_selectable.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_shop.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_shopbuy.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_shopnumber.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_shopparty.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_shopsell.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_shopstatus.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_skill.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_skillstatus.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\window_targetstatus.cpp">
-      <Filter>Source Files\Engine\Window</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\cache.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\font_pearl_8x8.cpp">
-      <Filter>Source Files\Tools\Font 8x8</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\font_render_8x8.cpp">
-      <Filter>Source Files\Tools\Font 8x8</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\filefinder.cpp">
       <Filter>Source Files\Tools\Filefinder</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\util_win.cpp">
-      <Filter>Source Files\Tools</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\output.cpp">
       <Filter>Source Files\Tools</Filter>
@@ -412,423 +124,123 @@
     <ClCompile Include="..\..\src\player.cpp">
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main_data.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\battle_actions.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\battle_algorithms.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\battle_animation.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\battle_battler.cpp">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\registry.cpp">
       <Filter>Source Files\Tools</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\image_io.cpp">
+      <Filter>Source Files\Backend\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\input_buttons.cpp">
+      <Filter>Source Files\Backend\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\tools\EasyRPG_Player\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\drawable.cpp">
+      <Filter>Source Files\Backend\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\audio.cpp">
+      <Filter>Source Files\Backend\Audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\audio.h">
-      <Filter>Source Files\Backend\Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\background.h">
+    <ClInclude Include="..\..\include\bitmap.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bitmap.h">
+    <ClInclude Include="..\..\include\color.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bitmap_screen.h">
+    <ClInclude Include="..\..\include\bitmap_screen.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\bitmap_utils.h">
+    <ClInclude Include="..\..\include\drawable.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\color.h">
+    <ClInclude Include="..\..\include\font.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\drawable.h">
+    <ClInclude Include="..\..\include\graphics.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\exfont.h">
+    <ClInclude Include="..\..\include\hslrgb.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\font.h">
+    <ClInclude Include="..\..\include\image_io.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\graphics.h">
+    <ClInclude Include="..\..\include\map_data.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\hslrgb.h">
+    <ClInclude Include="..\..\include\matrix.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\image_bmp.h">
+    <ClInclude Include="..\..\include\plane.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\image_jpg.h">
+    <ClInclude Include="..\..\include\rect.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\image_png.h">
+    <ClInclude Include="..\..\include\sprite.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\image_xyz.h">
+    <ClInclude Include="..\..\include\text.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\pixel_format.h">
+    <ClInclude Include="..\..\include\tilemap_layer.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\sprite.h">
+    <ClInclude Include="..\..\include\tilemap.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\plane.h">
+    <ClInclude Include="..\..\include\tone.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\rect.h">
+    <ClInclude Include="..\..\include\window.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\zobj.h">
+    <ClInclude Include="..\..\include\zobj.h">
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\text.h">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\tilemap.h">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\tilemap_layer.h">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\tone.h">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window.h">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\input.h">
+    <ClInclude Include="..\..\include\input.h">
       <Filter>Source Files\Backend\Input</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\input_buttons.h">
+    <ClInclude Include="..\..\include\keys.h">
       <Filter>Source Files\Backend\Input</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\keys.h">
-      <Filter>Source Files\Backend\Input</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\baseui.h">
+    <ClInclude Include="..\..\include\baseui.h">
       <Filter>Source Files\Backend\UI</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\sdl_ui.h">
-      <Filter>Source Files\Backend\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\sdl_audio.h">
-      <Filter>Source Files\Backend\Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\al_audio.h">
-      <Filter>Source Files\Backend\Audio</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_unit.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_variables.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_vehicle.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_actor.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_actors.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_battle.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_battler.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_character.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_commonevent.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_enemy.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_event.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_interpreter.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_interpreter_battle.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_interpreter_map.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_map.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_message.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_party.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_picture.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_player.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_screen.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_switches.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_system.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_targets.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_temp.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\game_troop.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_title.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_actortarget.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_battle.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_end.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_equip.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_file.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_gameover.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_item.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_load.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_logo.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_map.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_menu.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_name.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_order.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_save.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_shop.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_skill.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\scene_status.h">
-      <Filter>Source Files\Engine\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\sprite_character.h">
-      <Filter>Source Files\Engine\Sprite</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\spriteset_map.h">
-      <Filter>Source Files\Engine\Sprite</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_targetstatus.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_actorinfo.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_actorstatus.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_actortarget.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_base.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_battlecommand.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_battleitem.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_battleoption.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_battleskill.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_battlestatus.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_command.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_equip.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_equipitem.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_equipstatus.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_face.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_gold.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_help.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_item.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_keyboard.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_menustatus.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_message.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_name.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_numberinput.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_savefile.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_selectable.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_shop.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_shopbuy.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_shopnumber.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_shopparty.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_shopsell.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_shopstatus.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_skill.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\window_skillstatus.h">
-      <Filter>Source Files\Engine\Window</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cache.h">
+    <ClInclude Include="..\..\include\cache.h">
       <Filter>Source Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\font_render_8x8.h">
-      <Filter>Source Files\Tools\Font 8x8</Filter>
+    <ClInclude Include="..\..\include\player.h">
+      <Filter>Source Files\Engine</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\filefinder.h">
+    <ClInclude Include="..\..\include\rtp_table_bom.h">
+      <Filter>Source Files\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\system.h">
+      <Filter>Source Files\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\memory_management.h">
+      <Filter>Source Files\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\options.h">
+      <Filter>Source Files\Settings</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\filefinder.h">
       <Filter>Source Files\Tools\Filefinder</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\dirent_win.h">
+    <ClInclude Include="..\..\include\dirent_win.h">
       <Filter>Source Files\Tools\Filefinder</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\util_win.h">
+    <ClInclude Include="..\..\include\output.h">
       <Filter>Source Files\Tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\output.h">
+    <ClInclude Include="..\..\include\registry.h">
       <Filter>Source Files\Tools</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\util_macro.h">
-      <Filter>Source Files\Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\utils.h">
-      <Filter>Source Files\Tools</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\system.h">
-      <Filter>Source Files\Settings</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\options.h">
-      <Filter>Source Files\Settings</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\player.h">
-      <Filter>Source Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\map_data.h">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\main_data.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\battle_actions.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\battle_animation.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\battle_battler.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\battle_interface.h">
-      <Filter>Source Files\Engine\Game</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\matrix.h">
-      <Filter>Source Files\Backend\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\memory_management.h">
-      <Filter>Source Files\Settings</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\rtp_table_bom.h">
-      <Filter>Source Files\Engine</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\registry.h">
+    <ClInclude Include="..\..\include\utils.h">
       <Filter>Source Files\Tools</Filter>
     </ClInclude>
   </ItemGroup>
