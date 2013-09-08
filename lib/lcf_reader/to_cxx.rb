@@ -14,7 +14,12 @@ out.write "char const* LCF_SCHEMA_JSON_STRING[] = {\n"
 
 Dir.glob("#{ARGV[0]}/*.json") { |f|
   # check json
-  out.write "  \"" + JSON.dump(JSON.parse(IO.read(f))).gsub("\"", "\\\"") + "\",\n\n"
+  json_dump = JSON.dump(JSON.parse(IO.read(f))).gsub("\"", "\\\"").scan(/.{1,15000}/)
+  json_dump[0..-2].each do |x|
+    # Workaround MSVC error C2026
+    out.write "  \"" + x + "\"\n"
+  end
+  out.write "  \"" + json_dump[-1] + "\",\n\n"
 }
 
 out.write "  NULL,\n"
