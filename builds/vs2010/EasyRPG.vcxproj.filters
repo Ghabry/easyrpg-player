@@ -27,23 +27,8 @@
     <Filter Include="Source Files\Engine">
       <UniqueIdentifier>{150af59c-bdd7-4871-9896-fcbaa91f995b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Engine\Game">
-      <UniqueIdentifier>{13a516d5-b2ec-404e-af5c-89dbade61633}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Scene">
-      <UniqueIdentifier>{532078e2-4b2c-4ef2-b571-5be08a4be290}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Sprite">
-      <UniqueIdentifier>{fd5619a4-1bcb-4207-83ca-5d6fc02cb569}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Engine\Window">
-      <UniqueIdentifier>{c9afd51c-09bc-486d-ad90-cccec101e659}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Tools">
       <UniqueIdentifier>{5c38e5d1-df70-4c50-8e06-d9e813ecfdfa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Tools\Font 8x8">
-      <UniqueIdentifier>{743c23f6-e9cd-4953-9517-aae64f9c6776}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Tools\Filefinder">
       <UniqueIdentifier>{1ac112ed-4c8f-45bf-85d2-1ebc5098935f}</UniqueIdentifier>
