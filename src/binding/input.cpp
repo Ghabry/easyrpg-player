@@ -44,6 +44,10 @@ mrb_value dir8(mrb_state* M, mrb_value) {
 	return mrb_fixnum_value(Input(M).dir8);
 }
 
+mrb_value reset_keys(mrb_state* M, mrb_value const self) {
+	return Input(M).ResetKeys(), self;
+}
+
 }
 
 void EasyRPG::register_input(mrb_state* M) {
@@ -54,6 +58,7 @@ void EasyRPG::register_input(mrb_state* M) {
 		{ "repeat?", &repeated, MRB_ARGS_REQ(1) },
 		{ "dir4", &dir4, MRB_ARGS_NONE() },
 		{ "dir8", &dir8, MRB_ARGS_NONE() },
+		{ "reset_keys", &reset_keys, MRB_ARGS_NONE() },
 		method_info_end };
 	define_module(M, "Input", methods);
 }

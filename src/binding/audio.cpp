@@ -14,6 +14,10 @@ mrb_value bgm_play(mrb_state* M, mrb_value const self) {
 mrb_value bgm_stop(mrb_state*, mrb_value const self) {
 	return Audio().BGM_Stop(), self;
 }
+mrb_value bgm_pause(mrb_state*, mrb_value const self) {
+	return Audio().BGM_Pause(), self;
+}
+
 mrb_value bgm_fade(mrb_state* M, mrb_value const self) {
 	mrb_int time;
 	mrb_get_args(M, "i", &time);
@@ -70,6 +74,7 @@ void EasyRPG::register_audio(mrb_state* M) {
 	static method_info const methods[] = {
 		{ "bgm_play", &bgm_play, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(2) },
 		{ "bgm_stop", &bgm_stop, MRB_ARGS_NONE() },
+		{ "bgm_pause", &bgm_pause, MRB_ARGS_NONE() },
 		{ "bgm_fade", &bgm_fade, MRB_ARGS_REQ(1) },
 		{ "bgs_play", &bgs_play, MRB_ARGS_REQ(1) | MRB_ARGS_OPT(2) },
 		{ "bgs_stop", &bgs_stop, MRB_ARGS_NONE() },
