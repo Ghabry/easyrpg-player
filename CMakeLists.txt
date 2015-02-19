@@ -33,6 +33,7 @@ set(PLAYER_SRCS
 	src/decoder_wildmidi.cpp
 	src/decoder_xmp.cpp
 	src/drawable.cpp
+	src/dynrpg.cpp
 	src/filefinder.cpp
 	src/font.cpp
 	src/fps_overlay.cpp

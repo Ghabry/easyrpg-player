@@ -155,6 +155,9 @@
     <ClCompile Include="..\..\src\sdl_ui.cpp">
       <Filter>Source Files\Backend\UI</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\dynrpg.cpp">
+      <Filter>Source Files\Engine</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\game_vehicle.cpp">
       <Filter>Source Files\Engine\Game</Filter>
     </ClCompile>
@@ -1011,6 +1014,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\decoder_oggvorbis.h">
       <Filter>Source Files\Backend\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dynrpg.h">
+      <Filter>Source Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\fps_overlay.h">
       <Filter>Source Files\Backend\Graphics</Filter>

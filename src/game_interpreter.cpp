@@ -22,6 +22,7 @@
 #include <sstream>
 #include "game_interpreter.h"
 #include "audio.h"
+#include "dynrpg.h"
 #include "filefinder.h"
 #include "game_map.h"
 #include "game_event.h"
@@ -404,7 +405,7 @@ bool Game_Interpreter::ExecuteCommand() {
 			return CommandEndEventProcessing(com);
 		case Cmd::Comment:
 		case Cmd::Comment_2:
-			return true;
+			return DynRpg::Invoke(com);
 		case Cmd::GameOver:
 			return CommandGameOver(com);
 		case Cmd::ChangeHeroName:

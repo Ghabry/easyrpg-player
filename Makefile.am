@@ -59,6 +59,8 @@ libeasyrpg_player_la_SOURCES = \
 	src/docmain.h \
 	src/drawable.cpp \
 	src/drawable.h \
+	src/dynrpg.h \
+	src/dynrpg.cpp \
 	src/exfont.h \
 	src/filefinder.cpp \
 	src/filefinder.h \
