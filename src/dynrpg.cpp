@@ -21,7 +21,6 @@
 #include "game_variables.h"
 #include "output.h"
 #include "player.h"
-#include "rpg_eventcommand.h"
 #include "utils.h"
 
 #include <map>
@@ -56,6 +55,56 @@ namespace {
 		return f;
 	}
 
+	// Var arg referenced by $n
+	std::string ParseVarArg(const dyn_arg_list &args, int index) {
+		if (index >= args.size()) {
+			return "";
+		}
+
+		std::u32string::iterator text_index, end;
+		std::u32string text = Utils::DecodeUTF32(args[index]);
+		text_index = text.begin();
+		end = text.end();
+
+		char32_t chr = *text_index;
+
+		std::stringstream msg;
+
+		for (; text_index != end; ++text_index) {
+			char32_t chr = *text_index;
+
+			// Test for "" -> append "
+			// otherwise end of string
+			if (chr == '$' && std::distance(text_index, end) > 1) {
+				char32_t n = *std::next(text_index, 1);
+
+				if (n == '$') {
+					// $$ = $
+					msg << n;
+					++text_index;
+				} else if (n >= '1' && n <= '9') {
+					int i = (int)(n - '0');
+
+					if (i + index < args.size()) {
+						msg << args[i + index];
+					}
+					else {
+						// $-ref out of range
+						return "";
+					}
+
+					++text_index;
+				} else {
+					msg << chr;
+				}
+			} else {
+				msg << chr;
+			}
+		}
+
+		return msg.str();
+	}
+
 	// Macros
 
 #define DYNRPG_FUNCTION(var) \
@@ -63,8 +112,14 @@ namespace {
 
 #define DYNRPG_CHECK_ARG_LENGTH(len) \
 	if (args.size() != len) {\
-	Output::Warning("Function \"%s\" got %d args (needs %d)", func_name.c_str(), args.size(), len); \
+	Output::Warning("%s: Got %d args (needs %d)", func_name.c_str(), args.size(), len); \
 	return true; \
+	}
+
+#define DYNRPG_CHECK_ARG_MIN(len) \
+	if (args.size() < len) { \
+		Output::Warning("%s: Got %d args (needs %d or more)", func_name.c_str(), args.size(), len); \
+		return true; \
 	}
 
 #define DYNRPG_GET_FLOAT_ARG(i, var) \
@@ -72,7 +127,7 @@ namespace {
 	bool valid_float##var; \
 	var = GetFloat(args[i], &valid_float##var); \
 	if (!valid_float##var) { \
-	Output::Warning("Arg %d is not numeric in \"%s\"", i, func_name.c_str()); \
+	Output::Warning("%s: Arg %d (%s) is not numeric", func_name.c_str(), i, args[i].c_str()); \
 	return true; \
 	}
 
@@ -82,6 +137,12 @@ namespace {
 
 #define DYNRPG_GET_STR_ARG(i, var) \
 	std::string& var = args[i];
+
+#define DYNRPG_GET_VAR_ARG(i, var) \
+	std::string var = ParseVarArg(args, i); \
+	if (var.empty()) { \
+	Output::Warning("%s: Vararg %d out of range", func_name.c_str(), i); \
+	}
 
 	// DynRpg Functions
 
@@ -153,10 +214,10 @@ namespace {
 	bool Oput(dyn_arg_list args) {
 		DYNRPG_FUNCTION("output")
 
-		DYNRPG_CHECK_ARG_LENGTH(2);
-
+		DYNRPG_CHECK_ARG_MIN(2);
+		
 		DYNRPG_GET_STR_ARG(0, mode);
-		DYNRPG_GET_STR_ARG(1, msg);
+		DYNRPG_GET_VAR_ARG(1, msg);
 
 		if (mode == "Debug") {
 			Output::DebugStr(msg);
@@ -211,7 +272,7 @@ static std::string ParseToken(const std::string& token, const std::string& funct
 			for (std::string::reverse_iterator it = tmp.rbegin(); it != tmp.rend(); ++it) {
 				if (*it == 'N') {
 					if (!Game_Actors::ActorExists(number)) {
-						Output::Warning("Invalid actor id %d in %s", number, function_name.c_str());
+						Output::Warning("%s: Invalid actor id %d in %s", function_name.c_str(), number, token.c_str());
 						return "";
 					}
 
@@ -220,7 +281,7 @@ static std::string ParseToken(const std::string& token, const std::string& funct
 				} else {
 					// Variable
 					if (!Game_Variables.IsValid(number)) {
-						Output::Warning("Invalid variable %d in %s", number, function_name.c_str());
+						Output::Warning("%s: Invalid variable %d in %s", function_name.c_str(), number, token.c_str());
 						return "";
 					}
 
@@ -249,6 +310,7 @@ static std::string ParseToken(const std::string& token, const std::string& funct
 			break;
 		}
 
+		++text_index;
 		first = false;
 	}
 
@@ -267,7 +329,6 @@ static bool ValidFunction(const std::string& token) {
 		// Avoid spamming by reporting only once per function
 		if (unknown_functions.find(token) == unknown_functions.end()) {
 			unknown_functions[token] = 1;
-		} else {
 			Output::Warning("Unsupported DynRPG function: %s", token.c_str());
 		}
 		return false;
@@ -332,7 +393,7 @@ bool DynRpg::Invoke(RPG::EventCommand const& com) {
 				// no-op
 				break;
 			case ParseMode_String:
-				Output::Warning("Unterminated literal for %s", function_name.c_str());
+				Output::Warning("%s: Unterminated literal", function_name.c_str());
 				return true;
 			case ParseMode_Token:
 				tmp = ParseToken(token.str(), function_name);
@@ -344,6 +405,8 @@ bool DynRpg::Invoke(RPG::EventCommand const& com) {
 				token.str("");
 				break;
 			}
+
+			break;
 		} else if (chr == ' ') {
 			switch (mode) {
 			case ParseMode_Function:
@@ -372,13 +435,13 @@ bool DynRpg::Invoke(RPG::EventCommand const& com) {
 			switch (mode) {
 			case ParseMode_Function:
 				// End of function token
-				Output::Warning("Expected char or whitespace, got comma");
+				Output::Warning("%s: Expected space or end, got \",\"", function_name.c_str());
 				return true;
 			case ParseMode_WaitForComma:
 				mode = ParseMode_WaitForArg;
 				break;
 			case ParseMode_WaitForArg:
-				Output::Warning("Expected token, found comma");
+				Output::Warning("%s: Expected token, got \",\"", function_name.c_str());
 				return true;
 			case ParseMode_String:
 				u32_tmp = chr;
@@ -390,7 +453,8 @@ bool DynRpg::Invoke(RPG::EventCommand const& com) {
 					return true;
 				}
 				args.push_back(tmp);
-				mode = ParseMode_WaitForComma;
+				// already on a comma
+				mode = ParseMode_WaitForArg;
 				token.str("");
 				break;
 			}
@@ -402,7 +466,7 @@ bool DynRpg::Invoke(RPG::EventCommand const& com) {
 				token << Utils::EncodeUTF(u32_tmp);
 				break;
 			case ParseMode_WaitForComma:
-				Output::Warning("Expected whitespace or \",\" in %s", function_name.c_str());
+				Output::Warning("%s: Expected \",\", got token", function_name.c_str());
 				return true;
 			case ParseMode_WaitForArg:
 				if (chr == '"') {
@@ -411,6 +475,7 @@ bool DynRpg::Invoke(RPG::EventCommand const& com) {
 				}
 				else {
 					mode = ParseMode_Token;
+					token << chr;
 				}
 				break;
 			case ParseMode_String:

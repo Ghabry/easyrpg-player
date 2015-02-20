@@ -405,7 +405,10 @@ bool Game_Interpreter::ExecuteCommand() {
 			return CommandEndEventProcessing(com);
 		case Cmd::Comment:
 		case Cmd::Comment_2:
-			return DynRpg::Invoke(com);
+			if ((Player::patch & Player::PatchDynRpg) == Player::PatchDynRpg) {
+				return DynRpg::Invoke(com);
+			}
+			return true;
 		case Cmd::GameOver:
 			return CommandGameOver(com);
 		case Cmd::ChangeHeroName:

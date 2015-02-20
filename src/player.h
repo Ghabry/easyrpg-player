@@ -40,6 +40,12 @@ namespace Player {
 		EngineEnglish = 8
 	};
 
+	enum PatchType {
+		PatchNone = 0,
+		PatchDynRpg = 1 << 0,
+		// Patch??? = 1 << 1
+	};
+
 	/**
 	 * Initializes EasyRPG Player.
 	 */
@@ -286,6 +292,9 @@ namespace Player {
 
 	/** Game title. */
 	extern std::string game_title;
+
+	/** Currently enabled engine patches */
+	extern int patch;
 
 	/**
 	 * The default speed modifier applied when the speed up button is pressed
