@@ -22,19 +22,11 @@
 #include "output.h"
 #include "player.h"
 #include "rpg_eventcommand.h"
+#include "utils.h"
 
-#include <boost/assign/list_of.hpp>
-#include <boost/regex/pending/unicode_iterator.hpp>
 #include <map>
 #include <sstream>
 #include <string>
-
-using boost::assign::map_list_of;
-
-enum DynRpg_ArgType {
-	ArgType_String,
-	ArgType_Number
-};
 
 enum DynRpg_ParseMode {
 	ParseMode_Function,
@@ -44,47 +36,58 @@ enum DynRpg_ParseMode {
 	ParseMode_Token
 };
 
-typedef struct {
-	DynRpg_ArgType type;
-	float float_val;
-	std::string str_val;
-} dyn_arg;
-
-typedef std::vector<dyn_arg> dyn_arg_list;
-
+typedef std::vector<std::string> dyn_arg_list;
 typedef bool(*dynfunc)(dyn_arg_list);
 typedef std::map<std::string, dynfunc> dyn_rpg_func;
-typedef boost::u8_to_u32_iterator<std::string::const_iterator> u8_to_u32;
-typedef boost::u32_to_u8_iterator<u8_to_u32> u32_to_u8;
 
 namespace {
-	bool IsFloat(std::string str) {
+	// already reported unknown funcs
+	std::map<std::string, int> unknown_functions;
+
+	float GetFloat(std::string str, bool* valid = NULL) {
 		std::istringstream iss(str);
 		float f;
 		iss >> f;
-		return iss.eof() && !iss.fail();
+
+		if (valid) {
+			*valid = iss.eof() && !iss.fail();
+		}
+
+		return f;
 	}
 
+	// Macros
+
+#define DYNRPG_FUNCTION(var) \
+	std::string func_name = var;
+
 #define DYNRPG_CHECK_ARG_LENGTH(len) \
-	if (args.size() != len) { return true; }
+	if (args.size() != len) {\
+	Output::Warning("Function \"%s\" got %d args (needs %d)", func_name.c_str(), args.size(), len); \
+	return true; \
+	}
 
 #define DYNRPG_GET_FLOAT_ARG(i, var) \
 	float var; \
-	if (args[i].type != ArgType_Number) { return true; } \
-	else { var = args[i].float_val; }
+	bool valid_float##var; \
+	var = GetFloat(args[i], &valid_float##var); \
+	if (!valid_float##var) { \
+	Output::Warning("Arg %d is not numeric in \"%s\"", i, func_name.c_str()); \
+	return true; \
+	}
 
 #define DYNRPG_GET_INT_ARG(i, var) \
 	DYNRPG_GET_FLOAT_ARG(i, var##_float_arg) \
 	int var = (int)var##_float_arg;
 
 #define DYNRPG_GET_STR_ARG(i, var) \
-	std::string var; \
-	if (args[i].type != ArgType_String) { std::stringstream ss; ss << args[i].float_val; var = ss.str(); } \
-	else { var = args[i].str_val; }
+	std::string& var = args[i];
 
-	u8_to_u32 text_index, end;
+	// DynRpg Functions
 
 	bool Add(dyn_arg_list args) {
+		DYNRPG_FUNCTION("add");
+
 		DYNRPG_CHECK_ARG_LENGTH(2);
 
 		DYNRPG_GET_INT_ARG(0, arg1);
@@ -96,6 +99,8 @@ namespace {
 	}
 
 	bool Sub(dyn_arg_list args) {
+		DYNRPG_FUNCTION("sub");
+
 		DYNRPG_CHECK_ARG_LENGTH(2);
 
 		DYNRPG_GET_INT_ARG(0, arg1);
@@ -107,6 +112,8 @@ namespace {
 	}
 
 	bool Mul(dyn_arg_list args) {
+		DYNRPG_FUNCTION("mul");
+
 		DYNRPG_CHECK_ARG_LENGTH(2);
 
 		DYNRPG_GET_INT_ARG(0, arg1);
@@ -118,6 +125,8 @@ namespace {
 	}
 
 	bool Div(dyn_arg_list args) {
+		DYNRPG_FUNCTION("div");
+
 		DYNRPG_CHECK_ARG_LENGTH(2);
 
 		DYNRPG_GET_INT_ARG(0, arg1);
@@ -129,6 +138,8 @@ namespace {
 	}
 
 	bool Mod(dyn_arg_list args) {
+		DYNRPG_FUNCTION("mod");
+
 		DYNRPG_CHECK_ARG_LENGTH(2);
 
 		DYNRPG_GET_INT_ARG(0, arg1);
@@ -139,15 +150,9 @@ namespace {
 		return true;
 	}
 
-	bool Exit(dyn_arg_list args) {
-		DYNRPG_CHECK_ARG_LENGTH(0);
-
-		Player::exit_flag = true;
-
-		return true;
-	}
-
 	bool Oput(dyn_arg_list args) {
+		DYNRPG_FUNCTION("output")
+
 		DYNRPG_CHECK_ARG_LENGTH(2);
 
 		DYNRPG_GET_STR_ARG(0, mode);
@@ -166,227 +171,273 @@ namespace {
 		return true;
 	}
 
-	dyn_rpg_func const dyn_rpg_functions = map_list_of
-		("add", Add)
-		("sub", Sub)
-		("mul", Mul)
-		("div", Div)
-		("mod", Mod)
-		("exit", Exit)
-		("output", Oput);
+	// Function table
+
+	dyn_rpg_func const dyn_rpg_functions = {
+			{"add", Add},
+			{"sub", Sub},
+			{"mul", Mul},
+			{"div", Div},
+			{"mod", Mod},
+			{"output", Oput}};
+}
+
+static std::string ParseToken(const std::string& token, const std::string& function_name) {
+	std::u32string::iterator text_index, end;
+	std::u32string text = Utils::DecodeUTF32(token);
+	text_index = text.begin();
+	end = text.end();
+
+	char32_t chr = *text_index;
+
+	bool first = true;
+
+	bool number_encountered = false;
+
+	std::stringstream var_part;
+	std::stringstream number_part;
+
+	for (;;) {
+		if (text_index != end) {
+			chr = *std::next(text_index, 1);
+		}
+
+		if (text_index == end) {
+			// Convert backwards
+			std::string tmp = number_part.str();
+			int number = atoi(tmp.c_str());
+			tmp = var_part.str();
+
+			for (std::string::reverse_iterator it = tmp.rbegin(); it != tmp.rend(); ++it) {
+				if (*it == 'N') {
+					if (!Game_Actors::ActorExists(number)) {
+						Output::Warning("Invalid actor id %d in %s", number, function_name.c_str());
+						return "";
+					}
+
+					// N is last
+					return Game_Actors::GetActor(number)->GetName();
+				} else {
+					// Variable
+					if (!Game_Variables.IsValid(number)) {
+						Output::Warning("Invalid variable %d in %s", number, function_name.c_str());
+						return "";
+					}
+
+					number = Game_Variables[number];
+				}
+			}
+
+			number_part.str("");
+			number_part << number;
+			return number_part.str();
+		} else if (chr == 'N') {
+			if (!first || number_encountered) {
+				break;
+			}
+			var_part << chr;
+		} else if (chr == 'V') {
+			if (number_encountered) {
+				break;
+			}
+			var_part << chr;
+		}
+		else if (chr >= '0' && chr <= '9') {
+			number_encountered = true;
+			number_part << chr;
+		} else {
+			break;
+		}
+
+		first = false;
+	}
+
+	// Normal token
+	return token;
+}
+
+static bool ValidFunction(const std::string& token) {
+	if (token.empty()) {
+		// empty function name
+		return false;
+	}
+
+	if (dyn_rpg_functions.find(token) == dyn_rpg_functions.end()) {
+		// Not a supported function
+		// Avoid spamming by reporting only once per function
+		if (unknown_functions.find(token) == unknown_functions.end()) {
+			unknown_functions[token] = 1;
+		} else {
+			Output::Warning("Unsupported DynRPG function: %s", token.c_str());
+		}
+		return false;
+	}
+
+	return true;
 }
 
 bool DynRpg::Invoke(RPG::EventCommand const& com) {
 	if (com.string.empty()) {
+		// Not a DynRPG function (empty comment)
 		return true;
 	}
 
-	text_index = u8_to_u32(com.string.begin(), com.string.begin(), com.string.end());
-	end = u8_to_u32(com.string.end(), com.string.begin(), com.string.end());
+	std::u32string::iterator text_index, end;
+	std::u32string text = Utils::DecodeUTF32(com.string);
+	text_index = text.begin();
+	end = text.end();
 
-	std::string func_name;
+	char32_t chr = *text_index;
 
-	std::string chr = std::string(u32_to_u8(text_index), u32_to_u8(boost::next(text_index, 1)));
-
-	if (chr != "@") {
+	if (chr != '@') {
+		// Not a DynRPG function, normal comment
 		return true;
 	}
-
-	++text_index;
 
 	DynRpg_ParseMode mode = ParseMode_Function;
 	std::string function_name;
-	dyn_arg arg;
-	dyn_arg_list args;
-	std::stringstream str;
 	std::string tmp;
+	std::u32string u32_tmp;
+	dyn_arg_list args;
+	std::stringstream token;
 
-	// If a token could be a indirect reference to a variable/actor:
-	// [VN]+[0-9]+
-	bool var_actor_ref = true;
-	std::stringstream var;
-	std::stringstream num;
+	// Parameters can be of type Token, Number or String
+	// Strings are in "", a "-literal is represented by ""
+	// Number is a valid float number
+	// Tokens are Strings without "" and with Whitespace stripped o_O
+	// If a token is (regex) N?V+[0-9]+ it is resolved to a var or an actor
+	
+	// All arguments are passed as string to the DynRpg functions and are
+	// converted to int or float on demand.
 	
 	for (;;) {
-		if (std::distance(text_index, end) >= 1) {
-			chr = std::string(u32_to_u8(text_index), u32_to_u8(boost::next(text_index, 1)));
-		}
-		else {
-			chr = "";
+		if (text_index != end) {
+			chr = *std::next(text_index, 1);
 		}
 
-		// Test for end of item (except if in string)
-		if (text_index == end || chr == " " || chr == ",") {
+		if (text_index == end) {
 			switch (mode) {
 			case ParseMode_Function:
-				function_name = str.str();
-
-				if (function_name.empty()) {
+				// End of function token
+				if (!ValidFunction(token.str())) {
 					return true;
 				}
-
-				if (dyn_rpg_functions.find(function_name) == dyn_rpg_functions.end()) {
-					return true;
-				}
+				function_name = token.str();
+				token.str("");
 
 				mode = ParseMode_WaitForArg;
-				str.str("");
 				break;
 			case ParseMode_WaitForComma:
-				if (chr == ",") {
-					mode = ParseMode_WaitForArg;
-					str.str("");
-				}
-				break;
 			case ParseMode_WaitForArg:
 				// no-op
 				break;
 			case ParseMode_String:
-				if (text_index == end) {
-					// Unterminated literal
+				Output::Warning("Unterminated literal for %s", function_name.c_str());
+				return true;
+			case ParseMode_Token:
+				tmp = ParseToken(token.str(), function_name);
+				if (tmp.empty()) {
 					return true;
 				}
+				args.push_back(tmp);
+				mode = ParseMode_WaitForComma;
+				token.str("");
+				break;
+			}
+		} else if (chr == ' ') {
+			switch (mode) {
+			case ParseMode_Function:
+				// End of function token
+				if (!ValidFunction(token.str())) {
+					return true;
+				}
+				function_name = token.str();
+				token.str("");
 
-				str << chr;
+				mode = ParseMode_WaitForArg;
+				break;
+			case ParseMode_WaitForComma:
+			case ParseMode_WaitForArg:
+				// no-op
+				break;
+			case ParseMode_String:
+				u32_tmp = chr;
+				token << Utils::EncodeUTF(u32_tmp);
 				break;
 			case ParseMode_Token:
-				if (chr != " ") {
-					// For some reason whitespaces in tokens must be stripped
-
-					tmp = str.str();
-
-					if (var_actor_ref && var.str().length() > 0 && num.str().length() > 0) {
-						tmp = num.str();
-						int number = atoi(tmp.c_str());
-
-						// Convert backwards
-						tmp = var.str();
-						for (std::string::reverse_iterator it = tmp.rbegin(); it != tmp.rend(); ++it) {
-							if (*it == 'N') {
-								if (!Game_Actors::ActorExists(number)) {
-									return false;
-								}
-
-								arg.type = ArgType_String;
-								arg.str_val = Game_Actors::GetActor(number)->GetName();
-								args.push_back(arg);
-								tmp = "";
-
-								// N is last
-								break;
-							}
-							else {
-								// Variable
-								if (!Game_Variables.isValidVar(number)) {
-									return false;
-								}
-
-								number = Game_Variables[number];
-							}
-						}
-
-						if (!tmp.empty()) {
-							arg.type = ArgType_Number;
-							arg.float_val = (float)number;
-							args.push_back(arg);
-						}
-					}
-					else if (IsFloat(tmp)) {
-						arg.type = ArgType_Number;
-						arg.float_val = (float)atof(tmp.c_str());
-						args.push_back(arg);
-					}
-					else {
-						tmp = str.str();
-						arg.type = ArgType_String;
-						arg.str_val = tmp;
-						args.push_back(arg);
-					}
-					break;
-				}
-			};
-			
-			if (mode != ParseMode_WaitForArg && mode != ParseMode_String) {
-				mode = chr == "," ? ParseMode_WaitForArg : ParseMode_WaitForComma;
-
-				str.str("");
-				var.str("");
-				num.str("");
-				var_actor_ref = true;
-			}
-
-			if (text_index == end) {
+				// Skip whitespace
 				break;
 			}
-			
-			++text_index;
-
-			continue;
-		}
-
-		// Neither space nor comma
-		switch (mode) {
-		case ParseMode_Function:
-			str << chr;
-			break;
-		case ParseMode_WaitForComma:
-			// Parser error
-			return true;
-		case ParseMode_WaitForArg:
-			if (chr == "\"") {
-				mode = ParseMode_String;
-				// skip "
+		} else if (chr == ',') {
+			switch (mode) {
+			case ParseMode_Function:
+				// End of function token
+				Output::Warning("Expected char or whitespace, got comma");
+				return true;
+			case ParseMode_WaitForComma:
+				mode = ParseMode_WaitForArg;
+				break;
+			case ParseMode_WaitForArg:
+				Output::Warning("Expected token, found comma");
+				return true;
+			case ParseMode_String:
+				u32_tmp = chr;
+				token << Utils::EncodeUTF(u32_tmp);
+				break;
+			case ParseMode_Token:
+				tmp = ParseToken(token.str(), function_name);
+				if (tmp.empty()) {
+					return true;
+				}
+				args.push_back(tmp);
+				mode = ParseMode_WaitForComma;
+				token.str("");
+				break;
 			}
-			else {
-				mode = ParseMode_Token;
-			}
-			break;
-		case ParseMode_String:
-			if (chr == "\"") {
-				// Test for "" -> append "
-				// otherwise end of string
-				if (std::distance(text_index, end) > 1 && std::string(u32_to_u8(text_index), u32_to_u8(boost::next(text_index, 1))) == "\"") {
-					str << '"';
-					++text_index;
+		} else {
+			// Anything else that isn't special purpose
+			switch (mode) {
+			case ParseMode_Function:
+				u32_tmp = chr;
+				token << Utils::EncodeUTF(u32_tmp);
+				break;
+			case ParseMode_WaitForComma:
+				Output::Warning("Expected whitespace or \",\" in %s", function_name.c_str());
+				return true;
+			case ParseMode_WaitForArg:
+				if (chr == '"') {
+					mode = ParseMode_String;
+					// begin of string
 				}
 				else {
-					// End of string
-					arg.type = ArgType_String;
-					arg.str_val = str.str();
-					args.push_back(arg);
-
-					mode = ParseMode_WaitForComma;
-					str.str("");
+					mode = ParseMode_Token;
 				}
-			} else {
-				str << chr;
-			}
-			break;
-		default:;
-		}
-
-		if (mode == ParseMode_Token) {
-			str << chr;
-
-			if (var_actor_ref) {
-				if (chr == "N" || chr == "V") {
-					if (num.str().length() > 0) {
-						// Already numbers found -> not a ref
-						var_actor_ref = false;
+				break;
+			case ParseMode_String:
+				if (chr == '"') {
+					// Test for "" -> append "
+					// otherwise end of string
+					if (std::distance(text_index, end) > 1 && *std::next(text_index, 2) == '"') {
+						token << '"';
+						++text_index;
 					}
-					else if (chr == "N" && var.str().length() > 0) {
-						// N must be first
-						var_actor_ref = false;
+					else {
+						// End of string
+						args.push_back(token.str());
+
+						mode = ParseMode_WaitForComma;
+						token.str("");
 					}
-					var << chr;
-				}
-				else if (chr.length() == 1 && chr[0] >= '0' && chr[0] <= '9') {
-					num << chr;
 				}
 				else {
-					// Not a reference
-					var_actor_ref = false;
+					u32_tmp = chr;
+					token << Utils::EncodeUTF(u32_tmp);
 				}
+				break;
+			case ParseMode_Token:
+				u32_tmp = chr;
+				token << Utils::EncodeUTF(u32_tmp);
+				break;
 			}
 		}
 
