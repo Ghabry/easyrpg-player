@@ -21,6 +21,7 @@
 // Headers
 #include "baseui.h"
 #include <vector>
+#include <functional>
 
 /**
  * Player namespace.
@@ -212,6 +213,12 @@ namespace Player {
 	/** Name of game emscripten uses */
 	extern std::string emscripten_game_name;
 #endif
+
+	// Event handler
+	typedef std::function<void(int)> on_update_func;
+	void AddOnUpdateListener(on_update_func func);
+	bool RemoveOnUpdateListener(on_update_func func);
+	void OnUpdate(int frame);
 }
 
 #endif

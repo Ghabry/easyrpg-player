@@ -17,10 +17,8 @@
 
 // Headers
 #include "scene_logo.h"
-#include "async_handler.h"
 #include "bitmap.h"
 #include "filefinder.h"
-#include "graphics.h"
 #include "input.h"
 #include "player.h"
 #include "scene_map.h"

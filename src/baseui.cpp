@@ -18,6 +18,7 @@
 // Headers
 #include "baseui.h"
 #include "bitmap.h"
+#include "dummy_ui.h"
 
 #ifdef USE_SDL
 #include "sdl_ui.h"
@@ -31,6 +32,10 @@ EASYRPG_SHARED_PTR<BaseUi> BaseUi::CreateUi(long width, long height, const std::
 #else
 #error cannot create UI
 #endif
+}
+
+std::shared_ptr<BaseUi> BaseUi::CreateDummyUi() {
+	return EASYRPG_MAKE_SHARED<DummyUi>(SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT);
 }
 
 BaseUi::BaseUi()

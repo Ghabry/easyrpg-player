@@ -108,6 +108,13 @@ public:
 	int GetId() const;
 
 	/**
+	 * Gets page ID of active page.
+	 *
+	 * @return page ID
+	 */
+	int GetPageId() const;
+
+	/**
 	 * Gets starting flag.
 	 *
 	 * @return starting flag.

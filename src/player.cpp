@@ -43,13 +43,10 @@
 #include "reader_util.h"
 #include "scene_battle.h"
 #include "scene_logo.h"
-#include "scene_map.h"
-#include "scene_title.h"
-#include "system.h"
+#include "util_macro.h"
 #include "utils.h"
 
 #include <algorithm>
-#include <cstring>
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
@@ -145,8 +142,6 @@ void Player::Init(int argc, char *argv[]) {
 
 	FileFinder::Init();
 
-	DisplayUi.reset();
-
 	if(! DisplayUi) {
 		DisplayUi = BaseUi::CreateUi
 			(SCREEN_TARGET_WIDTH,
@@ -201,6 +196,8 @@ void Player::Resume() {
 }
 
 void Player::Update(bool update_scene) {
+	OnUpdate(frames);
+	
 	// available ms per frame, game logic expects 60 fps
 	static const double framerate_interval = 1000.0 / Graphics::GetDefaultFps();
 	next_frame = start_time + framerate_interval;
@@ -764,6 +761,13 @@ bool Player::IsRPG2k3() {
 
 bool Player::IsRPG2k3E() {
 	return (engine & EngineRpg2k3E) == EngineRpg2k3E;
+}
+
+// Event handler
+DECLARE_EVENT_HANDLER(Player, on_update_func, Update);
+
+void Player::OnUpdate(int frame) {
+	INVOKE_EVENT_HANDLER(Player, Update, frame)
 }
 
 #if (defined(_WIN32) && defined(NDEBUG) && defined(WINVER) && WINVER >= 0x0600)

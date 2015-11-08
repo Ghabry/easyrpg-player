@@ -448,6 +448,9 @@
     <ClCompile Include="..\..\lib\shinonome\mincho.cxx">
       <Filter>Source Files\Shinonome</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\dummy_ui.cpp">
+      <Filter>Source Files\Backend\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\audio.h">
@@ -863,6 +866,9 @@
     </ClInclude>
     <ClInclude Include="..\..\lib\shinonome\shinonome.hxx">
       <Filter>Source Files\Shinonome</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\dummy_ui.h">
+      <Filter>Source Files\Backend\UI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

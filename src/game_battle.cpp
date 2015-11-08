@@ -270,7 +270,7 @@ bool Game_Battle::UpdateEvents() {
 	}
 
 	if (new_page != NULL) {
-		interpreter->Setup(new_page->event_commands, 0);
+		interpreter->Setup(new_page->event_commands, 0, new_page->ID);
 	}
 
 	return new_page == NULL;

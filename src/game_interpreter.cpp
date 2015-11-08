@@ -82,13 +82,14 @@ bool Game_Interpreter::IsRunning() const {
 }
 
 // Setup.
-void Game_Interpreter::Setup(const std::vector<RPG::EventCommand>& _list, int _event_id, int dbg_x, int dbg_y) {
+void Game_Interpreter::Setup(const std::vector<RPG::EventCommand>& _list, int _event_id, int _page_id, int dbg_x, int dbg_y) {
 
 	Clear();
 
 	map_id = Game_Map::GetMapId();
 	event_id = _event_id;
 	list = _list;
+	page_id = _page_id;
 
 	debug_x = dbg_x;
 	debug_y = dbg_y;
@@ -123,6 +124,12 @@ void Game_Interpreter::SetContinuation(Game_Interpreter::ContinuationFunction fu
 
 void Game_Interpreter::EndMoveRoute(Game_Character*) {
 	// This will only ever be called on Game_Interpreter_Map instances
+}
+
+DECLARE_EVENT_HANDLER(Game_Interpreter, on_event_command_func, EventCommand)
+
+void Game_Interpreter::OnEventCommand(const std::vector<RPG::EventCommand>& events, int event_id, int page_id, int line_id) {
+	INVOKE_EVENT_HANDLER(Game_Interpreter, EventCommand, events, event_id, page_id, line_id)
 }
 
 bool Game_Interpreter::HasRunned() const {
@@ -209,6 +216,8 @@ void Game_Interpreter::Update() {
 		}
 
 		runned = true;
+
+		OnEventCommand(list, event_id, page_id, index);
 		if (!ExecuteCommand()) {
 			break;
 		}
@@ -232,11 +241,11 @@ void Game_Interpreter::Update() {
 // Setup Starting Event
 void Game_Interpreter::SetupStartingEvent(Game_Event* ev) {
 	ev->ClearStarting();
-	Setup(ev->GetList(), ev->GetId(), ev->GetX(), ev->GetY());
+	Setup(ev->GetList(), ev->GetId(), ev->GetPageId(), ev->GetX(), ev->GetY());
 }
 
 void Game_Interpreter::SetupStartingEvent(Game_CommonEvent* ev) {
-	Setup(ev->GetList(), 0, ev->GetIndex(), -2);
+	Setup(ev->GetList(), 0, 0, ev->GetIndex(), -2);
 }
 
 void Game_Interpreter::CheckGameOver() {

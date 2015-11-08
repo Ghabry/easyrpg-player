@@ -51,6 +51,8 @@ public:
 	 */
 	static EASYRPG_SHARED_PTR<BaseUi> CreateUi(long width, long height, const std::string& title, bool fullscreen, bool zoom);
 
+	static EASYRPG_SHARED_PTR<BaseUi> CreateDummyUi();
+
 	/**
 	 * Begins a display mode change.
 	 */

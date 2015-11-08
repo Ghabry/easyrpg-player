@@ -27,6 +27,7 @@
 #include "system.h"
 #include "command_codes.h"
 #include <boost/scoped_ptr.hpp>
+#include <functional>
 
 class Game_Event;
 class Game_CommonEvent;
@@ -40,7 +41,7 @@ public:
 	Game_Interpreter(int _depth = 0, bool _main_flag = false);
 
 	void Clear();
-	void Setup(const std::vector<RPG::EventCommand>& _list, int _event_id, int dbg_x = -1, int dbg_y = -1);
+	void Setup(const std::vector<RPG::EventCommand>& _list, int _event_id, int _page_id, int dbg_x = -1, int dbg_y = -1);
 
 	bool HasRunned() const;
 	bool IsRunning() const;
@@ -53,12 +54,16 @@ public:
 
 	virtual bool ExecuteCommand();
 	virtual void EndMoveRoute(Game_Character* moving_character);
-
+	
 	enum Sizes {
 		MaxSize = 9999999,
 		MinSize = -9999999
 	};
 
+	using on_event_command_func = std::function<void(const std::vector<RPG::EventCommand>&, int, int, int)>;
+	static void AddOnEventCommandListener(on_event_command_func func);
+	static bool RemoveOnEventCommandListener(on_event_command_func func);
+	static void OnEventCommand(const std::vector<RPG::EventCommand>& events, int event_id, int page_id, int line_id);
 protected:
 	friend class Game_Interpreter_Map;
 
@@ -161,6 +166,7 @@ protected:
 	virtual bool ContinuationShowInnFinish(RPG::EventCommand const& com);
 	virtual bool ContinuationEnemyEncounter(RPG::EventCommand const& com);
 
+	int page_id;
 	int debug_x;
 	int debug_y;
 };

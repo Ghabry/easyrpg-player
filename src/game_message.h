@@ -172,6 +172,20 @@ namespace Game_Message {
 	int GetRealPosition();
 
 	/**
+	 * When set to true message boxes don't wait for keypresses.
+	 * Useful for non-interactive Player sessions.
+	 *
+	 * @param non_stop enable/disable non-stop mode
+	 */
+	void SetNonStopMode(bool non_stop);
+
+	/**
+	 * @return If message boxes wait for key presses (false) or not (true)
+	 */
+	bool GetNonStopMode();
+
+
+	/**
 	 * Number of lines before the start
 	 * of selection options.
 	 * +-----------------------------------+

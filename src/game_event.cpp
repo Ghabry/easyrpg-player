@@ -447,6 +447,14 @@ int Game_Event::GetId() const {
 	return ID;
 }
 
+int Game_Event::GetPageId() const {
+	if (page) {
+		return page->ID;
+	}
+
+	return -1;
+}
+
 bool Game_Event::GetStarting() const {
 	return starting;
 }
@@ -521,7 +529,7 @@ void Game_Event::Update() {
 
 	if (interpreter) {
 		if (!interpreter->IsRunning()) {
-			interpreter->Setup(list, event.ID, -event.x, event.y);
+			interpreter->Setup(list, event.ID, GetPageId(), -event.x, event.y);
 		} else {
 			interpreter->Update();
 		}
