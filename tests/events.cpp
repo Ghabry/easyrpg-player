@@ -9,24 +9,67 @@
 #include <game_switches.h>
 #include <game_temp.h>
 #include <input.h>
+#include <regex>
+#include <fstream>
+#include <queue>
+#include <string>
+
+// via https://stackoverflow.com/questions/9435385/split-a-string-using-c11
+std::vector<std::string> split(std::string& input, const std::string& regex) {
+	// passing -1 as the submatch index parameter performs splitting
+	std::regex re(regex);
+	std::sregex_token_iterator
+		first{ input.begin(), input.end(), re, -1 },
+		last;
+	return{ first, last };
+}
 
 namespace {	
-	static int i = 0;
+	int i = 0;
+	std::deque<std::tuple<int, int, int>> trace_list;
+	int test_count = 0;
+	int test_passed = 0;
+
+	void LoadTrace(const std::string& filename) {
+		trace_list.clear();
+		std::ifstream input(filename);
+
+		for (std::string line; getline(input, line); ) {
+			if (line.size() == 0) {
+				continue;
+			}
+
+			if (line[0] == '#') {
+				continue;
+			}
+
+			auto split_vec = split(line, "\t");
+			if (split_vec.size() != 3) {
+				assert(false && "Bad trace log");
+			}
+
+			auto tup = std::make_tuple(atoi(split_vec[0].c_str()), atoi(split_vec[1].c_str()), atoi(split_vec[2].c_str()));
+			trace_list.push_back(tup);
+		}
+
+		test_count++;
+	}
 
 	void EventTracer(const std::vector<RPG::EventCommand>&, int event_id, int page_id, int line_id) {
-		// TODO:
-		// Load a trace dump (from dynrpg) and compare it with the execution of Player
-		Output::Debug("%d\t%d\t%d", event_id, page_id, line_id);
+		auto tup = trace_list.front();
+		trace_list.pop_front();
+		Output::Debug("%d\t%d\t%d", event_id == std::get<0>(tup), page_id == std::get<1>(tup), line_id == std::get<2>(tup));
+
+		if (event_id != std::get<0>(tup) || page_id != std::get<1>(tup) || line_id != std::get<2>(tup)) {
+			// Trace not matching RPG_RT
+			trace_list.clear();
+		} else if (trace_list.empty()) {
+			test_passed++;
+		}
 	}
 	
 	void Updater(int frames) {
-		// TODO:
-		// this function should shutdown the player when the event execution finished
-		if (i == 5) {
-			// TODO: Just some testing code, remove later
-			Game_Interpreter::RemoveOnEventCommandListener(event_tracer);
-		}
-		if (frames == 3000) {
+		if (trace_list.empty()) {
 			Player::exit_flag = true;
 		}
 	}
@@ -45,6 +88,8 @@ int main(int argc, char** argv) {
 	Player::new_game_flag = true;
 	Game_Message::SetNonStopMode(true);
 
+	LoadTrace("event_tests/trivial.txt");
+
 	// Register callbacks
 	Game_Interpreter::AddOnEventCommandListener(EventTracer);
 	Player::AddOnUpdateListener(Updater);
@@ -52,5 +97,5 @@ int main(int argc, char** argv) {
 	// Begin the test
 	Player::Run();
 
-	return EXIT_SUCCESS;
+	return test_count - test_passed;
 }
