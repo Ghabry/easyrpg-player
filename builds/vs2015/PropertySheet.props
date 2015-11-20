@@ -10,7 +10,7 @@
   <PropertyGroup Label="Configuration">
     <OutDir>..\..\bin\</OutDir>
 	<TargetName>$(ProjectName)$(PlatformSuffix)$(DebugSuffix)</TargetName>
-	<IntDir>Output\$(PlatformShortName)\$(Configuration)\</IntDir>
+	<IntDir>$(ProjectName)\$(PlatformShortName)\$(Configuration)\</IntDir>
     <UseOfMfc>false</UseOfMfc>
     <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v140</PlatformToolset>
@@ -38,8 +38,8 @@
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
 	</ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(EASYDEV_MSVC)\lib\$(PlatformShortName)\$(Configuration);$(DXSDK_DIR)\Lib\$(PlatformShortName)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>freetype.lib;libexpat.lib;libmad.lib;libogg.lib;libpng.lib;libvorbis.lib;libvorbisfile.lib;libmodplug.lib;native_midi.lib;sicudt$(DebugSuffix).lib;sicuuc$(DebugSuffix).lib;sicuin$(DebugSuffix).lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_mixer.lib;zlib.lib;winmm.lib;Imm32.lib;Version.lib;pixman.lib;liblcf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\bin;$(EASYDEV_MSVC)\lib\$(PlatformShortName)\$(Configuration);$(DXSDK_DIR)\Lib\$(PlatformShortName)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>PlayerLib$(PlatformSuffix)$(DebugSuffix).lib;freetype.lib;libexpat.lib;libmad.lib;libogg.lib;libpng.lib;libvorbis.lib;libvorbisfile.lib;libmodplug.lib;native_midi.lib;sicudt$(DebugSuffix).lib;sicuuc$(DebugSuffix).lib;sicuin$(DebugSuffix).lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_mixer.lib;zlib.lib;winmm.lib;Imm32.lib;Version.lib;pixman.lib;liblcf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />

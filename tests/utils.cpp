@@ -2,13 +2,21 @@
 #include <cstdlib>
 #include "utils.h"
 
-static void LowerCase() {
-	assert(Utils::LowerCase("EasyRPG") == "easyrpg");
-	assert(Utils::LowerCase("player") == "player");
-}
+#include "lest.hpp"
 
-extern "C" int main(int, char**) {
-	LowerCase();
+const lest::test module[] = {
+	CASE("LC conv: EasyRPG -> easyrpg") {
+		EXPECT(Utils::LowerCase("EasyRPG") == "easyrpg");
+	},
 
-	return EXIT_SUCCESS;
-}
+	CASE("LC conv: player -> player") {
+		EXPECT(Utils::LowerCase("player") == "player");
+	},
+
+	CASE("LC conv: A -> A [fail]") {
+		EXPECT(Utils::LowerCase("A") == "A");
+	}
+};
+
+extern lest::tests & specification();
+MODULE(specification(), module)

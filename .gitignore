@@ -44,7 +44,7 @@ resources/player.aps
 /builds/android/local.properties
 /builds/android/assets/
 /builds/easyrpg-player.6
-/builds/vs20*/Output/
+/builds/vs20*/Player*/
 /builds/vs20*/*.*sdf
 /builds/vs20*/*.ncb
 /builds/vs20*/*.psess

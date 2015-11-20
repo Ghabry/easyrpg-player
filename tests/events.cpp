@@ -58,8 +58,7 @@ namespace {
 	void EventTracer(const std::vector<RPG::EventCommand>&, int event_id, int page_id, int line_id) {
 		auto tup = trace_list.front();
 		trace_list.pop_front();
-		Output::Debug("%d\t%d\t%d", event_id == std::get<0>(tup), page_id == std::get<1>(tup), line_id == std::get<2>(tup));
-
+		
 		if (event_id != std::get<0>(tup) || page_id != std::get<1>(tup) || line_id != std::get<2>(tup)) {
 			// Trace not matching RPG_RT
 			trace_list.clear();
