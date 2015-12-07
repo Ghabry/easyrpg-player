@@ -26,5 +26,11 @@
     <ClCompile Include="..\..\tests\events.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\tests\test_player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\tests\test_player.h" />
   </ItemGroup>
 </Project>

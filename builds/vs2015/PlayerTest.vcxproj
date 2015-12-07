@@ -152,7 +152,11 @@
     <ClCompile Include="..\..\tests\filefinder.cpp" />
     <ClCompile Include="..\..\tests\main.cpp" />
     <ClCompile Include="..\..\tests\output.cpp" />
+    <ClCompile Include="..\..\tests\test_player.cpp" />
     <ClCompile Include="..\..\tests\utils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\tests\test_player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
