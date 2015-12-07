@@ -1,7 +1,6 @@
 #include <cassert>
 #include <cstdlib>
 #include "utils.h"
-
 #include "lest.hpp"
 
 const lest::test module[] = {

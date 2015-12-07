@@ -43,8 +43,6 @@ namespace Game_Message {
 	bool visible;
 
 	int choice_result;
-
-	bool non_stop;
 }
 
 RPG::SaveSystem& data = Main_Data::game_data.system;
@@ -178,12 +176,4 @@ int Game_Message::GetRealPosition() {
 			return disp >= (16 * 10) ? 0 : 2;
 		};
 	}
-}
-
-bool Game_Message::GetNonStopMode() {
-	return non_stop;
-}
-
-void Game_Message::SetNonStopMode(bool _non_stop) {
-	non_stop = _non_stop;
 }

@@ -596,7 +596,7 @@ void Window_Message::WaitForInput() {
 	active = true; // Enables the Pause arrow
 	if (Input::IsTriggered(Input::DECISION) ||
 		Input::IsTriggered(Input::CANCEL) ||
-		Game_Message::GetNonStopMode()) {
+		Player::non_stop_mode) {
 		active = false;
 		pause = false;
 

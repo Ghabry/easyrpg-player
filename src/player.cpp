@@ -85,6 +85,7 @@ namespace Player {
 	std::string escape_symbol;
 	int engine;
 	std::string game_title;
+	bool non_stop_mode;
 	double start_time;
 	double next_frame;
 	int frames;

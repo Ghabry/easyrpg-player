@@ -73,8 +73,6 @@ namespace {
 		return LOG_FILE << timestr;
 	}
 
-	bool ignore_pause = false;
-
 	MessageOverlay& message_overlay() {
 		static MessageOverlay* overlay = NULL;
 		assert(DisplayUi);
@@ -95,10 +93,6 @@ namespace {
 		assert(0 <= result && result < int(sizeof(buf)));
 		return std::string(buf, result);
 	}
-}
-
-void Output::IgnorePause(bool const val) {
-	ignore_pause = val;
 }
 
 static void WriteLog(std::string const& type, std::string const& msg, Color const& c = Color()) {
@@ -136,9 +130,16 @@ static void HandleErrorOutput(const std::string& err) {
 	Text::Draw(*surface, 10, 10, Color(255, 255, 255, 255), error);
 	DisplayUi->UpdateDisplay();
 
-	if (ignore_pause) { return; }
-
 	Input::ResetKeys();
+
+#ifdef EMSCRIPTEN
+	return;
+#endif
+
+	if (Player::non_stop_mode) {
+		return;
+	}
+
 	while (!Input::IsAnyPressed()) {
 		DisplayUi->Sleep(1);
 		DisplayUi->ProcessEvents();

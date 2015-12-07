@@ -148,6 +148,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\tests\events.cpp" />
+    <ClCompile Include="..\..\tests\filefinder.cpp" />
     <ClCompile Include="..\..\tests\main.cpp" />
     <ClCompile Include="..\..\tests\output.cpp" />
     <ClCompile Include="..\..\tests\utils.cpp" />
