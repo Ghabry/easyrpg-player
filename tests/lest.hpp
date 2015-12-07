@@ -1154,6 +1154,7 @@ inline auto split_arguments( texts args ) -> std::tuple<options, texts>
             else if ( opt == "--order" && "random"       == val ) { option.random  =  true; continue; }
             else if ( opt == "--random-seed" ) { option.seed   = seed  ( "--random-seed", val ); continue; }
             else if ( opt == "--repeat"      ) { option.repeat = repeat( "--repeat"     , val ); continue; }
+            else if ( opt == "--player" ) { break; } // arguments after --player are passed to the player
             else throw std::runtime_error( "unrecognised option '" + arg + "' (try option --help)" );
         }
         in.push_back( arg );
