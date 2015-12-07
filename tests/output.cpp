@@ -5,7 +5,7 @@
 
 const lest::test module[] = {
 	CASE("Output") {
-		SetupTestPlayer;
+		SetupTestPlayer p;
 
 		Output::Debug("Test %s", "debg");
 		Output::Warning("Test %s", "test");

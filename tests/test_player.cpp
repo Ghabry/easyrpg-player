@@ -2,6 +2,8 @@
 #include "player.h"
 #include "graphics.h"
 #include "input.h"
+#include "filefinder.h"
+#include "main_data.h"
 
 int PlayerArgs::argc;
 char** PlayerArgs::argv;
@@ -15,11 +17,13 @@ SetupTestPlayer::SetupTestPlayer() {
 	Graphics::Init();
 	Input::Init();
 
+	// Create proper default tree
+	FileFinder::SetDirectoryTree(FileFinder::CreateDirectoryTree(Main_Data::project_path));
+
 	// Make Player non-blocking
 	Player::non_stop_mode = true;
 }
 
 SetupTestPlayer::~SetupTestPlayer() {
-	Player::non_stop_mode = false;
 	Player::Exit();
 }

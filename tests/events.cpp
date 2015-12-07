@@ -13,6 +13,8 @@
 #include <fstream>
 #include <queue>
 #include <string>
+#include "lest.hpp"
+#include "test_player.h"
 
 // via https://stackoverflow.com/questions/9435385/split-a-string-using-c11
 std::vector<std::string> split(std::string& input, const std::string& regex) {
@@ -24,15 +26,18 @@ std::vector<std::string> split(std::string& input, const std::string& regex) {
 	return{ first, last };
 }
 
-namespace {	
-	int i = 0;
+namespace {
 	std::deque<std::tuple<int, int, int>> trace_list;
-	int test_count = 0;
-	int test_passed = 0;
+
+	int test_line;
 
 	void LoadTrace(const std::string& filename) {
+		test_line = 1;
+
 		trace_list.clear();
 		std::ifstream input(filename);
+
+		assert(input);
 
 		for (std::string line; getline(input, line); ) {
 			if (line.size() == 0) {
@@ -51,8 +56,6 @@ namespace {
 			auto tup = std::make_tuple(atoi(split_vec[0].c_str()), atoi(split_vec[1].c_str()), atoi(split_vec[2].c_str()));
 			trace_list.push_back(tup);
 		}
-
-		test_count++;
 	}
 
 	void EventTracer(const std::vector<RPG::EventCommand>&, int event_id, int page_id, int line_id) {
@@ -61,40 +64,59 @@ namespace {
 		
 		if (event_id != std::get<0>(tup) || page_id != std::get<1>(tup) || line_id != std::get<2>(tup)) {
 			// Trace not matching RPG_RT
+			printf("Line %d: %d vs. %d, %d vs. %d, %d vs %d\n", test_line, event_id, std::get<0>(tup), page_id, std::get<1>(tup), line_id, std::get<2>(tup));
 			trace_list.clear();
 		} else if (trace_list.empty()) {
-			test_passed++;
+			// Test passed
+			test_line = 0;
+		} else {
+			++test_line;
 		}
 	}
 	
 	void Updater(int frames) {
+		if (frames > Graphics::GetDefaultFps() * 10) {
+			// Longer then 10 seconds -> cancel test
+			// (game play seconds, tests run without frame limit)
+			test_line = -1;
+			Player::exit_flag = true;
+		}
+
 		if (trace_list.empty()) {
 			Player::exit_flag = true;
 		}
 	}
+
+	class SetupEventTracer {
+	public:
+		SetupEventTracer() {
+			Game_Interpreter::AddOnEventCommandListener(EventTracer);
+			Player::AddOnUpdateListener(Updater);
+		}
+
+		~SetupEventTracer() {
+			Player::exit_flag = false;
+			Game_Interpreter::RemoveOnEventCommandListener(EventTracer);
+			Player::RemoveOnUpdateListener(Updater);
+		}
+	};
 }
 
-int main(int argc, char** argv) {
-	// Prevents creating of SdlUi
-	DisplayUi = BaseUi::CreateDummyUi();
+const lest::test module[] = {
+	CASE("Basic interpreter test") {
+		SetupTestPlayer p;
+		SetupEventTracer e;
 
-	// Standard init code
-	Player::Init(argc, argv);
-	Graphics::Init();
-	Input::Init();
+		Player::new_game_flag = true;
+		Player::start_map_id = 1;
 
-	// Make ready for non-interactive session
-	Player::new_game_flag = true;
-	Game_Message::SetNonStopMode(true);
+		LoadTrace("event_tests/trivial.txt");
 
-	LoadTrace("event_tests/trivial.txt");
+		Player::Run();
 
-	// Register callbacks
-	Game_Interpreter::AddOnEventCommandListener(EventTracer);
-	Player::AddOnUpdateListener(Updater);
+		EXPECT(test_line == 0);
+	}
+};
 
-	// Begin the test
-	Player::Run();
-
-	return test_count - test_passed;
-}
+extern lest::tests & specification();
+MODULE(specification(), module)

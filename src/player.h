@@ -216,7 +216,7 @@ namespace Player {
 	extern std::string game_title;
 
 	/** Prevents waiting for key press (for non-interactive sessions) */
-	extern bool non_stop_mode = false;
+	extern bool non_stop_mode;
 
 #ifdef EMSCRIPTEN
 	/** Name of game emscripten uses */

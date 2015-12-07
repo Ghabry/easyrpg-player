@@ -10,10 +10,6 @@ const lest::test module[] = {
 
 	CASE("LC conv: player -> player") {
 		EXPECT(Utils::LowerCase("player") == "player");
-	},
-
-	CASE("LC conv: A -> A [fail]") {
-		EXPECT(Utils::LowerCase("A") == "A");
 	}
 };
 

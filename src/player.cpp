@@ -140,6 +140,8 @@ void Player::Init(int argc, char *argv[]) {
 
 	srand(time(NULL));
 
+	non_stop_mode = false;
+
 	ParseCommandLine(argc, argv);
 
 	if (Main_Data::project_path.empty()) {

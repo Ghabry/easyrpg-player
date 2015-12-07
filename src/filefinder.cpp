@@ -451,6 +451,8 @@ std::string FileFinder::FindDefault(const std::string& dir, const std::string& n
 }
 
 std::string FileFinder::FindDefault(std::string const& name) {
+	assert(game_directory_tree);
+
 	return FindDefault(*GetDirectoryTree(), name);
 }
 

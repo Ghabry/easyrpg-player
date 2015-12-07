@@ -6,22 +6,27 @@
 
 const lest::test module[] = {
 	CASE("Project directory is a RPG2k project") {
-		SetupTestPlayer;
+		SetupTestPlayer p;
 
-		auto tree = FileFinder::CreateProjectTree(Main_Data::project_path);
+		auto tree = FileFinder::CreateDirectoryTree(Main_Data::project_path);
 		EXPECT(FileFinder::IsRPG2kProject(*tree));
 	},
 
 	CASE(". IsDirectory") {
-		SetupTestPlayer;
+		SetupTestPlayer p;
 
 		EXPECT(FileFinder::IsDirectory("."));
 	},
 
 	CASE("Find RPG_RT.ldb") {
-		SetupTestPlayer;
+		SetupTestPlayer p;
 
-		EXPECT(!FileFinder::FindDefault("RPG_RT.ldb").empty());
+		const std::string& name = "RPG_RT.ldb";
+		const std::string& find_result = FileFinder::FindDefault(name);
+		size_t pos = find_result.find(name);
+
+		EXPECT(pos != std::string::npos);
+		EXPECT(pos == find_result.size() - name.size());
 	}
 };
 
