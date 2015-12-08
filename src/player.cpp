@@ -816,7 +816,7 @@ bool Player::IsRPG2k3E() {
 }
 
 // Event handler
-DECLARE_EVENT_HANDLER(Player, on_update_func, Update);
+DECLARE_EVENT_HANDLER(Player, on_update_func, Update)
 
 void Player::OnUpdate(int frame) {
 	INVOKE_EVENT_HANDLER(Player, Update, frame)

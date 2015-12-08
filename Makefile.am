@@ -323,21 +323,17 @@ dist_man6_MANS = builds/easyrpg-player.6
 endif
 endif
 
-# FIXME make filefinder work without external scripting
-check_PROGRAMS = output utils
-TESTS = output utils events
-#filefinder_SOURCES = tests/filefinder.cpp
-#filefinder_CXXFLAGS = $(libeasyrpg_player_la_CXXFLAGS)
-#filefinder_LDADD = $(easyrpg_player_LDADD)
-output_SOURCES = tests/output.cpp
-output_CXXFLAGS = $(libeasyrpg_player_la_CXXFLAGS)
-output_LDADD = $(easyrpg_player_LDADD)
-utils_SOURCES = tests/utils.cpp
-utils_CXXFLAGS = $(libeasyrpg_player_la_CXXFLAGS)
-utils_LDADD = $(easyrpg_player_LDADD)
-events_SOURCES = tests/events.cpp
-events_CXXFLAGS = $(libeasyrpg_player_la_CXXFLAGS)
-events_LDADD = $(easyrpg_player_LDADD)
+check_PROGRAMS = tests/unittest
+TESTS = tests/unittest
+tests_unittest_SOURCES = \
+	tests/events.cpp \
+	tests/filefinder.cpp \
+	tests/main.cpp \
+	tests/output.cpp \
+	tests/test_player.cpp \
+	tests/utils.cpp
+tests_unittest_CXXFLAGS = $(libeasyrpg_player_la_CXXFLAGS)
+tests_unittest_LDADD = $(easyrpg_player_LDADD)
 
 # Some tests will create this file
 # make distcheck will fail if it is not cleaned after runing these tests
