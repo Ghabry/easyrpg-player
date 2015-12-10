@@ -1,0 +1,14 @@
+# Session start at 2015-12-10 01:14:46
+# E	evt_id	page_id	line_id
+# M	evt_id	line_id
+E	2	1	0
+# Simple Move Route test
+E	2	1	1
+E	2	1	2
+M	2	0
+M	2	1
+M	2	2
+M	2	3
+M	2	4
+E	2	2	0
+# Session end at 2015-12-10 01:14:52

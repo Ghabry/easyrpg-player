@@ -60,10 +60,10 @@ public:
 		MinSize = -9999999
 	};
 
-	using on_event_command_func = std::function<void(const std::vector<RPG::EventCommand>&, int, int, int)>;
+	using on_event_command_func = std::function<void(Game_Interpreter&, std::vector<RPG::EventCommand>&, int, int, int)>;
 	static void AddOnEventCommandListener(on_event_command_func func);
 	static bool RemoveOnEventCommandListener(on_event_command_func func);
-	static void OnEventCommand(const std::vector<RPG::EventCommand>& events, int event_id, int page_id, int line_id);
+	static void OnEventCommand(Game_Interpreter& interpreter, std::vector<RPG::EventCommand>& events, int event_id, int page_id, int event_index);
 protected:
 	friend class Game_Interpreter_Map;
 

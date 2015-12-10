@@ -27,7 +27,7 @@ std::vector<std::string> split(std::string& input, const std::string& regex) {
 }
 
 namespace {
-	std::deque<std::tuple<int, int, int>> trace_list;
+	std::deque<std::tuple<char, int, int, int>> trace_list;
 
 	int test_line;
 
@@ -49,22 +49,70 @@ namespace {
 			}
 
 			auto split_vec = split(line, "\t");
-			if (split_vec.size() != 3) {
-				assert(false && "Bad trace log");
-			}
 
-			auto tup = std::make_tuple(atoi(split_vec[0].c_str()), atoi(split_vec[1].c_str()), atoi(split_vec[2].c_str()));
-			trace_list.push_back(tup);
+			if (split_vec[0].empty()) {
+				assert(false);
+			} else if (split_vec[0][0] == 'E') {
+				if (split_vec.size() != 4) {
+					assert(false);
+				}
+				auto tup = std::make_tuple(split_vec[0][0], atoi(split_vec[1].c_str()), atoi(split_vec[2].c_str()), atoi(split_vec[3].c_str()));
+				trace_list.push_back(tup);
+			} else if (split_vec[0][0] == 'M') {
+				if (split_vec.size() != 3) {
+					assert(false);
+				}
+				auto tup = std::make_tuple(split_vec[0][0], atoi(split_vec[1].c_str()), atoi(split_vec[2].c_str()), -1);
+				trace_list.push_back(tup);
+			} else {
+				assert(false);
+			}
 		}
 	}
 
-	void EventTracer(const std::vector<RPG::EventCommand>&, int event_id, int page_id, int line_id) {
+	void EventTracer(Game_Interpreter&, std::vector<RPG::EventCommand>&, int event_id, int page_id, int line_id) {
+		if (trace_list.empty()) {
+			// List empty but Player not finished -> test failed
+			test_line = -2;
+			return;
+		}
+
 		auto tup = trace_list.front();
 		trace_list.pop_front();
 		
-		if (event_id != std::get<0>(tup) || page_id != std::get<1>(tup) || line_id != std::get<2>(tup)) {
+		if (std::get<0>(tup) != 'E') {
+			// Current line is not an event trace
+			printf("Line %d not a event line (got %c)\n", test_line, std::get<0>(tup));
+			trace_list.clear();
+		} else if (event_id != std::get<1>(tup) || page_id != std::get<2>(tup) || line_id != std::get<3>(tup)) {
 			// Trace not matching RPG_RT
-			printf("Line %d: %d vs. %d, %d vs. %d, %d vs %d\n", test_line, event_id, std::get<0>(tup), page_id, std::get<1>(tup), line_id, std::get<2>(tup));
+			printf("Line %d: %d vs. %d, %d vs. %d, %d vs %d\n", test_line, event_id, std::get<1>(tup), page_id, std::get<2>(tup), line_id, std::get<3>(tup));
+			trace_list.clear();
+		} else if (trace_list.empty()) {
+			// Test passed
+			test_line = 0;
+		} else {
+			++test_line;
+		}
+	}
+
+	void MoveTracer(Game_Character& character, const RPG::MoveRoute&, int move_route_index) {
+		if (trace_list.empty()) {
+			// List empty but Player not finished -> test failed
+			test_line = -3;
+			return;
+		}
+
+		auto tup = trace_list.front();
+		trace_list.pop_front();
+
+		if (std::get<0>(tup) != 'M') {
+			// Current line is not a move trace
+			printf("Line %d not a move line (got %c)\n", test_line, std::get<0>(tup));
+			trace_list.clear();
+		} else if (character.GetMapId() != std::get<1>(tup) || move_route_index != std::get<2>(tup)) {
+			// Trace not matching RPG_RT
+			printf("Line %d: %d vs. %d, %d vs. %d\n", test_line, character.GetMapId(), std::get<1>(tup), move_route_index, std::get<2>(tup));
 			trace_list.clear();
 		} else if (trace_list.empty()) {
 			// Test passed
@@ -91,12 +139,14 @@ namespace {
 	public:
 		SetupEventTracer() {
 			Game_Interpreter::AddOnEventCommandListener(EventTracer);
+			Game_Character::AddOnMoveCommandListener(MoveTracer);
 			Player::AddOnUpdateListener(Updater);
 		}
 
 		~SetupEventTracer() {
 			Player::exit_flag = false;
 			Game_Interpreter::RemoveOnEventCommandListener(EventTracer);
+			Game_Character::RemoveOnMoveCommandListener(MoveTracer);
 			Player::RemoveOnUpdateListener(Updater);
 		}
 	};
@@ -111,6 +161,20 @@ const lest::test module[] = {
 		Player::start_map_id = 1;
 
 		LoadTrace("event_tests/trivial.txt");
+
+		Player::Run();
+
+		EXPECT(test_line == 0);
+	},
+
+	CASE("Basic move command test") {
+		SetupTestPlayer p;
+		SetupEventTracer e;
+
+		Player::new_game_flag = true;
+		Player::start_map_id = 2;
+
+		LoadTrace("event_tests/movebasic.txt");
 
 		Player::Run();
 

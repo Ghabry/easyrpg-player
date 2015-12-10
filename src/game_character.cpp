@@ -395,6 +395,8 @@ void Game_Character::MoveTypeCustom() {
 
 			const RPG::MoveCommand& move_command = active_route->move_commands[active_route_index];
 
+			OnMoveCommand(*this, *active_route, active_route_index);
+
 			switch (move_command.command_id) {
 			case RPG::MoveCommand::Code::move_up:
 			case RPG::MoveCommand::Code::move_right:
@@ -993,4 +995,10 @@ Game_Character* Game_Character::GetCharacter(int character_id, int event_id) {
 
 			return it->second.get();
 	}
+}
+
+DECLARE_EVENT_HANDLER(Game_Character, on_move_command_func, MoveCommand)
+
+void Game_Character::OnMoveCommand(Game_Character& character, const RPG::MoveRoute& move_route, int move_route_index) {
+	INVOKE_EVENT_HANDLER(Game_Character, MoveCommand, character, move_route, move_route_index);
 }

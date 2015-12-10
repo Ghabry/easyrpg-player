@@ -129,8 +129,8 @@ void Game_Interpreter::EndMoveRoute(Game_Character*) {
 
 DECLARE_EVENT_HANDLER(Game_Interpreter, on_event_command_func, EventCommand)
 
-void Game_Interpreter::OnEventCommand(const std::vector<RPG::EventCommand>& events, int event_id, int page_id, int line_id) {
-	INVOKE_EVENT_HANDLER(Game_Interpreter, EventCommand, events, event_id, page_id, line_id)
+void Game_Interpreter::OnEventCommand(Game_Interpreter& interpreter, std::vector<RPG::EventCommand>& events, int event_id, int page_id, int event_index) {
+	INVOKE_EVENT_HANDLER(Game_Interpreter, EventCommand, interpreter, events, event_id, page_id, event_index);
 }
 
 bool Game_Interpreter::HasRunned() const {
@@ -218,7 +218,7 @@ void Game_Interpreter::Update() {
 
 		runned = true;
 
-		OnEventCommand(list, event_id, page_id, index);
+		OnEventCommand(*this, list, event_id, page_id, index);
 		if (!ExecuteCommand()) {
 			break;
 		}

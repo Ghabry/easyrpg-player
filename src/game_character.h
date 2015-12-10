@@ -22,6 +22,7 @@
 #include <string>
 #include "color.h"
 #include "rpg_moveroute.h"
+#include <functional>
 
 /**
  * Game_Character class.
@@ -689,6 +690,11 @@ public:
 	};
 
 	static Game_Character* GetCharacter(int character_id, int event_id);
+
+	using on_move_command_func = std::function<void(Game_Character&, const RPG::MoveRoute&, int)>;
+	static void AddOnMoveCommandListener(on_move_command_func func);
+	static bool RemoveOnMoveCommandListener(on_move_command_func func);
+	static void OnMoveCommand(Game_Character& character, const RPG::MoveRoute& move_route, int move_route_index);
 
 protected:
 	void UpdateMove();

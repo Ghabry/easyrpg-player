@@ -1,8 +1,12 @@
-# Session start at 2015-11-08 22:58:09
-# Trivial interpreter test
-# event	page_id	line_id
-1	1	0
-1	1	1
-1	1	4
-1	1	5
-# Session end at 2015-11-08 22:58:15
+# Session start at 2015-12-10 01:03:24
+# E	evt_id	page_id	line_id
+# M	evt_id	line_id
+E	1	1	0
+# Basic test to determine if interpreter works at all
+E	1	1	1
+E	1	1	2
+# Test message handling (only first line reported)
+E	1	1	3
+E	1	1	6
+E	1	1	7
+# Session end at 2015-12-10 01:03:29
