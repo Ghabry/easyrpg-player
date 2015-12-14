@@ -28,6 +28,7 @@ std::vector<std::string> split(std::string& input, const std::string& regex) {
 
 namespace {
 	std::deque<std::tuple<char, int, int, int>> trace_list;
+	std::tuple<int, int, int> old_event_notify;
 
 	int test_line;
 
@@ -77,6 +78,16 @@ namespace {
 			return;
 		}
 
+		std::tuple<int, int, int> new_event_notify = std::make_tuple(event_id, page_id, line_id);
+		if (old_event_notify == new_event_notify) {
+			// RPG_RT handles events strange, e.g. "ProceedWithMovement" is notified only once
+			// but Player notifies it each frame
+			// Filter notifications of same line...
+			return;
+		}
+
+		old_event_notify = new_event_notify;
+
 		auto tup = trace_list.front();
 		trace_list.pop_front();
 		
@@ -86,7 +97,9 @@ namespace {
 			trace_list.clear();
 		} else if (event_id != std::get<1>(tup) || page_id != std::get<2>(tup) || line_id != std::get<3>(tup)) {
 			// Trace not matching RPG_RT
-			printf("Line %d: %d vs. %d, %d vs. %d, %d vs %d\n", test_line, event_id, std::get<1>(tup), page_id, std::get<2>(tup), line_id, std::get<3>(tup));
+			printf("Line %d: Event line. Mismatch\n", test_line);
+			printf("%d\t%d\t%d reported\n", event_id, page_id, line_id);
+			printf("%d\t%d\t%d expected\n", std::get<1>(tup), std::get<2>(tup), std::get<3>(tup));
 			trace_list.clear();
 		} else if (trace_list.empty()) {
 			// Test passed
@@ -112,7 +125,9 @@ namespace {
 			trace_list.clear();
 		} else if (character.GetMapId() != std::get<1>(tup) || move_route_index != std::get<2>(tup)) {
 			// Trace not matching RPG_RT
-			printf("Line %d: %d vs. %d, %d vs. %d\n", test_line, character.GetMapId(), std::get<1>(tup), move_route_index, std::get<2>(tup));
+			printf("Line %d: Movement line. Mismatch\n", test_line);
+			printf("%d\t%d reported\n", character.GetMapId(), move_route_index);
+			printf("%d\t%d expected\n", std::get<1>(tup), std::get<2>(tup));
 			trace_list.clear();
 		} else if (trace_list.empty()) {
 			// Test passed
@@ -141,6 +156,7 @@ namespace {
 			Game_Interpreter::AddOnEventCommandListener(EventTracer);
 			Game_Character::AddOnMoveCommandListener(MoveTracer);
 			Player::AddOnUpdateListener(Updater);
+			old_event_notify = std::make_tuple(-1, -1, -1);
 		}
 
 		~SetupEventTracer() {

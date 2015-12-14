@@ -19,7 +19,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <iostream>
-#include <sstream>
 #include "game_interpreter.h"
 #include "audio.h"
 #include "game_map.h"
@@ -32,12 +31,6 @@
 #include "game_actors.h"
 #include "game_system.h"
 #include "game_message.h"
-#include "game_picture.h"
-#include "spriteset_map.h"
-#include "sprite_character.h"
-#include "scene_map.h"
-#include "scene.h"
-#include "graphics.h"
 #include "input.h"
 #include "main_data.h"
 #include "output.h"
@@ -218,7 +211,6 @@ void Game_Interpreter::Update() {
 
 		runned = true;
 
-		OnEventCommand(*this, list, event_id, page_id, index);
 		if (!ExecuteCommand()) {
 			break;
 		}

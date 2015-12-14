@@ -42,6 +42,8 @@ bool Game_Interpreter_Battle::ExecuteCommand() {
 		return false;
 	}
 
+	OnEventCommand(*this, list, event_id, page_id, index);
+
 	RPG::EventCommand const& com = list[index];
 
 	switch (com.code) {
