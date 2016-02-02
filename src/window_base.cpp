@@ -34,7 +34,7 @@ Window_Base::Window_Base(int x, int y, int width, int height) {
 	if (!windowskin_name.empty()) {
 		SetWindowskin(Cache::System(windowskin_name));
 	} else {
-		SetWindowskin(Bitmap::Create(160, 80, false));
+		SetWindowskin(Bitmap::Create(160, 80, false, 1));
 	}
 
 	SetX(x);

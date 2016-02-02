@@ -85,15 +85,18 @@ public:
 	 * @param width surface width.
 	 * @param height surface height.
 	 * @param color color for filling.
+	 * @param scale_factor When != -1 the dimensions are changed based on the display scale factor
 	 */
-	static BitmapRef Create(int width, int height, const Color& color);
+	static BitmapRef Create(int width, int height, const Color& color, int scale_factor = -1);
 
 	/**
 	 * Loads a bitmap from an image file.
+	 * This function respects the scale_factor of the display.
 	 *
 	 * @param filename image file to load.
 	 * @param transparent allow transparency on bitmap.
 	 * @param flags bitmap flags.
+	 * @param scale_factor Scaling factor of the image. When the factor mismatches the display it is rescaled.
 	 */
 	static BitmapRef Create(const std::string& filename, bool transparent = true, uint32_t flags = 0, int scale_factor = 1);
 
@@ -104,8 +107,9 @@ public:
 	 * @param bytes size of data.
 	 * @param transparent allow transparency on bitmap.
 	 * @param flags bitmap flags.
+	 * @param scale_factor When != -1 the dimensions are changed based on the display scale factor
 	 */
-	static BitmapRef Create(const uint8_t* data, unsigned bytes, bool transparent = true, uint32_t flags = 0);
+	static BitmapRef Create(const uint8_t* data, unsigned bytes, bool transparent = true, uint32_t flags = 0, int scale_factor = -1);
 
 	/**
 	 * Creates a bitmap from another.
@@ -121,19 +125,10 @@ public:
 	 *
 	 * @param width surface width.
 	 * @param height surface height.
-	 * @param bpp surface bpp.
 	 * @param transparent allow transparency on surface.
+	 * @param scale_factor When != -1 the dimensions are changed based on the display scale factor
 	 */
-	static BitmapRef Create(int width, int height, bool transparent = true, int bpp = 0);
-
-	/**
-	 * Creates a copy of an existing bitmap.
-	 *
-	 * @//param source : source bitmap
-	 * @//param src_rect : rect to copy from source bitmap
-	 * @//param transparent : allow transparency on bitmap
-	 */
-	// static BitmapRef Create(Bitmap const& source, Rect const& src_rect, bool transparent = true);
+	static BitmapRef Create(int width, int height, bool transparent = true, int scale_factor = -1);
 
 	/**
 	 * Destructor.
@@ -673,7 +668,7 @@ protected:
 	bool editing;
 public:
 	Bitmap(int width, int height, bool transparent);
-	Bitmap(const std::string& filename, bool transparent, uint32_t flags, int scale_factor);
+	Bitmap(const std::string& filename, bool transparent, uint32_t flags);
 	Bitmap(const uint8_t* data, unsigned bytes, bool transparent, uint32_t flags);
 	Bitmap(Bitmap const& source, Rect const& src_rect, bool transparent);
 	Bitmap(void *pixels, int width, int height, int pitch, const DynamicFormat& format);
@@ -724,8 +719,6 @@ protected:
 	static void initialize_formats();
 	static void add_pair(pixman_format_code_t pcode, const DynamicFormat& format);
 	static pixman_format_code_t find_format(const DynamicFormat& format);
-
-	int scale_factor;
 };
 
 #endif

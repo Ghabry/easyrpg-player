@@ -37,35 +37,50 @@
 
 const Opacity Opacity::opaque;
 
-BitmapRef Bitmap::Create(int width, int height, const Color& color) {
+namespace {
+	BitmapRef RescaleToDisplay(BitmapRef src, int scale_factor) {
+		if (scale_factor != -1 && DisplayUi->GetScaleFactor() / scale_factor != 1) {
+			int scale = DisplayUi->GetScaleFactor() / scale_factor;
+
+			BitmapRef bitmap = Bitmap::Create(src->GetWidth()*scale, src->GetHeight()*scale, src->GetTransparent());
+
+			// FIXME: scale factor
+			bitmap->Blit2x(bitmap->GetRect(), *src, src->GetRect());
+
+			return bitmap;
+		}
+
+		return src;
+	}
+}
+
+BitmapRef Bitmap::Create(int width, int height, const Color& color, int scale_factor) {
     BitmapRef surface = Bitmap::Create(width, height, false);
+	surface = RescaleToDisplay(surface, scale_factor);
 	surface->Fill(color);
 	return surface;
 }
 
 BitmapRef Bitmap::Create(const std::string& filename, bool transparent, uint32_t flags, int scale_factor) {
-	if (DisplayUi->GetScaleFactor() / scale_factor != 1) {
-		Output::Debug("2x %s", filename.c_str());
-
-		BitmapRef tmp = EASYRPG_MAKE_SHARED<Bitmap>(filename, transparent, flags, scale_factor);
-
-		BitmapRef bitmap = Bitmap::Create(tmp->GetWidth()*scale_factor, tmp->GetHeight()*scale_factor, tmp->GetTransparent());
-
-		// FIXME: scale factor
-		bitmap->Blit2x(bitmap->GetRect(), *tmp, tmp->GetRect());
-
-		return bitmap;
-	}
-
-	return EASYRPG_MAKE_SHARED<Bitmap>(filename, transparent, flags, scale_factor);
+	BitmapRef src = EASYRPG_MAKE_SHARED<Bitmap>(filename, transparent, flags);
+	src = RescaleToDisplay(src, scale_factor);
+	return src;
 }
 
-BitmapRef Bitmap::Create(const uint8_t* data, unsigned bytes, bool transparent, uint32_t flags) {
-	return EASYRPG_MAKE_SHARED<Bitmap>(data, bytes, transparent, flags);
+BitmapRef Bitmap::Create(const uint8_t* data, unsigned bytes, bool transparent, uint32_t flags, int scale_factor) {
+	BitmapRef src = EASYRPG_MAKE_SHARED<Bitmap>(data, bytes, transparent, flags);
+	src = RescaleToDisplay(src, scale_factor);
+	return src;
 }
 
 BitmapRef Bitmap::Create(Bitmap const& source, Rect const& src_rect, bool transparent) {
 	return EASYRPG_MAKE_SHARED<Bitmap>(source, src_rect, transparent);
+}
+
+BitmapRef Bitmap::Create(int width, int height, bool transparent, int scale_factor) {
+	BitmapRef src = EASYRPG_MAKE_SHARED<Bitmap>(width, height, transparent);
+	src = RescaleToDisplay(src, scale_factor);
+	return src;
 }
 
 void Bitmap::InitBitmap() {
@@ -190,10 +205,6 @@ uint8_t* Bitmap::pointer(int x, int y) {
 
 uint8_t const* Bitmap::pointer(int x, int y) const {
 	return (uint8_t const*) pixels() + y * pitch() + x * bytes();
-}
-
-BitmapRef Bitmap::Create(int width, int height, bool transparent, int /* bpp */) {
-	return EASYRPG_MAKE_SHARED<Bitmap>(width, height, transparent);
 }
 
 BitmapRef Bitmap::Create(void *pixels, int width, int height, int pitch, const DynamicFormat& format) {
@@ -512,10 +523,9 @@ Bitmap::Bitmap(void *pixels, int width, int height, int pitch, const DynamicForm
 	Init(width, height, pixels, pitch, false);
 }
 
-Bitmap::Bitmap(const std::string& filename, bool transparent, uint32_t flags, int scale_factor) {
+Bitmap::Bitmap(const std::string& filename, bool transparent, uint32_t flags) {
 	InitBitmap();
 
-	this->scale_factor = scale_factor;
 	format = (transparent ? pixel_format : opaque_pixel_format);
 	pixman_format = find_format(format);
 
