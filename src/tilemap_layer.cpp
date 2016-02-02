@@ -164,7 +164,7 @@ TilemapLayer::TilemapLayer(int ilayer) :
 void TilemapLayer::DrawTile(Bitmap& screen, int x, int y, int row, int col, bool autotile) {
 	if (!autotile && screen.GetTileOpacity(row, col) == Bitmap::Transparent)
 		return;
-	Rect rect(col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+	Rect rect(col * Metrics::ChipSet::TileSize(), row * Metrics::ChipSet::TileSize(), Metrics::ChipSet::TileSize(), Metrics::ChipSet::TileSize());
 
 	BitmapRef dst = DisplayUi->GetDisplaySurface();
 	dst->Blit(x, y, screen, rect, 255);
@@ -174,15 +174,15 @@ void TilemapLayer::Draw(int z_order) {
 	if (!visible) return;
 
 	// Get the number of tiles that can be displayed on window
-	int tiles_x = (int)ceil(Metrics::Display::Width() / (float)TILE_SIZE);
-	int tiles_y = (int)ceil(Metrics::Display::Height() / (float)TILE_SIZE);
+	int tiles_x = (int)ceil(Metrics::Display::Width() / (float)Metrics::ChipSet::TileSize());
+	int tiles_y = (int)ceil(Metrics::Display::Height() / (float)Metrics::ChipSet::TileSize());
 
 	// If ox or oy are not equal to the tile size draw the next tile too
 	// to prevent black (empty) tiles at the borders
-	if (ox % TILE_SIZE != 0) {
+	if (ox % Metrics::ChipSet::TileSize() != 0) {
 		++tiles_x;
 	}
-	if (oy % TILE_SIZE != 0) {
+	if (oy % Metrics::ChipSet::TileSize() != 0) {
 		++tiles_y;
 	}
 
@@ -190,13 +190,13 @@ void TilemapLayer::Draw(int z_order) {
 		for (int y = 0; y < tiles_y; y++) {
 
 			// Get the real maps tile coordinates
-			int map_x = (ox / TILE_SIZE + x + width) % width;
-			int map_y = (oy / TILE_SIZE + y + height) % height;
+			int map_x = (ox / Metrics::ChipSet::TileSize() + x + width) % width;
+			int map_y = (oy / Metrics::ChipSet::TileSize() + y + height) % height;
 
 			if (width <= map_x || height <= map_y) continue;
 
-			int map_draw_x = x * TILE_SIZE - ox % TILE_SIZE;
-			int map_draw_y = y * TILE_SIZE - oy % TILE_SIZE;
+			int map_draw_x = x * Metrics::ChipSet::TileSize() - ox % Metrics::ChipSet::TileSize();
+			int map_draw_y = y * Metrics::ChipSet::TileSize() - oy % Metrics::ChipSet::TileSize();
 
 			// Get the tile data
 			TileData &tile = data_cache[map_x][map_y];
@@ -334,7 +334,7 @@ void TilemapLayer::GenerateAutotileAB(short ID, short animID) {
 
 	// Calculate the B block combination
 	short b_subtile = (ID - block * 1000) / 50;
-	if (b_subtile >= TILE_SIZE) {
+	if (b_subtile >= Metrics::ChipSet::TileSize()) {
 		Output::Warning("Invalid AB autotile ID: %d (b_subtile = %d)",
 						ID, b_subtile);
 		return;
@@ -491,9 +491,9 @@ void TilemapLayer::GenerateAutotileD(short ID) {
 
 BitmapRef TilemapLayer::GenerateAutotiles(int count, const std::map<uint32_t, TileXY>& map) {
 	int rows = (count + TILES_PER_ROW - 1) / TILES_PER_ROW;
-	BitmapRef tiles = Bitmap::Create(TILES_PER_ROW * TILE_SIZE, rows * TILE_SIZE);
+	BitmapRef tiles = Bitmap::Create(TILES_PER_ROW * Metrics::ChipSet::TileSize(), rows * Metrics::ChipSet::TileSize());
 	tiles->Clear();
-	Rect rect(0, 0, TILE_SIZE/2, TILE_SIZE/2);
+	Rect rect(0, 0, Metrics::ChipSet::TileSize()/2, Metrics::ChipSet::TileSize()/2);
 
 	std::map<uint32_t, TileXY>::const_iterator it;
 	for (it = map.begin(); it != map.end(); ++it) {
@@ -509,10 +509,10 @@ BitmapRef TilemapLayer::GenerateAutotiles(int count, const std::map<uint32_t, Ti
 				int y = quarters_hash >> 28;
 				quarters_hash <<= 4;
 				
-				rect.x = (x * 2 + i) * (TILE_SIZE/2);
-				rect.y = (y * 2 + j) * (TILE_SIZE/2);
+				rect.x = (x * 2 + i) * (Metrics::ChipSet::TileSize()/2);
+				rect.y = (y * 2 + j) * (Metrics::ChipSet::TileSize()/2);
 
-				tiles->Blit((dst.x * 2 + i) * (TILE_SIZE / 2), (dst.y * 2 + j) * (TILE_SIZE / 2), *chipset, rect, 255);
+				tiles->Blit((dst.x * 2 + i) * (Metrics::ChipSet::TileSize() / 2), (dst.y * 2 + j) * (Metrics::ChipSet::TileSize() / 2), *chipset, rect, 255);
 			}
 		}
 	}

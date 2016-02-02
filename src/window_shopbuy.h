@@ -21,6 +21,7 @@
 // Headers
 #include <vector>
 #include "window_selectable.h"
+#include "metrics.h"
 
 /**
  * Window Shop Buy Class
@@ -31,7 +32,7 @@ public:
 	/**
 	 * Constructor.
 	 */
-	Window_ShopBuy(int ix, int iy, int iwidth = SCREEN_TARGET_WIDTH, int iheight = 80);
+	Window_ShopBuy(int ix, int iy, int iwidth = Metrics::Display::Width(), int iheight = 80);
 
 	/**
 	 * Gets item ID of the selected item.

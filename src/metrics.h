@@ -30,10 +30,28 @@ namespace Metrics {
 	}
 
 	namespace FaceSet {
-		Rect Get(int face_index);
+		/** Size of the file (width and height) */
+		int Size();
+		/** Size of a single face (width and height) */
+		int FaceSize();
+		/** Boundary rect for index face_index */
+		Rect FaceRect(int face_index);
 	}
 
+	namespace ChipSet {
+		/** Height of the file */
+		int Height();
+		/** Width of the file */
+		int Width();
+		/** Size of a single tile (width and height) */
+		int TileSize();
+	}
 
+	namespace CharSet {
+		int CharHeight();
+		int CharWidth();
+		Rect CharRect(int char_index);
+	}
 }
 
 #endif

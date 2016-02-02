@@ -27,6 +27,7 @@
 #include "game_player.h"
 #include "game_vehicle.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 // Constructor
 Spriteset_Map::Spriteset_Map() :
@@ -62,8 +63,8 @@ Spriteset_Map::Spriteset_Map() :
 
 // Update
 void Spriteset_Map::Update() {
-	tilemap.SetOx(Game_Map::GetDisplayX() / (SCREEN_TILE_WIDTH / TILE_SIZE));
-	tilemap.SetOy(Game_Map::GetDisplayY() / (SCREEN_TILE_WIDTH / TILE_SIZE));
+	tilemap.SetOx(Game_Map::GetDisplayX() / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize()));
+	tilemap.SetOy(Game_Map::GetDisplayY() / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize()));
 	tilemap.Update();
 	for (size_t i = 0; i < character_sprites.size(); i++) {
 		character_sprites[i]->Update();

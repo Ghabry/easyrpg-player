@@ -34,8 +34,8 @@ int Display::Height() {
 	return 480;
 }
 
-Rect FaceSet::Get(int face_index) {
-	const int face_square = 48 * scale();
+Rect FaceSet::FaceRect(int face_index) {
+	int face_square = FaceSize();
 
 	return Rect(
 		(face_index % 4) * face_square,
@@ -43,4 +43,24 @@ Rect FaceSet::Get(int face_index) {
 		face_square,
 		face_square
 	);
+}
+
+int FaceSet::Size() {
+	return FaceSize() * 4;
+}
+
+int FaceSet::FaceSize() {
+	return scale() * 48;
+}
+
+int ChipSet::Width() {
+	return 480 * scale();
+}
+
+int ChipSet::Height() {
+	return 256 * scale();
+}
+
+int ChipSet::TileSize() {
+	return 16 * scale();
 }

@@ -30,6 +30,7 @@
 #include <cmath>
 #include <cassert>
 #include <cstdlib>
+#include "metrics.h"
 
 Game_Character::Game_Character() :
 	tile_id(0),
@@ -149,10 +150,10 @@ void Game_Character::MoveTo(int x, int y) {
 }
 
 int Game_Character::GetScreenX() const {
-	int x = GetRealX() / TILE_SIZE - Game_Map::GetDisplayX() / TILE_SIZE + (TILE_SIZE / 2);
+	int x = GetRealX() / Metrics::ChipSet::TileSize() - Game_Map::GetDisplayX() / Metrics::ChipSet::TileSize() + (Metrics::ChipSet::TileSize() / 2);
 
 	if (Game_Map::LoopHorizontal()) {
-		int map_width = Game_Map::GetWidth() * TILE_SIZE;
+		int map_width = Game_Map::GetWidth() * Metrics::ChipSet::TileSize();
 		x = (x + map_width) % map_width;
 	}
 
@@ -160,10 +161,10 @@ int Game_Character::GetScreenX() const {
 }
 
 int Game_Character::GetScreenY() const {
-	int y = GetRealY() / TILE_SIZE - Game_Map::GetDisplayY() / TILE_SIZE + TILE_SIZE;
+	int y = GetRealY() / Metrics::ChipSet::TileSize() - Game_Map::GetDisplayY() / Metrics::ChipSet::TileSize() + Metrics::ChipSet::TileSize();
 
 	if (Game_Map::LoopVertical()) {
-		int map_height = Game_Map::GetHeight() * TILE_SIZE;
+		int map_height = Game_Map::GetHeight() * Metrics::ChipSet::TileSize();
 		y = (y + map_height) % map_height;
 	}
 

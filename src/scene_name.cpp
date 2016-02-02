@@ -23,7 +23,6 @@
 #include "input.h"
 #include "metrics.h"
 
-
 #include <cassert>
 
 Scene_Name::Scene_Name() :

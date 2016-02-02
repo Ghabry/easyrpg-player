@@ -29,6 +29,7 @@
 #include "battle_animation.h"
 #include "baseui.h"
 #include "spriteset_battle.h"
+#include "metrics.h"
 
 BattleAnimation::BattleAnimation(const RPG::Animation& anim) :
 	animation(anim), frame(0), z(1500), frame_update(false), large(false)
@@ -277,10 +278,10 @@ void BattleAnimationGlobal::Draw() {
 	// The animations are played at the vertices of a regular grid,
 	// 20 tiles wide by 10 tiles high, independant of the map.
 	// NOTE: not accurate, but see #574
-	const int x_stride = 20 * TILE_SIZE;
-	const int y_stride = 10 * TILE_SIZE;
-	int x_offset = (Game_Map::GetDisplayX()/TILE_SIZE) % x_stride;
-	int y_offset = (Game_Map::GetDisplayY()/TILE_SIZE) % y_stride;
+	const int x_stride = 20 * Metrics::ChipSet::TileSize();
+	const int y_stride = 10 * Metrics::ChipSet::TileSize();
+	int x_offset = (Game_Map::GetDisplayX()/Metrics::ChipSet::TileSize()) % x_stride;
+	int y_offset = (Game_Map::GetDisplayY()/Metrics::ChipSet::TileSize()) % y_stride;
 	for (int y = 0; y != 3; ++y) {
 		for (int x = 0; x != 3; ++x) {
 			DrawAt(x_stride*x - x_offset, y_stride*y - y_offset);

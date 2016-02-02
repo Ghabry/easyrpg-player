@@ -344,7 +344,7 @@ void Game_Map::ScrollDown(int distance) {
 				parallax_y -= distance / 2;
 			else if (!LoopVertical() && GetHeight() > 15 && parallax_height > Metrics::Display::Height())
 				parallax_y -=
-					std::min(distance, distance * (parallax_height - (int)Metrics::Display::Height()) / (GetHeight() - 15) / (SCREEN_TILE_WIDTH / TILE_SIZE));
+					std::min(distance, distance * (parallax_height - (int)Metrics::Display::Height()) / (GetHeight() - 15) / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize()));
 		}
 	}
 }
@@ -361,7 +361,7 @@ void Game_Map::ScrollLeft(int distance) {
 				parallax_x += distance / 2;
 			else if (!LoopHorizontal() && GetWidth() > 20 && parallax_width > Metrics::Display::Width())
 				parallax_x +=
-					std::min(distance, distance * (parallax_width - (int)Metrics::Display::Width()) / (GetWidth() - 20) / (SCREEN_TILE_WIDTH / TILE_SIZE));
+					std::min(distance, distance * (parallax_width - (int)Metrics::Display::Width()) / (GetWidth() - 20) / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize()));
 		}
 	}
 }
@@ -378,7 +378,7 @@ void Game_Map::ScrollRight(int distance) {
 				parallax_x -= distance / 2;
 			else if (!LoopHorizontal() && GetWidth() > 20 && parallax_width > Metrics::Display::Width())
 				parallax_x -=
-					std::min(distance, distance * (parallax_width - (int)Metrics::Display::Width()) / (GetWidth() - 20) / (SCREEN_TILE_WIDTH / TILE_SIZE));
+					std::min(distance, distance * (parallax_width - (int)Metrics::Display::Width()) / (GetWidth() - 20) / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize()));
 		}
 	}
 }
@@ -395,7 +395,7 @@ void Game_Map::ScrollUp(int distance) {
 				parallax_y += distance / 2;
 			else if (!LoopVertical() && GetHeight() > 15 && parallax_height > Metrics::Display::Height())
 				parallax_y +=
-					std::min(distance, distance * (parallax_height - (int)Metrics::Display::Height()) / (GetHeight() - 15) / (SCREEN_TILE_WIDTH / TILE_SIZE));
+					std::min(distance, distance * (parallax_height - (int)Metrics::Display::Height()) / (GetHeight() - 15) / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize()));
 		}
 	}
 }
@@ -982,7 +982,7 @@ void Game_Map::InitializeParallax() {
 		parallax_x = -map_info.position_x / 2;
 	else if (GetWidth() > 20 && parallax_width > Metrics::Display::Width())
 		parallax_x = -std::min(map_info.position_x,
-			(map_info.position_x / (SCREEN_TILE_WIDTH / TILE_SIZE)) * (parallax_width - (int)Metrics::Display::Width()) / (GetWidth() - 20));
+			(map_info.position_x / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize())) * (parallax_width - (int)Metrics::Display::Width()) / (GetWidth() - 20));
 	else
 		parallax_x = 0;
 
@@ -990,7 +990,7 @@ void Game_Map::InitializeParallax() {
 		parallax_y = -map_info.position_y / 2;
 	else if (GetHeight() > 15 && parallax_height > Metrics::Display::Height())
 		parallax_y = -std::min(map_info.position_y,
-			(map_info.position_y / (SCREEN_TILE_WIDTH / TILE_SIZE)) * (parallax_height - (int)Metrics::Display::Height()) / (GetHeight() - 15));
+			(map_info.position_y / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize())) * (parallax_height - (int)Metrics::Display::Height()) / (GetHeight() - 15));
 	else
 		parallax_y = 0;
 }
@@ -1157,11 +1157,11 @@ void Game_Map::UpdateParallax() {
 }
 
 int Game_Map::GetParallaxX() {
-	return parallax_x / TILE_SIZE;
+	return parallax_x / Metrics::ChipSet::TileSize();
 }
 
 int Game_Map::GetParallaxY() {
-	return parallax_y / TILE_SIZE;
+	return parallax_y / Metrics::ChipSet::TileSize();
 }
 
 const std::string& Game_Map::GetParallaxName() {

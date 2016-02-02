@@ -27,6 +27,7 @@
 #include "bitmap.h"
 #include "font.h"
 #include "player.h"
+#include "metrics.h"
 
 Window_Base::Window_Base(int x, int y, int width, int height) {
 	windowskin_name = Game_System::GetSystemName();
@@ -55,12 +56,7 @@ void Window_Base::Update() {
 void Window_Base::OnFaceReady(FileRequestResult* result, int face_index, int cx, int cy, bool flip) {
 	BitmapRef faceset = Cache::Faceset(result->file);
 
-	Rect src_rect(
-		(face_index % 4) * 48,
-		face_index / 4 * 48,
-		48,
-		48
-		);
+	Rect src_rect = Metrics::FaceSet::FaceRect(face_index);
 
 	if (flip) {
 		contents->FlipBlit(cx, cy, *faceset, src_rect, true, false, Opacity::opaque);

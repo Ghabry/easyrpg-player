@@ -256,20 +256,20 @@ bool Game_Player::IsTeleporting() const {
 }
 
 void Game_Player::Center(int x, int y) {
-	int center_x = (Metrics::Display::Width() / (TILE_SIZE / 16) - TILE_SIZE * 2) * 8 - Game_Map::GetPanX();
-	int center_y = (Metrics::Display::Height() / (TILE_SIZE / 16) - TILE_SIZE) * 8 - Game_Map::GetPanY();
+	int center_x = (Metrics::Display::Width() / (Metrics::ChipSet::TileSize() / 16) - Metrics::ChipSet::TileSize() * 2) * 8 - Game_Map::GetPanX();
+	int center_y = (Metrics::Display::Height() / (Metrics::ChipSet::TileSize() / 16) - Metrics::ChipSet::TileSize()) * 8 - Game_Map::GetPanY();
 
 	if (Game_Map::LoopHorizontal()) {
 		Game_Map::SetDisplayX(x*SCREEN_TILE_WIDTH - center_x);
 	} else {
-		int max_x = (Game_Map::GetWidth() - Metrics::Display::Width() / TILE_SIZE) * SCREEN_TILE_WIDTH;
+		int max_x = (Game_Map::GetWidth() - Metrics::Display::Width() / Metrics::ChipSet::TileSize()) * SCREEN_TILE_WIDTH;
 		Game_Map::SetDisplayX(max(0, min((x * SCREEN_TILE_WIDTH - center_x), max_x)));
 	}
 
 	if (Game_Map::LoopVertical()) {
 		Game_Map::SetDisplayY(y * SCREEN_TILE_WIDTH - center_y);
 	} else {
-		int max_y = (Game_Map::GetHeight() - Metrics::Display::Height() / TILE_SIZE) * SCREEN_TILE_WIDTH;
+		int max_y = (Game_Map::GetHeight() - Metrics::Display::Height() / Metrics::ChipSet::TileSize()) * SCREEN_TILE_WIDTH;
 		Game_Map::SetDisplayY(max(0, min((y * SCREEN_TILE_WIDTH - center_y), max_y)));
 	}
 }
@@ -283,8 +283,8 @@ void Game_Player::MoveTo(int x, int y) {
 }
 
 void Game_Player::UpdateScroll() {
-	int center_x = Metrics::Display::Width() / 2 - TILE_SIZE / 2 - Game_Map::GetPanX() / (SCREEN_TILE_WIDTH / TILE_SIZE);
-	int center_y = Metrics::Display::Height() / 2 + TILE_SIZE / 2 - Game_Map::GetPanY() / (SCREEN_TILE_WIDTH / TILE_SIZE);
+	int center_x = Metrics::Display::Width() / 2 - Metrics::ChipSet::TileSize() / 2 - Game_Map::GetPanX() / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize());
+	int center_y = Metrics::Display::Height() / 2 + Metrics::ChipSet::TileSize() / 2 - Game_Map::GetPanY() / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize());
 	int dx = 0;
 	int dy = 0;
 

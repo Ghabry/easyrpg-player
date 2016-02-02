@@ -24,6 +24,7 @@
 #include "game_picture.h"
 #include "player.h"
 #include "main_data.h"
+#include "metrics.h"
 
 /**
  * Picture class.
@@ -205,13 +206,13 @@ void Game_Picture::Update() {
 		// based on map scroll because of savegame compatibility with RPG_RT
 
 		if (old_map_x != Game_Map::GetDisplayX()) {
-			int mx = (old_map_x - Game_Map::GetDisplayX()) / TILE_SIZE;
+			int mx = (old_map_x - Game_Map::GetDisplayX()) / Metrics::ChipSet::TileSize();
 
 			data.finish_x += mx;
 			data.current_x += mx;
 		}
 		if (old_map_y != Game_Map::GetDisplayY()) {
-			int my = (old_map_y - Game_Map::GetDisplayY()) / TILE_SIZE;
+			int my = (old_map_y - Game_Map::GetDisplayY()) / Metrics::ChipSet::TileSize();
 
 			data.finish_y += my;
 			data.current_y += my;

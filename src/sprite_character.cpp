@@ -21,13 +21,14 @@
 #include "cache.h"
 #include "game_map.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 Sprite_Character::Sprite_Character(Game_Character* character) :
 	character(character),
 	tile_id(0),
 	character_index(0),
-	chara_width(24*(TILE_SIZE/16)),
-	chara_height(32*(TILE_SIZE/16)),
+	chara_width(24*(Metrics::ChipSet::TileSize()/16)),
+	chara_height(32*(Metrics::ChipSet::TileSize()/16)),
 	tile_request(NULL),
 	char_request(NULL) {
 	Update();
@@ -112,7 +113,7 @@ void Sprite_Character::OnTileSpriteReady(FileRequestResult*) {
 	SetBitmap(tile);
 
 	Rect r;
-	r.Set(0, 0, TILE_SIZE, TILE_SIZE);
+	r.Set(0, 0, Metrics::ChipSet::TileSize(), Metrics::ChipSet::TileSize());
 	SetSrcRect(r);
 	SetOx(8);
 	SetOy(16);

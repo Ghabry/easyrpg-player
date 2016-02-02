@@ -24,12 +24,13 @@
 #include "main_data.h"
 #include "sprite_airshipshadow.h"
 #include <string>
+#include "metrics.h"
 
 Sprite_AirshipShadow::Sprite_AirshipShadow() {
 	SetBitmap(Bitmap::Create(16,16));
 
-	SetOx(TILE_SIZE/2);
-	SetOy(TILE_SIZE);
+	SetOx(Metrics::ChipSet::TileSize()/2);
+	SetOy(Metrics::ChipSet::TileSize());
 
 	RecreateShadow();
 }
@@ -64,7 +65,7 @@ void Sprite_AirshipShadow::Update() {
 	Game_Vehicle* airship = Game_Map::GetVehicle(Game_Vehicle::Airship);
 
 	const int altitude = airship->GetAltitude();
-	const int max_altitude = TILE_SIZE;
+	const int max_altitude = Metrics::ChipSet::TileSize();
 	const double opacity = (double)altitude / max_altitude;
 	SetOpacity(opacity * 255);
 

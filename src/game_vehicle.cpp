@@ -23,6 +23,7 @@
 #include "game_player.h"
 #include "game_vehicle.h"
 #include "output.h"
+#include "metrics.h"
 
 Game_Vehicle::Game_Vehicle(Type _type) :
 	data(_type == Boat ? Main_Data::game_data.boat_location :
@@ -354,11 +355,11 @@ int Game_Vehicle::GetAltitude() const {
 	if (!data.flying)
 		return 0;
 	else if (IsAscending())
-		return (SCREEN_TILE_WIDTH - data.remaining_ascent) / (SCREEN_TILE_WIDTH / TILE_SIZE);
+		return (SCREEN_TILE_WIDTH - data.remaining_ascent) / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize());
 	else if (IsDescending())
-		return data.remaining_descent / (SCREEN_TILE_WIDTH / TILE_SIZE);
+		return data.remaining_descent / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize());
 	else
-		return SCREEN_TILE_WIDTH / (SCREEN_TILE_WIDTH / TILE_SIZE);
+		return SCREEN_TILE_WIDTH / (SCREEN_TILE_WIDTH / Metrics::ChipSet::TileSize());
 }
 
 int Game_Vehicle::GetScreenY() const {
