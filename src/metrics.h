@@ -52,6 +52,19 @@ namespace Metrics {
 		int CharWidth();
 		Rect CharRect(int char_index);
 	}
+
+	namespace System {
+		namespace Border {
+			Rect Top(int which);
+			Rect Bottom(int which);
+			Rect Left(int which);
+			Rect Right(int which);
+			Rect TopLeft(int which);
+			Rect TopRight(int which);
+			Rect BottomLeft(int which);
+			Rect BottomRight(int which);
+		}
+	}
 }
 
 #endif

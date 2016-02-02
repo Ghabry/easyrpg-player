@@ -170,3 +170,16 @@ void Rect::Halve() {
 	height /= 2;
 }
 
+void Rect::Add(int i) {
+	x += i;
+	y += i;
+	width += i;
+	height += i;
+}
+
+void Rect::Multiply(int i) {
+	x *= i;
+	y *= i;
+	width *= i;
+	height *= i;
+}

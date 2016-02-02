@@ -17,6 +17,7 @@
 
 #include "metrics.h"
 #include "baseui.h"
+#include <cassert>
 
 using namespace Metrics;
 
@@ -64,3 +65,53 @@ int ChipSet::Height() {
 int ChipSet::TileSize() {
 	return 16 * scale();
 }
+
+Rect System::Border::Top(int which) {
+	assert(which >= 0 && which <= 2);
+	Rect r(32 * (which + 1) + 8, 0, 16, 8);
+	r.Multiply(scale());
+	return r;
+}
+
+Rect System::Border::Bottom(int which) {
+	Rect r(32 * (which + 1) + 8, 32 - 8, 16, 8);
+	r.Multiply(scale());
+	return r;
+}
+
+Rect System::Border::Left(int which) {
+	Rect r(32 * (which + 1), 8, 8, 16);
+	r.Multiply(scale());
+	return r;
+}
+
+Rect System::Border::Right(int which) {
+	Rect r(64 * (which + 1) - 8, 8, 8, 16);
+	r.Multiply(scale());
+	return r;
+}
+
+Rect System::Border::TopLeft(int which) {
+	Rect r(32 * (which + 1), 0, 8, 8);
+	r.Multiply(scale());
+	return r;
+}
+
+Rect System::Border::TopRight(int which) {
+	Rect r(64 * (which + 1) - 8, 0, 8, 8);
+	r.Multiply(scale());
+	return r;
+}
+
+Rect System::Border::BottomLeft(int which) {
+	Rect r(32 * (which + 1), 32 - 8, 8, 8);
+	r.Multiply(scale());
+	return r;
+}
+
+Rect System::Border::BottomRight(int which) {
+	Rect r((64 - 8) * (which + 1), 32 - 8, 8, 8);
+	r.Multiply(scale());
+	return r;
+}
+

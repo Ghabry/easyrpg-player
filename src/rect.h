@@ -143,6 +143,18 @@ public:
 	 * Halves the coordinates of a rectangle.
 	 */
 	void Halve();
+
+	/**
+	 * Adds i to all coordinates of a rectangle.
+	 * @param i add value
+	 */
+	void Add(int i);
+
+	/**
+	 * Multiplies i to all coordinates of a rectangle.
+	 * @param i multiplier
+	 */
+	void Multiply(int i);
 };
 
 #endif

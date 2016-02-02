@@ -100,6 +100,8 @@ void Window::Draw() {
 	BitmapRef dst = DisplayUi->GetDisplaySurface();
 
 	if (windowskin) {
+		int scale = DisplayUi->GetScaleFactor();
+
 		if (width > 4 && height > 4 && (back_opacity * opacity / 255 > 0)) {
 			if (background_needs_refresh) RefreshBackground();
 
@@ -136,7 +138,7 @@ void Window::Draw() {
 				dst->Blit(x, y, *frame_up, frame_up->GetRect(), opacity);
 				dst->Blit(x, y + height - 8, *frame_down, frame_down->GetRect(), opacity);
 				dst->Blit(x, y + 8, *frame_left, frame_left->GetRect(), opacity);
-				dst->Blit(x + width - 8, y + 8, *frame_right, frame_right->GetRect(), opacity);
+				dst->Blit(x + (width - 8) * scale, y + (8 * scale), *frame_right, frame_right->GetRect(), opacity);
 			}
 		}
 
@@ -190,12 +192,14 @@ void Window::Draw() {
 void Window::RefreshBackground() {
 	background_needs_refresh = false;
 
-	BitmapRef bitmap = Bitmap::Create(width, height, false);
+	BitmapRef bitmap = Bitmap::Create(width, height, false, 1);
+
+	int scale = DisplayUi->GetScaleFactor();
 
 	if (stretch) {
-		bitmap->StretchBlit(*windowskin, Rect(0, 0, 32, 32), 255);
+		bitmap->StretchBlit(*windowskin, Rect(0, 0, 32*scale, 32*scale), 255);
 	} else {
-		bitmap->TiledBlit(Rect(0, 0, 16, 16), *windowskin, bitmap->GetRect(), 255);
+		bitmap->TiledBlit(Rect(0, 0, 16*scale, 16*scale), *windowskin, bitmap->GetRect(), 255);
 	}
 
 	background = bitmap;
@@ -204,8 +208,8 @@ void Window::RefreshBackground() {
 void Window::RefreshFrame() {
 	frame_needs_refresh = false;
 
-	BitmapRef up_bitmap = Bitmap::Create(width, 8);
-	BitmapRef down_bitmap = Bitmap::Create(width, 8);
+	BitmapRef up_bitmap = Bitmap::Create(width, 8, true, 1);
+	BitmapRef down_bitmap = Bitmap::Create(width, 8, true, 1);
 
 	up_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
 	down_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
@@ -213,36 +217,41 @@ void Window::RefreshFrame() {
 	up_bitmap->Clear();
 	down_bitmap->Clear();
 
+	int scale = DisplayUi->GetScaleFactor();
+
 	Rect src_rect, dst_rect;
 
 	// Border Up
-	src_rect.Set(32 + 8, 0, 16, 8);
+	src_rect = Metrics::System::Border::Top(0);
 	dst_rect.Set(8, 0, max(width - 16, 1), 8);
+	dst_rect.Multiply(scale);
+
 	up_bitmap->TiledBlit(8, 0, src_rect, *windowskin, dst_rect, 255);
 
 	// Border Down
-	src_rect.Set(32 + 8, 32 - 8, 16, 8);
+	src_rect = Metrics::System::Border::Bottom(0);
 	dst_rect.Set(8, 0, max(width - 16, 1), 8);
+	dst_rect.Multiply(scale);
 	down_bitmap->TiledBlit(8, 0, src_rect, *windowskin, dst_rect, 255);
 
 	// Upper left corner
-	up_bitmap->Blit(0, 0, *windowskin, Rect(32, 0, 8, 8), 255);
+	up_bitmap->Blit(0, 0, *windowskin, Metrics::System::Border::TopLeft(0), 255);
 
 	// Upper right corner
-	up_bitmap->Blit(width - 8, 0, *windowskin, Rect(64 - 8, 0, 8, 8), 255);
+	up_bitmap->Blit(width - 8, 0, *windowskin, Metrics::System::Border::TopRight(0), 255);
 
 	// Lower left corner
-	down_bitmap->Blit(0, 0, *windowskin, Rect(32, 32 - 8, 8, 8), 255);
+	down_bitmap->Blit(0, 0, *windowskin, Metrics::System::Border::BottomLeft(0), 255);
 
 	// Lower right corner
-	down_bitmap->Blit(width - 8, 0, *windowskin, Rect(64 - 8, 32 - 8, 8, 8), 255);
+	down_bitmap->Blit(width - 8, 0, *windowskin, Metrics::System::Border::BottomRight(0), 255);
 
 	frame_up = up_bitmap;
 	frame_down = down_bitmap;
 
 	if (height > 16) {
-		BitmapRef left_bitmap = Bitmap::Create(8, height - 16);
-		BitmapRef right_bitmap = Bitmap::Create(8, height - 16);
+		BitmapRef left_bitmap = Bitmap::Create(8, height - 16, true, 1);
+		BitmapRef right_bitmap = Bitmap::Create(8, height - 16, true, 1);
 
 		left_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
 		right_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
@@ -251,13 +260,15 @@ void Window::RefreshFrame() {
 		right_bitmap->Clear();
 
 		// Border Left
-		src_rect.Set(32, 8, 8, 16);
+		src_rect = Metrics::System::Border::Left(0);
 		dst_rect.Set(0, 0, 8, height - 16);
+		dst_rect.Multiply(scale);
 		left_bitmap->TiledBlit(0, 8, src_rect, *windowskin, dst_rect, 255);
 
 		// Border Right
-		src_rect.Set(64 - 8, 8, 8, 16);
+		src_rect = Metrics::System::Border::Right(0);
 		dst_rect.Set(0, 0, 8, height - 16);
+		dst_rect.Multiply(scale);
 		right_bitmap->TiledBlit(0, 8, src_rect, *windowskin, dst_rect, 255);
 
 		frame_left = left_bitmap;
@@ -285,44 +296,51 @@ void Window::RefreshCursor() {
 
 	Rect dst_rect;
 
+	int scale = DisplayUi->GetScaleFactor();
+
 	// Border Up
 	dst_rect.Set(8, 0, cw - 16, 8);
-	cursor1_bitmap->TiledBlit(8, 0, Rect(64 + 8, 0, 16, 8), *windowskin, dst_rect, 255);
-	cursor2_bitmap->TiledBlit(8, 0, Rect(96 + 8, 0, 16, 8), *windowskin, dst_rect, 255);
+	dst_rect.Multiply(scale);
+	cursor1_bitmap->TiledBlit(8, 0, Metrics::System::Border::Top(1), *windowskin, dst_rect, 255);
+	cursor2_bitmap->TiledBlit(8, 0, Metrics::System::Border::Top(2), *windowskin, dst_rect, 255);
 
 	// Border Down
 	dst_rect.Set(8, ch - 8, cw - 16, 8);
-	cursor1_bitmap->TiledBlit(8, 0, Rect(64 + 8, 32 - 8, 16, 8), *windowskin, dst_rect, 255);
-	cursor2_bitmap->TiledBlit(8, 0, Rect(96 + 8, 32 - 8, 16, 8), *windowskin, dst_rect, 255);
+	dst_rect.Multiply(scale);
+	cursor1_bitmap->TiledBlit(8, 0, Metrics::System::Border::Bottom(1), *windowskin, dst_rect, 255);
+	cursor2_bitmap->TiledBlit(8, 0, Metrics::System::Border::Bottom(2), *windowskin, dst_rect, 255);
 
 	// Border Left
 	dst_rect.Set(0, 8, 8, ch - 16);
-	cursor1_bitmap->TiledBlit(0, 8, Rect(64, 8, 8, 16), *windowskin, dst_rect, 255);
-	cursor2_bitmap->TiledBlit(0, 8, Rect(96, 8, 8, 16), *windowskin, dst_rect, 255);
+	dst_rect.Multiply(scale);
+	cursor1_bitmap->TiledBlit(0, 8, Metrics::System::Border::Left(1), *windowskin, dst_rect, 255);
+	cursor2_bitmap->TiledBlit(0, 8, Metrics::System::Border::Left(2), *windowskin, dst_rect, 255);
 
 	// Border Right
 	dst_rect.Set(cw - 8, 8, 8, ch - 16);
-	cursor1_bitmap->TiledBlit(0, 8, Rect(96 - 8, 8, 8, 16), *windowskin, dst_rect, 255);
-	cursor2_bitmap->TiledBlit(0, 8, Rect(128 - 8, 8, 8, 16), *windowskin, dst_rect, 255);
+	dst_rect.Multiply(scale);
+	cursor1_bitmap->TiledBlit(0, 8, Metrics::System::Border::Right(1), *windowskin, dst_rect, 255);
+	cursor2_bitmap->TiledBlit(0, 8, Metrics::System::Border::Right(2), *windowskin, dst_rect, 255);
 
 	// Upper left corner
-	cursor1_bitmap->Blit(0, 0, *windowskin, Rect(64, 0, 8, 8), 255);
-	cursor2_bitmap->Blit(0, 0, *windowskin, Rect(96, 0, 8, 8), 255);
+	cursor1_bitmap->Blit(0, 0, *windowskin, Metrics::System::Border::TopLeft(1), 255);
+	cursor2_bitmap->Blit(0, 0, *windowskin, Metrics::System::Border::TopLeft(2), 255);
 
 	// Upper right corner
-	cursor1_bitmap->Blit(cw - 8, 0, *windowskin, Rect(96 - 8, 0, 8, 8), 255);
-	cursor2_bitmap->Blit(cw - 8, 0, *windowskin, Rect(128 - 8, 0, 8, 8), 255);
+	cursor1_bitmap->Blit(cw - 8, 0, *windowskin, Metrics::System::Border::TopRight(1), 255);
+	cursor2_bitmap->Blit(cw - 8, 0, *windowskin, Metrics::System::Border::TopRight(2), 255);
 
 	// Lower left corner
-	cursor1_bitmap->Blit(0, ch - 8, *windowskin, Rect(64, 32 - 8, 8, 8), 255);
-	cursor2_bitmap->Blit(0, ch - 8, *windowskin, Rect(96, 32 - 8, 8, 8), 255);
+	cursor1_bitmap->Blit(0, ch - 8, *windowskin, Metrics::System::Border::BottomLeft(1), 255);
+	cursor2_bitmap->Blit(0, ch - 8, *windowskin, Metrics::System::Border::BottomLeft(2), 255);
 
 	// Lower right corner
-	cursor1_bitmap->Blit(cw - 8, ch - 8, *windowskin, Rect(96 - 8, 32 - 8, 8, 8), 255);
-	cursor2_bitmap->Blit(cw - 8, ch - 8, *windowskin, Rect(128 - 8, 32 - 8, 8, 8), 255);
+	cursor1_bitmap->Blit(cw - 8, ch - 8, *windowskin, Metrics::System::Border::BottomRight(1), 255);
+	cursor2_bitmap->Blit(cw - 8, ch - 8, *windowskin, Metrics::System::Border::BottomRight(2), 255);
 
 	// Background
 	dst_rect.Set(8, 8, cw - 16, ch - 16);
+	dst_rect.Multiply(scale);
 	cursor1_bitmap->TiledBlit(8, 8, Rect(64 + 8, 8, 16, 16), *windowskin, dst_rect, 255);
 	cursor2_bitmap->TiledBlit(8, 8, Rect(96 + 8, 8, 16, 16), *windowskin, dst_rect, 255);
 
