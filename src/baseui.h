@@ -166,6 +166,8 @@ public:
 	 */
 	long GetHeight() const;
 
+	long GetScaleFactor() const;
+
 	/**
 	 * Gets whether mouse is hovering the display.
 	 *

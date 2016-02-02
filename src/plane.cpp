@@ -20,6 +20,7 @@
 #include "graphics.h"
 #include "player.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 Plane::Plane() :
 	type(TypePlane),
@@ -39,7 +40,7 @@ void Plane::Draw() {
 	if (!visible || !bitmap) return;
 
 	BitmapRef dst = DisplayUi->GetDisplaySurface();
-	Rect dst_rect(0, 0, DisplayUi->GetWidth(), DisplayUi->GetHeight());
+	Rect dst_rect(0, 0, Metrics::Display::Width(), Metrics::Display::Height());
 
 	dst->TiledBlit(-ox, -oy, bitmap->GetRect(), *bitmap, dst_rect, 255);
 }

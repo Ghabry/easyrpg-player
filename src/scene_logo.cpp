@@ -917,7 +917,13 @@ Scene_Logo::Scene_Logo() :
 void Scene_Logo::Start() {
 	logo.reset(new Sprite());
 	if (!Player::debug_flag) {
-		logo_img = Bitmap::Create(easyrpg_logo, sizeof(easyrpg_logo), false);
+		BitmapRef lg = Bitmap::Create(easyrpg_logo, sizeof(easyrpg_logo), false);
+		if (DisplayUi->GetScaleFactor() != 1) {
+			logo_img = Bitmap::Create(640, 480);
+			logo_img->Blit2x(logo_img->GetRect(), *lg, lg->GetRect());
+		} else {
+			logo_img = lg;
+		}
 		logo->SetBitmap(logo_img);
 	}
 }
@@ -950,13 +956,21 @@ void Scene_Logo::Update() {
 			FileFinder::SetDirectoryTree(FileFinder::CreateDirectoryTree(Main_Data::GetProjectPath()));
 			Player::CreateGameObjects();
 			is_valid = true;
+
+			if (!Player::debug_flag) {
+				std::string img = FileFinder::FindImage("hires", "Logo");
+				if (!img.empty()) {
+					logo_img = Bitmap::Create(img, false, 0, 2);
+					logo->SetBitmap(logo_img);
+				}
+			}
 		}
 	}
 
 	++frame_counter;
 
 	if (Player::debug_flag ||
-		frame_counter == 60 ||
+		frame_counter == 300 ||
 		Input::IsTriggered(Input::DECISION) ||
 		Input::IsTriggered(Input::CANCEL)) {
 

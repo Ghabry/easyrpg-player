@@ -26,6 +26,7 @@
 #include "player.h"
 #include "rpg_skill.h"
 #include "util_macro.h"
+#include "metrics.h"
 
 static int max_hp_value() {
 	return Player::IsRPG2k() ? 999 : 9999;
@@ -671,19 +672,19 @@ int Game_Actor::GetBattleX() const {
 		switch (Game_Battle::GetBattleMode()) {
 			case Game_Battle::BattleNormal:
 			case Game_Battle::BattleInitiative:
-				return SCREEN_TARGET_WIDTH - position;
+				return Metrics::Display::Width() - position;
 			case Game_Battle::BattleBackAttack:
 				return position;
 			case Game_Battle::BattlePincer:
 			case Game_Battle::BattleSurround:
 				// ToDo: Correct position
-				return SCREEN_TARGET_WIDTH - position;
+				return Metrics::Display::Width() - position;
 		}
 	}
 	else {
 		//Output::Debug("%d %d %d %d", Data::terrains[0].grid_a, Data::terrains[0].grid_b, Data::terrains[0].grid_c, Data::terrains[0].grid_location);
 
-		position = (Data::actors[data.ID - 1].battle_x*SCREEN_TARGET_WIDTH / 320);
+		position = (Data::actors[data.ID - 1].battle_x*Metrics::Display::Width() / 320);
 	}
 
 	return position;
@@ -745,7 +746,7 @@ int Game_Actor::GetBattleY() const {
 		position -= 24;
 	}
 	else {
-		position = (Data::actors[data.ID - 1].battle_y*SCREEN_TARGET_HEIGHT / 240);
+		position = (Data::actors[data.ID - 1].battle_y*Metrics::Display::Height() / 240);
 	}
 
 	return (int)position;

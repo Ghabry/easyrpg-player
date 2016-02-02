@@ -24,12 +24,6 @@
     <Filter Include="Source Files\Engine\Window">
       <UniqueIdentifier>{c9afd51c-09bc-486d-ad90-cccec101e659}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Tools">
-      <UniqueIdentifier>{5c38e5d1-df70-4c50-8e06-d9e813ecfdfa}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Tools\Filefinder">
-      <UniqueIdentifier>{1ac112ed-4c8f-45bf-85d2-1ebc5098935f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Settings">
       <UniqueIdentifier>{36029a79-f366-4072-aafe-fe9606e929ec}</UniqueIdentifier>
     </Filter>
@@ -50,6 +44,12 @@
     </Filter>
     <Filter Include="Source Files\Shinonome">
       <UniqueIdentifier>{0c60afba-b3ff-41a5-ae63-beea5838ba61}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utils">
+      <UniqueIdentifier>{5c38e5d1-df70-4c50-8e06-d9e813ecfdfa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Utils\Filefinder">
+      <UniqueIdentifier>{1ac112ed-4c8f-45bf-85d2-1ebc5098935f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -368,16 +368,16 @@
       <Filter>Source Files\Engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\filefinder.cpp">
-      <Filter>Source Files\Tools\Filefinder</Filter>
+      <Filter>Source Files\Utils\Filefinder</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\util_win.cpp">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\output.cpp">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\utils.cpp">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\player.cpp">
       <Filter>Source Files\Engine</Filter>
@@ -392,7 +392,7 @@
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\registry.cpp">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\scene_debug.cpp">
       <Filter>Source Files\Engine\Scene</Filter>
@@ -459,6 +459,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\frame.cpp">
       <Filter>Source Files\Backend\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\metrics.cpp">
+      <Filter>Source Files\Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -775,22 +778,22 @@
       <Filter>Source Files\Engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\filefinder.h">
-      <Filter>Source Files\Tools\Filefinder</Filter>
+      <Filter>Source Files\Utils\Filefinder</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\dirent_win.h">
-      <Filter>Source Files\Tools\Filefinder</Filter>
+      <Filter>Source Files\Utils\Filefinder</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\util_win.h">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\output.h">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\util_macro.h">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\utils.h">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\system.h">
       <Filter>Source Files\Settings</Filter>
@@ -820,7 +823,7 @@
       <Filter>Source Files\Backend\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\registry.h">
-      <Filter>Source Files\Tools</Filter>
+      <Filter>Source Files\Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\scene_debug.h">
       <Filter>Source Files\Engine\Scene</Filter>
@@ -890,6 +893,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\frame.h">
       <Filter>Source Files\Backend\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\metrics.h">
+      <Filter>Source Files\Utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

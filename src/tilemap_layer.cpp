@@ -24,6 +24,8 @@
 #include "player.h"
 #include "map_data.h"
 #include "bitmap.h"
+#include "metrics.h"
+
 
 // Blocks subtiles IDs
 // Mess with this code and you will die in 3 days...
@@ -172,8 +174,8 @@ void TilemapLayer::Draw(int z_order) {
 	if (!visible) return;
 
 	// Get the number of tiles that can be displayed on window
-	int tiles_x = (int)ceil(DisplayUi->GetWidth() / (float)TILE_SIZE);
-	int tiles_y = (int)ceil(DisplayUi->GetHeight() / (float)TILE_SIZE);
+	int tiles_x = (int)ceil(Metrics::Display::Width() / (float)TILE_SIZE);
+	int tiles_y = (int)ceil(Metrics::Display::Height() / (float)TILE_SIZE);
 
 	// If ox or oy are not equal to the tile size draw the next tile too
 	// to prevent black (empty) tiles at the borders

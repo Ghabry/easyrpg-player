@@ -20,8 +20,6 @@
 #include <sstream>
 #include <vector>
 #include "baseui.h"
-#include "cache.h"
-#include "data.h"
 #include "game_system.h"
 #include "game_party.h"
 #include "input.h"
@@ -30,7 +28,7 @@
 #include "rpg_save.h"
 #include "scene_file.h"
 #include "bitmap.h"
-#include "reader_util.h"
+#include "metrics.h"
 
 Scene_File::Scene_File(std::string message) :
 	help_window(NULL), message(message), latest_time(0), latest_slot(0) {
@@ -40,7 +38,7 @@ Scene_File::Scene_File(std::string message) :
 
 void Scene_File::Start() {
 	// Create the windows
-	help_window.reset(new Window_Help(0, 0, SCREEN_TARGET_WIDTH, 32));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
 	help_window->SetText(message);
 
 	// Refresh File Finder Save Folder
@@ -48,7 +46,7 @@ void Scene_File::Start() {
 
 	for (int i = 0; i < 15; i++) {
 		EASYRPG_SHARED_PTR<Window_SaveFile>
-			w(new Window_SaveFile(0, 40 + i * 64, SCREEN_TARGET_WIDTH, 64));
+			w(new Window_SaveFile(0, 40 + i * 64, Metrics::Display::Width(), 64));
 		w->SetIndex(i);
 
 		// Try to access file

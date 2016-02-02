@@ -19,12 +19,11 @@
 #include "scene_skill.h"
 #include "game_map.h"
 #include "game_party.h"
-#include "game_switches.h"
 #include "game_system.h"
 #include "input.h"
 #include "scene_actortarget.h"
 #include "scene_map.h"
-#include "scene_menu.h"
+#include "metrics.h"
 
 Scene_Skill::Scene_Skill(int actor_index, int skill_index) :
 	actor_index(actor_index), skill_index(skill_index) {
@@ -33,9 +32,9 @@ Scene_Skill::Scene_Skill(int actor_index, int skill_index) :
 
 void Scene_Skill::Start() {
 	// Create the windows
-	help_window.reset(new Window_Help(0, 0, SCREEN_TARGET_WIDTH, 32));
-	skillstatus_window.reset(new Window_SkillStatus(0, 32, SCREEN_TARGET_WIDTH, 32));
-	skill_window.reset(new Window_Skill(0, 64, SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT - 64));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
+	skillstatus_window.reset(new Window_SkillStatus(0, 32, Metrics::Display::Width(), 32));
+	skill_window.reset(new Window_Skill(0, 64, Metrics::Display::Width(), Metrics::Display::Height() - 64));
 
 	// Assign actors and help to windows
 	skill_window->SetActor(Main_Data::game_party->GetActors()[actor_index]->GetId());

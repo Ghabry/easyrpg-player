@@ -17,14 +17,11 @@
 
 // Headers
 #include "scene_equip.h"
-#include "game_actors.h"
 #include "game_party.h"
 #include "game_system.h"
-#include "graphics.h"
 #include "input.h"
-#include "player.h"
-#include "scene_menu.h"
 #include "rpg_item.h"
+#include "metrics.h"
 
 Scene_Equip::Scene_Equip(int actor_index, int equip_index) :
 	actor_index(actor_index),
@@ -36,9 +33,9 @@ void Scene_Equip::Start() {
 	Game_Actor* actor = Main_Data::game_party->GetActors()[actor_index];
 
 	// Create the windows
-	help_window.reset(new Window_Help(0, 0, SCREEN_TARGET_WIDTH, 32));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
 	equipstatus_window.reset(new Window_EquipStatus(0, 32, 124, 96, actor->GetId()));
-	equip_window.reset(new Window_Equip(124, 32, (SCREEN_TARGET_WIDTH-124),96, actor->GetId()));
+	equip_window.reset(new Window_Equip(124, 32, (Metrics::Display::Width()-124),96, actor->GetId()));
 
 	equip_window->SetIndex(equip_index);
 

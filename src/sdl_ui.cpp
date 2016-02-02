@@ -414,7 +414,7 @@ bool SdlUi::RefreshDisplayMode() {
 		sdl_renderer = SDL_CreateRenderer(sdl_window, -1, rendered_flag);
 		if (!sdl_renderer)
 			return false;
-		SDL_RenderSetLogicalSize(sdl_renderer, SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT);
+		SDL_RenderSetLogicalSize(sdl_renderer, 640, 480);
 
 		uint32_t const texture_format =
 			SDL_BYTEORDER == SDL_LIL_ENDIAN
@@ -424,13 +424,14 @@ bool SdlUi::RefreshDisplayMode() {
 		sdl_texture = SDL_CreateTexture(sdl_renderer,
 			texture_format,
 			SDL_TEXTUREACCESS_STREAMING,
-			SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT);
+			640, 480);
 
 		if (!sdl_texture)
 			return false;
 	} else {
 		// Browser handles fast resizing for emscripten
 #ifndef EMSCRIPTEN
+		SetAppIcon();
 		if (is_fullscreen) {
 			SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
 		} else {
@@ -443,7 +444,6 @@ bool SdlUi::RefreshDisplayMode() {
 			else {
 				SDL_SetWindowSize(sdl_window, display_width, display_height);
 			}
-			SetAppIcon();
 		}
 #endif
 	}
@@ -490,7 +490,7 @@ bool SdlUi::RefreshDisplayMode() {
 	if (!main_surface) {
 		// Drawing surface will be the window itself
 		main_surface = Bitmap::Create(
-			SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT, Color(0, 0, 0, 255));
+			640, 480, Color(0, 0, 0, 255));
 	}
 #endif
 

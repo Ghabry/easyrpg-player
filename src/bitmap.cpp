@@ -26,16 +26,14 @@
 #include "cache.h"
 #include "bitmap.h"
 #include "filefinder.h"
-#include "options.h"
 #include "data.h"
 #include "output.h"
 #include "image_xyz.h"
 #include "image_bmp.h"
 #include "image_png.h"
 #include "font.h"
-#include "output.h"
-#include "util_macro.h"
 #include "bitmap_hslrgb.h"
+#include "player.h"
 
 const Opacity Opacity::opaque;
 
@@ -45,8 +43,21 @@ BitmapRef Bitmap::Create(int width, int height, const Color& color) {
 	return surface;
 }
 
-BitmapRef Bitmap::Create(const std::string& filename, bool transparent, uint32_t flags) {
-	return EASYRPG_MAKE_SHARED<Bitmap>(filename, transparent, flags);
+BitmapRef Bitmap::Create(const std::string& filename, bool transparent, uint32_t flags, int scale_factor) {
+	if (DisplayUi->GetScaleFactor() / scale_factor != 1) {
+		Output::Debug("2x %s", filename.c_str());
+
+		BitmapRef tmp = EASYRPG_MAKE_SHARED<Bitmap>(filename, transparent, flags, scale_factor);
+
+		BitmapRef bitmap = Bitmap::Create(tmp->GetWidth()*scale_factor, tmp->GetHeight()*scale_factor, tmp->GetTransparent());
+
+		// FIXME: scale factor
+		bitmap->Blit2x(bitmap->GetRect(), *tmp, tmp->GetRect());
+
+		return bitmap;
+	}
+
+	return EASYRPG_MAKE_SHARED<Bitmap>(filename, transparent, flags, scale_factor);
 }
 
 BitmapRef Bitmap::Create(const uint8_t* data, unsigned bytes, bool transparent, uint32_t flags) {
@@ -501,9 +512,10 @@ Bitmap::Bitmap(void *pixels, int width, int height, int pitch, const DynamicForm
 	Init(width, height, pixels, pitch, false);
 }
 
-Bitmap::Bitmap(const std::string& filename, bool transparent, uint32_t flags) {
+Bitmap::Bitmap(const std::string& filename, bool transparent, uint32_t flags, int scale_factor) {
 	InitBitmap();
 
+	this->scale_factor = scale_factor;
 	format = (transparent ? pixel_format : opaque_pixel_format);
 	pixman_format = find_format(format);
 
@@ -532,7 +544,7 @@ Bitmap::Bitmap(const std::string& filename, bool transparent, uint32_t flags) {
 
 	fclose(stream);
 
-	Init(w, h, (void *) NULL);
+	Init(DisplayUi->GetScaleFactor()*w, DisplayUi->GetScaleFactor()*h, (void *) NULL);
 	ConvertImage(w, h, pixels, transparent);
 
 	CheckPixels(flags);

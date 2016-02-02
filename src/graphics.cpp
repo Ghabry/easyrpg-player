@@ -26,9 +26,9 @@
 #include "cache.h"
 #include "baseui.h"
 #include "drawable.h"
-#include "util_macro.h"
 #include "output.h"
 #include "player.h"
+#include "metrics.h"
 
 namespace Graphics {
 	void UpdateTitle();
@@ -78,7 +78,7 @@ void Graphics::Init() {
 	screen_erased = false;
 	transition_frames_left = 0;
 
-	black_screen = Bitmap::Create(DisplayUi->GetWidth(), DisplayUi->GetHeight(), Color(0,0,0,255));
+	black_screen = Bitmap::Create(Metrics::Display::Width(), Metrics::Display::Height(), Color(0,0,0,255));
 
 	state.reset(new State());
 	global_state.reset(new State());
@@ -257,8 +257,8 @@ bool Graphics::IsTransitionPending() {
 void Graphics::UpdateTransition() {
 	// FIXME: Comments. Pleeeease. screen1, screen2?
 	BitmapRef dst = DisplayUi->GetDisplaySurface();
-	int w = DisplayUi->GetWidth();
-	int h = DisplayUi->GetHeight();
+	int w = Metrics::Display::Width();
+	int h = Metrics::Display::Height();
 
 	transition_frame++;
 

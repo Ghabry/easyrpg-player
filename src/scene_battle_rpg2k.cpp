@@ -18,14 +18,9 @@
 
 #include <algorithm>
 #include <sstream>
-#include "rpg_battlecommand.h"
 #include "input.h"
-#include "output.h"
 #include "player.h"
 #include "sprite.h"
-#include "graphics.h"
-#include "filefinder.h"
-#include "cache.h"
 #include "game_battler.h"
 #include "game_system.h"
 #include "game_temp.h"
@@ -33,13 +28,13 @@
 #include "game_enemy.h"
 #include "game_enemyparty.h"
 #include "game_message.h"
-#include "game_switches.h"
 #include "game_battle.h"
 #include "game_battlealgorithm.h"
 #include "battle_animation.h"
 #include "scene_battle_rpg2k.h"
 #include "scene_battle.h"
 #include "scene_gameover.h"
+#include "metrics.h"
 
 Scene_Battle_Rpg2k::Scene_Battle_Rpg2k() : Scene_Battle(),
 battle_action_wait(30),
@@ -62,7 +57,7 @@ void Scene_Battle_Rpg2k::CreateUi() {
 	CreateBattleTargetWindow();
 	CreateBattleCommandWindow();
 
-	battle_message_window.reset(new Window_BattleMessage(0, (SCREEN_TARGET_HEIGHT - 80), SCREEN_TARGET_WIDTH, 80));
+	battle_message_window.reset(new Window_BattleMessage(0, (Metrics::Display::Height() - 80), Metrics::Display::Width(), 80));
 
 	if (!Game_Battle::IsEscapeAllowed()) {
 		options_window->DisableItem(2);
@@ -81,7 +76,7 @@ void Scene_Battle_Rpg2k::CreateBattleTargetWindow() {
 
 	target_window.reset(new Window_Command(commands, 136, 4));
 	target_window->SetHeight(80);
-	target_window->SetY(SCREEN_TARGET_HEIGHT-80);
+	target_window->SetY(Metrics::Display::Height()-80);
 	target_window->SetZ(3001);
 }
 
@@ -94,8 +89,8 @@ void Scene_Battle_Rpg2k::CreateBattleCommandWindow() {
 
 	command_window.reset(new Window_Command(commands, 76));
 	command_window->SetHeight(80);
-	command_window->SetX(SCREEN_TARGET_WIDTH - 76);
-	command_window->SetY(SCREEN_TARGET_HEIGHT-80);
+	command_window->SetX(Metrics::Display::Width() - 76);
+	command_window->SetY(Metrics::Display::Height()-80);
 }
 
 void Scene_Battle_Rpg2k::RefreshCommandWindow() {

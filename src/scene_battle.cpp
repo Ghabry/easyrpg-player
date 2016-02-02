@@ -19,15 +19,11 @@
 #include <algorithm>
 #include <sstream>
 
-#include "rpg_battlecommand.h"
 #include "bitmap.h"
 #include "input.h"
 #include "output.h"
 #include "player.h"
-#include "sprite.h"
 #include "graphics.h"
-#include "filefinder.h"
-#include "cache.h"
 #include "game_battlealgorithm.h"
 #include "game_message.h"
 #include "game_system.h"
@@ -35,13 +31,12 @@
 #include "game_party.h"
 #include "game_enemy.h"
 #include "game_enemyparty.h"
-#include "game_switches.h"
 #include "game_battle.h"
-#include "game_interpreter.h"
 #include "battle_animation.h"
 #include "scene_battle.h"
 #include "scene_battle_rpg2k.h"
 #include "scene_battle_rpg2k3.h"
+#include "metrics.h"
 
 Scene_Battle::Scene_Battle() :
 	actor_index(0),
@@ -123,22 +118,22 @@ void Scene_Battle::CreateUi() {
 	commands.push_back(Data::terms.battle_escape);
 	options_window.reset(new Window_Command(commands, 76));
 	options_window->SetHeight(80);
-	options_window->SetY(SCREEN_TARGET_HEIGHT - 80);
+	options_window->SetY(Metrics::Display::Height() - 80);
 
-	help_window.reset(new Window_Help(0, 0, SCREEN_TARGET_WIDTH, 32));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
 	help_window->SetVisible(false);
 
-	item_window.reset(new Window_Item(0, (SCREEN_TARGET_HEIGHT-80), SCREEN_TARGET_WIDTH, 80));
+	item_window.reset(new Window_Item(0, (Metrics::Display::Height()-80), Metrics::Display::Width(), 80));
 	item_window->SetHelpWindow(help_window.get());
 	item_window->Refresh();
 	item_window->SetIndex(0);
 
-	skill_window.reset(new Window_Skill(0, (SCREEN_TARGET_HEIGHT-80), SCREEN_TARGET_WIDTH, 80));
+	skill_window.reset(new Window_Skill(0, (Metrics::Display::Height()-80), Metrics::Display::Width(), 80));
 	skill_window->SetHelpWindow(help_window.get());
 
-	status_window.reset(new Window_BattleStatus(0, (SCREEN_TARGET_HEIGHT-80), SCREEN_TARGET_WIDTH - 76, 80));
+	status_window.reset(new Window_BattleStatus(0, (Metrics::Display::Height()-80), Metrics::Display::Width() - 76, 80));
 
-	message_window.reset(new Window_Message(0, (SCREEN_TARGET_HEIGHT - 80), SCREEN_TARGET_WIDTH, 80));
+	message_window.reset(new Window_Message(0, (Metrics::Display::Height() - 80), Metrics::Display::Width(), 80));
 	message_window->SetZ(3002);
 }
 

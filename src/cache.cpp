@@ -45,7 +45,7 @@ namespace {
 	typedef std::map<tile_pair, EASYRPG_WEAK_PTR<Bitmap> > cache_tiles_type;
 	cache_tiles_type cache_tiles;
 
-	static std::string system_name;
+	std::string system_name;
 
 	BitmapRef LoadBitmap(std::string const& folder_name, const std::string& filename,
 						 bool transparent, uint32_t const flags) {
@@ -203,8 +203,8 @@ namespace {
 			ret->GetWidth () < s.min_width  || s.max_width  < ret->GetWidth () ||
 			ret->GetHeight() < s.min_height || s.max_height < ret->GetHeight()
 		) {
-			Output::Debug("Image has non-default size: %s/%s\nwidth  (min, max, actual) = (%d, %d, %d)\nheight (min, max, actual) = (%d, %d, %d)",
-						  s.directory, f.c_str(), s.min_width , s.max_width , ret->GetWidth (), s.min_height, s.max_height, ret->GetHeight());
+			//Output::Debug("Image has non-default size: %s/%s\nwidth  (min, max, actual) = (%d, %d, %d)\nheight (min, max, actual) = (%d, %d, %d)",
+			//			  s.directory, f.c_str(), s.min_width , s.max_width , ret->GetWidth (), s.min_height, s.max_height, ret->GetHeight());
 		}
 
 		return ret;

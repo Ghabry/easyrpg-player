@@ -48,9 +48,11 @@ void Weather::Update() {
 }
 
 void Weather::Draw() {
+	BitmapRef disp = DisplayUi->GetDisplaySurface();
+
 	if (Main_Data::game_screen->GetWeatherType() != Game_Screen::Weather_None) {
 		if (!weather_surface) {
-			weather_surface = Bitmap::Create(SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT);
+			weather_surface = Bitmap::Create(disp->GetWidth(), disp->GetHeight());
 		}
 	}
 
@@ -77,8 +79,7 @@ void Weather::Draw() {
 	}
 
 	if (dirty && weather_surface) {
-		BitmapRef dst = DisplayUi->GetDisplaySurface();
-		dst->Blit(0, 0, *weather_surface, weather_surface->GetRect(), 255);
+		disp->Blit(0, 0, *weather_surface, weather_surface->GetRect(), 255);
 	}
 }
 

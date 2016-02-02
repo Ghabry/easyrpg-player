@@ -95,7 +95,7 @@ public:
 	 * @param transparent allow transparency on bitmap.
 	 * @param flags bitmap flags.
 	 */
-	static BitmapRef Create(const std::string& filename, bool transparent = true, uint32_t flags = 0);
+	static BitmapRef Create(const std::string& filename, bool transparent = true, uint32_t flags = 0, int scale_factor = 1);
 
 	/*
 	 * Loads a bitmap from memory.
@@ -673,7 +673,7 @@ protected:
 	bool editing;
 public:
 	Bitmap(int width, int height, bool transparent);
-	Bitmap(const std::string& filename, bool transparent, uint32_t flags);
+	Bitmap(const std::string& filename, bool transparent, uint32_t flags, int scale_factor);
 	Bitmap(const uint8_t* data, unsigned bytes, bool transparent, uint32_t flags);
 	Bitmap(Bitmap const& source, Rect const& src_rect, bool transparent);
 	Bitmap(void *pixels, int width, int height, int pitch, const DynamicFormat& format);
@@ -724,6 +724,8 @@ protected:
 	static void initialize_formats();
 	static void add_pair(pixman_format_code_t pcode, const DynamicFormat& format);
 	static pixman_format_code_t find_format(const DynamicFormat& format);
+
+	int scale_factor;
 };
 
 #endif

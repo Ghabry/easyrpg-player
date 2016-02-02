@@ -21,6 +21,8 @@
 #include "game_system.h"
 #include "game_temp.h"
 #include "input.h"
+#include "metrics.h"
+
 
 #include <cassert>
 
@@ -40,7 +42,7 @@ void Scene_Name::Start() {
 	face_window->Set(Game_Temp::hero_name_id);
 	face_window->Refresh();
 
-	kbd_window.reset(new Window_Keyboard(32, 72, 256, (SCREEN_TARGET_WIDTH/2)));
+	kbd_window.reset(new Window_Keyboard(32, 72, 256, (Metrics::Display::Width()/2)));
 	kbd_window->SetMode(Window_Keyboard::Mode(Game_Temp::hero_name_charset));
 	kbd_window->Refresh();
 	kbd_window->UpdateCursorRect();

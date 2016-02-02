@@ -19,8 +19,6 @@
 #include "scene_gameover.h"
 #include "scene_map.h"
 #include "scene_menu.h"
-#include "scene_title.h"
-#include "scene_end.h"
 #include "scene_name.h"
 #include "scene_shop.h"
 #include "scene_save.h"
@@ -36,10 +34,11 @@
 #include "rpg_system.h"
 #include "player.h"
 #include "graphics.h"
-#include "audio.h"
 #include "input.h"
 #include "screen.h"
 #include "scene_load.h"
+#include "metrics.h"
+
 
 Scene_Map::Scene_Map(bool from_save) :
 	from_save(from_save) {
@@ -48,11 +47,11 @@ Scene_Map::Scene_Map(bool from_save) :
 
 void Scene_Map::Start() {
 	spriteset.reset(new Spriteset_Map());
-	message_window.reset(new Window_Message(0, SCREEN_TARGET_HEIGHT - 80, SCREEN_TARGET_WIDTH, 80));
+	message_window.reset(new Window_Message(0, Metrics::Display::Height() - 80, Metrics::Display::Width(), 80));
 
 	// Draw background to prevent System graphic shining through
 	background.reset(new Sprite());
-	background->SetBitmap(Bitmap::Create(DisplayUi->GetWidth(), DisplayUi->GetHeight(), Color(0, 0, 0, 255)));
+	background->SetBitmap(Bitmap::Create(Metrics::Display::Width(), Metrics::Display::Height(), Color(0, 0, 0, 255)));
 	background->SetZ(-10000);
 
 	screen.reset(new Screen());

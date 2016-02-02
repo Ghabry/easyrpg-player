@@ -23,6 +23,7 @@
 #include "game_party.h"
 #include "game_system.h"
 #include "game_temp.h"
+#include "metrics.h"
 
 
 Sprite_Timer::Sprite_Timer(int which) :
@@ -120,10 +121,10 @@ void Sprite_Timer::Update() {
 	digits[4].x = 32 + 8 * secs_1;
 
 	if (Game_Temp::battle_running) {
-		SetY(SCREEN_TARGET_HEIGHT / 3 * 2 - 20);
+		SetY(Metrics::Display::Height() / 3 * 2 - 20);
 	}
 	else if (Game_Message::GetRealPosition() == 0) {
-		SetY(SCREEN_TARGET_HEIGHT - 20);
+		SetY(Metrics::Display::Height() - 20);
 	}
 	else {
 		SetY(4);
@@ -147,7 +148,7 @@ void Sprite_Timer::CreateSprite() {
 			SetX(4);
 			break;
 		case Game_Party::Timer2:
-			SetX(SCREEN_TARGET_WIDTH - 8 * 5 - 4);
+			SetX(Metrics::Display::Width() - 8 * 5 - 4);
 			break;
 		default:
 			break;

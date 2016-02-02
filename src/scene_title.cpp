@@ -27,13 +27,14 @@
 #include "graphics.h"
 #include "input.h"
 #include "main_data.h"
-#include "options.h"
 #include "output.h"
 #include "player.h"
 #include "scene_battle.h"
 #include "scene_load.h"
 #include "scene_map.h"
 #include "window_command.h"
+#include "metrics.h"
+
 
 Scene_Title::Scene_Title() {
 	type = Scene::Title;
@@ -130,11 +131,11 @@ void Scene_Title::CreateCommandWindow() {
 
 	command_window.reset(new Window_Command(options));
 	if (!Player::hide_title_flag) {
-		command_window->SetX(SCREEN_TARGET_WIDTH / 2 - command_window->GetWidth() / 2);
-		command_window->SetY(SCREEN_TARGET_HEIGHT * 53 / 60 - command_window->GetHeight());
+		command_window->SetX(Metrics::Display::Width() / 2 - command_window->GetWidth() / 2);
+		command_window->SetY(Metrics::Display::Height() * 53 / 60 - command_window->GetHeight());
 	} else {
-		command_window->SetX(SCREEN_TARGET_WIDTH / 2 - command_window->GetWidth() / 2);
-		command_window->SetY(SCREEN_TARGET_HEIGHT / 2 - command_window->GetHeight() / 2);
+		command_window->SetX(Metrics::Display::Width() / 2 - command_window->GetWidth() / 2);
+		command_window->SetY(Metrics::Display::Height() / 2 - command_window->GetHeight() / 2);
 	}
 	// Enable load game if available
 	continue_enabled = FileFinder::HasSavegame(*FileFinder::CreateSaveDirectoryTree());

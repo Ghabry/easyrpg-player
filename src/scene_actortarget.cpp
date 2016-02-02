@@ -17,13 +17,11 @@
 
 // Headers
 #include "scene_actortarget.h"
-#include "game_actors.h"
 #include "game_party.h"
 #include "game_system.h"
 #include "input.h"
 #include "main_data.h"
-#include "scene_item.h"
-#include "scene_skill.h"
+#include "metrics.h"
 
 Scene_ActorTarget::Scene_ActorTarget(int item_id, int item_index) :
 	id(item_id), actor_index(0), use_item(true) {
@@ -39,7 +37,7 @@ Scene_ActorTarget::Scene_ActorTarget(
 void Scene_ActorTarget::Start() {
 	// Create the windows
 	help_window.reset(new Window_Help(0, 0, 136, 32));
-	target_window.reset(new Window_ActorTarget(136, 0, 184, SCREEN_TARGET_HEIGHT));
+	target_window.reset(new Window_ActorTarget(136, 0, 184, Metrics::Display::Height()));
 	status_window.reset(new Window_TargetStatus(0, 32, 136, 32));
 
 	target_window->SetActive(true);

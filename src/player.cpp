@@ -70,6 +70,14 @@
 	#include <emscripten.h>
 #endif
 
+int operator "" _pw(unsigned long long int i) {
+	return (int)(5120 * (i / 100.0));
+}
+
+int operator "" _ph(unsigned long long int i) {
+	return (int)(4096 * (i / 100.0));
+}
+
 namespace Player {
 	bool exit_flag;
 	bool reset_flag;
@@ -151,8 +159,8 @@ void Player::Init(int argc, char *argv[]) {
 
 	if(! DisplayUi) {
 		DisplayUi = BaseUi::CreateUi
-			(SCREEN_TARGET_WIDTH,
-			 SCREEN_TARGET_HEIGHT,
+			(640,
+			 480,
 			 game_title,
 			 !window_flag,
 			 RUN_ZOOM);
@@ -286,7 +294,7 @@ void Player::Exit() {
 	BitmapRef surface = DisplayUi->GetDisplaySurface();
 	std::string error = "You can turn off your browser now.";
 
-	Text::Draw(*surface, 55, DisplayUi->GetHeight() / 2 - 6, Color(255, 255, 255, 255), error);
+	Text::Draw(*surface, 55, Metrics::Display::Height() / 2 - 6, Color(255, 255, 255, 255), error);
 	DisplayUi->UpdateDisplay();
 #endif
 
@@ -515,6 +523,8 @@ void Player::CreateGameObjects() {
 	}
 
 	LoadDatabase();
+
+	int a = 100_pw;
 
 	std::string ini_file = FileFinder::FindDefault(INI_NAME);
 

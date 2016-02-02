@@ -19,6 +19,7 @@
 #include "player.h"
 #include "graphics.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -33,9 +34,9 @@ MessageOverlay::MessageOverlay() :
 	counter(0),
 	show_all(false) {
 	
-	black = Bitmap::Create(DisplayUi->GetWidth(), text_height, Color());
+	black = Bitmap::Create(Metrics::Display::Width(), text_height, Color());
 
-	bitmap = Bitmap::Create(DisplayUi->GetWidth(), text_height * message_max, true);
+	bitmap = Bitmap::Create(Metrics::Display::Width(), text_height * message_max, true);
 
 	Graphics::RegisterDrawable(this);
 }

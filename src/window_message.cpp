@@ -24,19 +24,16 @@
 #include "game_map.h"
 #include "game_message.h"
 #include "game_party.h"
-#include "game_player.h"
 #include "game_system.h"
 #include "game_variables.h"
 #include "game_temp.h"
-#include "graphics.h"
 #include "input.h"
-#include "reader_util.h"
 #include "player.h"
 #include "util_macro.h"
-#include "utils.h"
 #include "bitmap.h"
 #include "font.h"
-#include "text.h"
+#include "metrics.h"
+
 
 #include <boost/next_prior.hpp>
 
@@ -139,7 +136,7 @@ void Window_Message::StartNumberInputProcessing() {
 
 void Window_Message::ShowGoldWindow() {
 	if (!gold_window->GetVisible() && !Game_Temp::battle_running) {
-		gold_window->SetY(y == 0 ? SCREEN_TARGET_HEIGHT - 32 : 0);
+		gold_window->SetY(y == 0 ? Metrics::Display::Height() - 32 : 0);
 		gold_window->Refresh();
 		gold_window->SetOpenAnimation(5);
 	}

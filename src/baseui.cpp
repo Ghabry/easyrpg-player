@@ -18,6 +18,7 @@
 // Headers
 #include "baseui.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 #ifdef USE_SDL
 #include "sdl_ui.h"
@@ -60,6 +61,10 @@ long BaseUi::GetWidth() const {
 
 long BaseUi::GetHeight() const {
 	return current_display_mode.height;
+}
+
+long BaseUi::GetScaleFactor() const {
+	return Metrics::Display::Width() / 320;
 }
 
 bool BaseUi::GetMouseFocus() const {

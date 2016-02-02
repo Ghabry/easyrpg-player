@@ -16,7 +16,6 @@
  */
 
 // Headers
-#include <cmath>
 #include "system.h"
 #include "graphics.h"
 #include "player.h"
@@ -24,6 +23,7 @@
 #include "util_macro.h"
 #include "window.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 Window::Window():
 	type(TypeWindow),
@@ -95,7 +95,7 @@ void Window::SetCloseAnimation(int frames) {
 void Window::Draw() {
 	if (!visible) return;
 	if (width <= 0 || height <= 0) return;
-	if (x < -width || x > DisplayUi->GetWidth() || y < -height || y > DisplayUi->GetHeight()) return;
+	if (x < -width || x > Metrics::Display::Width() || y < -height || y > Metrics::Display::Height()) return;
 
 	BitmapRef dst = DisplayUi->GetDisplaySurface();
 

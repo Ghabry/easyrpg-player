@@ -24,6 +24,7 @@
 #include "game_enemy.h"
 #include "game_party.h"
 #include "game_switches.h"
+#include "metrics.h"
 
 Game_Enemy::Game_Enemy(int enemy_id) : Game_Battler() {
 	Setup(enemy_id);
@@ -118,11 +119,11 @@ void Game_Enemy::SetSp(int _sp) {
 }
 
 int Game_Enemy::GetBattleX() const {
-	return (x*SCREEN_TARGET_WIDTH/320);
+	return (x*Metrics::Display::Width()/320);
 }
 
 int Game_Enemy::GetBattleY() const {
-	return (y*SCREEN_TARGET_HEIGHT/240);
+	return (y*Metrics::Display::Height()/240);
 }
 
 void Game_Enemy::SetBattleX(int new_x) {

@@ -115,6 +115,8 @@ libeasyrpg_player_la_SOURCES = \
 	src/memory_management.h \
 	src/message_overlay.cpp \
 	src/message_overlay.h \
+	src/metrics.cpp \
+	src/metrics.h \
 	src/options.h \
 	src/output.cpp \
 	src/output.h \

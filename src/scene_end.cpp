@@ -18,15 +18,11 @@
 // Headers
 #include <vector>
 #include "audio.h"
-#include "baseui.h"
-#include "cache.h"
 #include "game_system.h"
 #include "input.h"
 #include "scene_end.h"
-#include "scene_menu.h"
-#include "scene_title.h"
-#include "util_macro.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 Scene_End::Scene_End() {
 	Scene::type = Scene::End;
@@ -66,7 +62,7 @@ void Scene_End::CreateCommandWindow() {
 	options.push_back(Data::terms.no);
 
 	command_window.reset(new Window_Command(options));
-	command_window->SetX((SCREEN_TARGET_WIDTH/2) - command_window->GetWidth() / 2);
+	command_window->SetX((Metrics::Display::Width()/2) - command_window->GetWidth() / 2);
 	command_window->SetY(72 + 48);
 	command_window->SetIndex(1);
 }
@@ -74,7 +70,7 @@ void Scene_End::CreateCommandWindow() {
 void Scene_End::CreateHelpWindow() {
 	int text_size = Font::Default()->GetSize(Data::terms.exit_game_message).width;
 
-	help_window.reset(new Window_Help((SCREEN_TARGET_WIDTH/2) - (text_size + 16)/ 2,
+	help_window.reset(new Window_Help((Metrics::Display::Width()/2) - (text_size + 16)/ 2,
 									  72, text_size + 16, 32));
 	help_window->SetText(Data::terms.exit_game_message);
 

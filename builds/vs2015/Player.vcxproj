@@ -128,6 +128,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -272,6 +273,7 @@
     <ClCompile Include="..\..\src\main.cpp" />
     <ClCompile Include="..\..\src\main_data.cpp" />
     <ClCompile Include="..\..\src\message_overlay.cpp" />
+    <ClCompile Include="..\..\src\metrics.cpp" />
     <ClCompile Include="..\..\src\output.cpp" />
     <ClCompile Include="..\..\src\plane.cpp" />
     <ClCompile Include="..\..\src\player.cpp" />
@@ -412,6 +414,7 @@
     <ClInclude Include="..\..\src\matrix.h" />
     <ClInclude Include="..\..\src\memory_management.h" />
     <ClInclude Include="..\..\src\message_overlay.h" />
+    <ClInclude Include="..\..\src\metrics.h" />
     <ClInclude Include="..\..\src\options.h" />
     <ClInclude Include="..\..\src\output.h" />
     <ClInclude Include="..\..\src\pixel_format.h" />

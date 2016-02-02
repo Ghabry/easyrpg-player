@@ -116,6 +116,7 @@ namespace {
 
 	FontRef const gothic = EASYRPG_MAKE_SHARED<ShinonomeFont>(&find_gothic_glyph);
 	FontRef const mincho = EASYRPG_MAKE_SHARED<ShinonomeFont>(&find_mincho_glyph);
+	FontRef const freetype = std::make_shared<FTFont>("Font.ttf", 10, false, false);
 
 	struct ExFont : public Font {
 		ExFont();
@@ -158,11 +159,13 @@ BitmapRef ShinonomeFont::Glyph(unsigned code) {
 EASYRPG_WEAK_PTR<boost::remove_pointer<FT_Library>::type> FTFont::library_checker_;
 
 FTFont::FTFont(const std::string& name, int size, bool bold, bool italic)
-	: Font(name, size, bold, italic), current_size_(0) {}
+	: Font(name, size, bold, italic), current_size_(0) {
+	
+}
 
 Rect FTFont::GetSize(std::string const& txt) const {
 	Utils::wstring tmp = Utils::ToWideString(txt);
-	int const s = Font::Default()->GetSize(txt).width;
+	int const s = txt.length() * 6;
 
 	if (s == -1) {
 		Output::Warning("Text contains invalid chars.\n"\
@@ -210,7 +213,7 @@ BitmapRef FTFont::Glyph(unsigned glyph) {
 }
 
 FontRef Font::Default(bool const m) {
-	return m? mincho : gothic;
+	return gothic;
 }
 
 FontRef Font::Create(const std::string& name, int size, bool bold, bool italic) {
@@ -252,7 +255,7 @@ bool FTFont::check_face() {
 	if(!face_ || face_name_ != name) {
 	    face_cache_type::const_iterator it = face_cache.find(name);
 		if(it == face_cache.end() || it->second.expired()) {
-			std::string const face_path = FileFinder::FindFont(name);
+			std::string const face_path = FileFinder::FindDefault(name);
 			FT_Face face;
 			if(FT_New_Face(library_.get(), face_path.c_str(), 0, &face) != FT_Err_Ok) {
 				Output::Error("Couldn't initialize FreeType face: %s(%s)",
@@ -260,14 +263,15 @@ bool FTFont::check_face() {
 				return false;
 			}
 
+			face_.reset(face, delete_face);
+
 			for (int i = 0; i < face_->num_fixed_sizes; i++) {
 				FT_Bitmap_Size* size = &face_->available_sizes[i];
 				Output::Debug("Font Size %d: %d %d %f %f %f", i,
-							  size->width, size->height, size->size / 64.0,
-							  size->x_ppem / 64.0, size->y_ppem / 64.0);
+					size->width, size->height, size->size / 64.0,
+					size->x_ppem / 64.0, size->y_ppem / 64.0);
 			}
 
-			face_.reset(face, delete_face);
 			face_cache[name] = face_;
 		} else {
 			face_ = it->second.lock();

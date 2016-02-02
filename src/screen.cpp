@@ -52,7 +52,7 @@ void Screen::Draw() {
 	Tone tone = Main_Data::game_screen->GetTone();
 
 	if (tone != default_tone) {
-		disp->ToneBlit(0, 0, *disp, Rect(0, 0, SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT), tone, Opacity::opaque);
+		disp->ToneBlit(0, 0, *disp, Rect(0, 0, disp->GetWidth(), disp->GetHeight()), tone, Opacity::opaque);
 	}
 
 	int flash_time_left;
@@ -61,7 +61,7 @@ void Screen::Draw() {
 
 	if (flash_time_left > 0) {
 		if (!flash) {
-			flash = Bitmap::Create(SCREEN_TARGET_WIDTH, SCREEN_TARGET_HEIGHT, flash_color);
+			flash = Bitmap::Create(disp->GetWidth(), disp->GetHeight(), flash_color);
 		} else {
 			flash->Fill(flash_color);
 		}

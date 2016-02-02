@@ -18,9 +18,6 @@
 // Headers
 #include <cassert>
 #include "scene_menu.h"
-#include "audio.h"
-#include "cache.h"
-#include "graphics.h"
 #include "game_party.h"
 #include "game_system.h"
 #include "game_temp.h"
@@ -29,12 +26,12 @@
 #include "scene_end.h"
 #include "scene_equip.h"
 #include "scene_item.h"
-#include "scene_map.h"
 #include "scene_skill.h"
 #include "scene_order.h"
 #include "scene_save.h"
 #include "scene_status.h"
 #include "bitmap.h"
+#include "metrics.h"
 
 Scene_Menu::Scene_Menu(int menu_index) :
 	menu_index(menu_index) {
@@ -45,10 +42,10 @@ void Scene_Menu::Start() {
 	CreateCommandWindow();
 
 	// Gold Window
-	gold_window.reset(new Window_Gold(0, (SCREEN_TARGET_HEIGHT-32), 88, 32));
+	gold_window.reset(new Window_Gold(0, (Metrics::Display::Height()-32), 88, 32));
 
 	// Status Window
-	menustatus_window.reset(new Window_MenuStatus(88, 0, (SCREEN_TARGET_WIDTH-88), SCREEN_TARGET_HEIGHT));
+	menustatus_window.reset(new Window_MenuStatus(88, 0, (Metrics::Display::Width()-88), Metrics::Display::Height()));
 	menustatus_window->SetActive(false);
 }
 

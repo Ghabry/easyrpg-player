@@ -23,20 +23,17 @@
 #include "output.h"
 #include "player.h"
 #include "sprite.h"
-#include "graphics.h"
-#include "filefinder.h"
 #include "cache.h"
 #include "game_system.h"
 #include "game_temp.h"
 #include "game_party.h"
 #include "game_enemy.h"
 #include "game_enemyparty.h"
-#include "game_interpreter_battle.h"
 #include "game_message.h"
-#include "game_switches.h"
 #include "game_battle.h"
 #include "game_battlealgorithm.h"
 #include "scene_gameover.h"
+#include "metrics.h"
 
 Scene_Battle_Rpg2k3::Scene_Battle_Rpg2k3() : Scene_Battle(),
 	battle_action_wait(30),
@@ -114,7 +111,7 @@ void Scene_Battle_Rpg2k3::CreateUi() {
 	// No escape. FIXME: Only enabled when party has initiative.
 	options_window->DisableItem(2);
 
-	enemy_status_window.reset(new Window_BattleStatus(0, 0, SCREEN_TARGET_WIDTH - 76, 80, true));
+	enemy_status_window.reset(new Window_BattleStatus(0, 0, Metrics::Display::Width() - 76, 80, true));
 	enemy_status_window->SetVisible(false);
 
 	ally_cursor.reset(new Sprite());
@@ -125,7 +122,7 @@ void Scene_Battle_Rpg2k3::CreateUi() {
 		skill_window->SetY(64);
 
 		// Default window too small for 4 actors
-		status_window.reset(new Window_BattleStatus(0, SCREEN_TARGET_HEIGHT - 80, SCREEN_TARGET_WIDTH, 80));
+		status_window.reset(new Window_BattleStatus(0, Metrics::Display::Height() - 80, Metrics::Display::Width(), 80));
 	}
 
 	if (Data::battlecommands.battle_type != RPG::BattleCommands::BattleType_traditional) {
@@ -226,7 +223,7 @@ void Scene_Battle_Rpg2k3::CreateBattleTargetWindow() {
 
 	target_window.reset(new Window_Command(commands, 136, 4));
 	target_window->SetHeight(80);
-	target_window->SetY(SCREEN_TARGET_HEIGHT-80);
+	target_window->SetY(Metrics::Display::Height()-80);
 	target_window->SetZ(3001);
 
 	if (Data::battlecommands.battle_type != RPG::BattleCommands::BattleType_traditional) {
@@ -270,11 +267,11 @@ void Scene_Battle_Rpg2k3::CreateBattleCommandWindow() {
 	command_window->SetHeight(80);
 	if (Data::battlecommands.battle_type == RPG::BattleCommands::BattleType_gauge) {
 		command_window->SetX(0);
-		command_window->SetY(SCREEN_TARGET_HEIGHT / 2 - 80 / 2);
+		command_window->SetY(Metrics::Display::Height() / 2 - 80 / 2);
 	}
 	else {
-		command_window->SetX(SCREEN_TARGET_WIDTH - 76);
-		command_window->SetY(SCREEN_TARGET_HEIGHT - 80);
+		command_window->SetX(Metrics::Display::Width() - 76);
+		command_window->SetY(Metrics::Display::Height() - 80);
 	}
 
 	if (Data::battlecommands.battle_type != RPG::BattleCommands::BattleType_traditional) {

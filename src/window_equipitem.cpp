@@ -19,9 +19,10 @@
 #include "window_equipitem.h"
 #include "game_actors.h"
 #include "game_party.h"
+#include "metrics.h"
 
 Window_EquipItem::Window_EquipItem(int actor_id, int equip_type) :
-	Window_Item(0, 128, SCREEN_TARGET_WIDTH, (SCREEN_TARGET_HEIGHT-128)),
+	Window_Item(0, 128, Metrics::Display::Width(), (Metrics::Display::Height()-128)),
 	actor_id(actor_id) {
 	this->equip_type = equip_type;
 	if (equip_type > 4 || equip_type < 0) {
