@@ -54,13 +54,14 @@ namespace {
 		cache_type::const_iterator const it = cache.find(key);
 
 		if (it == cache.end() || it->second.expired()) {
-			std::string const path = FileFinder::FindImage(folder_name, filename);
+			bool is_hires;
+			std::string const path = FileFinder::FindImage(folder_name, filename, &is_hires);
 
 			if (path.empty()) {
 				return BitmapRef();
 			}
 
-			return (cache[key] = Bitmap::Create(path, transparent, flags)).lock();
+			return (cache[key] = Bitmap::Create(path, transparent, flags, is_hires ? 2 : 1)).lock();
 		} else { return it->second.lock(); }
 	}
 

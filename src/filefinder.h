@@ -64,9 +64,10 @@ namespace FileFinder {
 	 *
 	 * @param dir directory to check.
 	 * @param name image file name to check.
+	 * @param is_hires True when the picture was found in the hires directory
 	 * @return path to file.
 	 */
-	std::string FindImage(const std::string& dir, const std::string& name);
+	std::string FindImage(const std::string& dir, const std::string& name, bool* is_hires = nullptr);
 
 	/**
 	 * Finds a file.
