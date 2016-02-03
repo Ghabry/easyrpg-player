@@ -208,6 +208,7 @@ void Window::RefreshBackground() {
 void Window::RefreshFrame() {
 	frame_needs_refresh = false;
 
+
 	BitmapRef up_bitmap = Bitmap::Create(width, 8, true, 1);
 	BitmapRef down_bitmap = Bitmap::Create(width, 8, true, 1);
 
@@ -438,23 +439,24 @@ void Window::SetDownArrow(bool ndown_arrow) {
 }
 
 int Window::GetX() const {
-	return x;
+	return x / DisplayUi->GetScaleFactor();
 }
 void Window::SetX(int nx) {
-	x = nx;
+	x = Metrics::Rescale(nx);
 }
 
 int Window::GetY() const {
-	return y;
+	return y / DisplayUi->GetScaleFactor();
 }
 void Window::SetY(int ny) {
-	y = ny;
+	y = Metrics::Rescale(ny);
 }
 
 int Window::GetWidth() const {
-	return width;
+	return width / DisplayUi->GetScaleFactor();
 }
 void Window::SetWidth(int nwidth) {
+	nwidth = Metrics::Rescale(nwidth);
 	if (width != nwidth) {
 		background_needs_refresh = true;
 		frame_needs_refresh = true;
@@ -463,9 +465,10 @@ void Window::SetWidth(int nwidth) {
 }
 
 int Window::GetHeight() const {
-	return height;
+	return height / DisplayUi->GetScaleFactor();
 }
 void Window::SetHeight(int nheight) {
+	nheight = Metrics::Rescale(nheight);
 	if (height != nheight) {
 		background_needs_refresh = true;
 		frame_needs_refresh = true;

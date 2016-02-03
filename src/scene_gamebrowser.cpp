@@ -81,21 +81,21 @@ void Scene_GameBrowser::CreateWindows() {
 	command_window->SetY(32);
 	command_window->SetIndex(0);
 
-	gamelist_window.reset(new Window_GameList(60, 32, Metrics::Display::Width() - 60, Metrics::Display::Height() - 32));
+	gamelist_window.reset(new Window_GameList(60, 32, Metrics::Display::OriginalWidth() - 60, Metrics::Display::OriginalHeight() - 32));
 	gamelist_window->Refresh();
 
 	if (!gamelist_window->HasValidGames()) {
 		command_window->DisableItem(0);
 	}
 
-	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::OriginalWidth(), 32));
 	help_window->SetText("EasyRPG Player - RPG Maker 2000/2003 interpreter");
 
-	load_window.reset(new Window_Help(Metrics::Display::Width() / 4, Metrics::Display::Height() / 2 - 16, Metrics::Display::Width() / 2, 32));
+	load_window.reset(new Window_Help(Metrics::Display::OriginalWidth() / 4, Metrics::Display::OriginalHeight() / 2 - 16, Metrics::Display::OriginalWidth() / 2, 32));
 	load_window->SetText("Loading...");
 	load_window->SetVisible(false);
 
-	about_window.reset(new Window_About(60, 32, Metrics::Display::Width() - 60, Metrics::Display::Height() - 32));
+	about_window.reset(new Window_About(60, 32, Metrics::Display::OriginalWidth() - 60, Metrics::Display::OriginalHeight() - 32));
 	about_window->Refresh();
 	about_window->SetVisible(false);
 }

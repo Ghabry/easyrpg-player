@@ -24,9 +24,13 @@ class Rect;
  * Metrics namespace contains shared size information for bitmaps and windows.
  */
 namespace Metrics {
+	int Rescale(int value, int scale_factor = 1);
+
 	namespace Display {
 		int Width();
 		int Height();
+		int OriginalWidth();
+		int OriginalHeight();
 	}
 
 	namespace FaceSet {
@@ -63,6 +67,7 @@ namespace Metrics {
 			Rect TopRight(int which);
 			Rect BottomLeft(int which);
 			Rect BottomRight(int which);
+			int Padding();
 		}
 	}
 }

@@ -98,7 +98,7 @@ public:
 	 * @param flags bitmap flags.
 	 * @param scale_factor Scaling factor of the image. When the factor mismatches the display it is rescaled.
 	 */
-	static BitmapRef Create(const std::string& filename, bool transparent = true, uint32_t flags = 0, int scale_factor = 1);
+	static BitmapRef Create(const std::string& filename, bool transparent = true, uint32_t flags = 0, int scale_factor = -1);
 
 	/*
 	 * Loads a bitmap from memory.

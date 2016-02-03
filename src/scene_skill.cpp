@@ -32,9 +32,9 @@ Scene_Skill::Scene_Skill(int actor_index, int skill_index) :
 
 void Scene_Skill::Start() {
 	// Create the windows
-	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
-	skillstatus_window.reset(new Window_SkillStatus(0, 32, Metrics::Display::Width(), 32));
-	skill_window.reset(new Window_Skill(0, 64, Metrics::Display::Width(), Metrics::Display::Height() - 64));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::OriginalWidth(), 32));
+	skillstatus_window.reset(new Window_SkillStatus(0, 32, Metrics::Display::OriginalWidth(), 32));
+	skill_window.reset(new Window_Skill(0, 64, Metrics::Display::OriginalWidth(), Metrics::Display::OriginalHeight() - 64));
 
 	// Assign actors and help to windows
 	skill_window->SetActor(Main_Data::game_party->GetActors()[actor_index]->GetId());

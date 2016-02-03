@@ -64,7 +64,7 @@ long BaseUi::GetHeight() const {
 }
 
 long BaseUi::GetScaleFactor() const {
-	return Metrics::Display::Width() / 320;
+	return 640 / 320;
 }
 
 bool BaseUi::GetMouseFocus() const {

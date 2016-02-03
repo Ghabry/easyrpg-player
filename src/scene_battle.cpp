@@ -118,22 +118,22 @@ void Scene_Battle::CreateUi() {
 	commands.push_back(Data::terms.battle_escape);
 	options_window.reset(new Window_Command(commands, 76));
 	options_window->SetHeight(80);
-	options_window->SetY(Metrics::Display::Height() - 80);
+	options_window->SetY(Metrics::Display::OriginalHeight() - 80);
 
-	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::OriginalWidth(), 32));
 	help_window->SetVisible(false);
 
-	item_window.reset(new Window_Item(0, (Metrics::Display::Height()-80), Metrics::Display::Width(), 80));
+	item_window.reset(new Window_Item(0, (Metrics::Display::OriginalHeight()-80), Metrics::Display::OriginalWidth(), 80));
 	item_window->SetHelpWindow(help_window.get());
 	item_window->Refresh();
 	item_window->SetIndex(0);
 
-	skill_window.reset(new Window_Skill(0, (Metrics::Display::Height()-80), Metrics::Display::Width(), 80));
+	skill_window.reset(new Window_Skill(0, (Metrics::Display::OriginalHeight()-80), Metrics::Display::OriginalWidth(), 80));
 	skill_window->SetHelpWindow(help_window.get());
 
-	status_window.reset(new Window_BattleStatus(0, (Metrics::Display::Height()-80), Metrics::Display::Width() - 76, 80));
+	status_window.reset(new Window_BattleStatus(0, (Metrics::Display::OriginalHeight()-80), Metrics::Display::OriginalWidth() - 76, 80));
 
-	message_window.reset(new Window_Message(0, (Metrics::Display::Height() - 80), Metrics::Display::Width(), 80));
+	message_window.reset(new Window_Message(0, (Metrics::Display::OriginalHeight() - 80), Metrics::Display::OriginalWidth(), 80));
 	message_window->SetZ(3002);
 }
 

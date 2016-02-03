@@ -47,7 +47,7 @@ Scene_Map::Scene_Map(bool from_save) :
 
 void Scene_Map::Start() {
 	spriteset.reset(new Spriteset_Map());
-	message_window.reset(new Window_Message(0, Metrics::Display::Height() - 80, Metrics::Display::Width(), 80));
+	message_window.reset(new Window_Message(0, Metrics::Display::OriginalHeight() - 80, Metrics::Display::OriginalWidth(), 80));
 
 	// Draw background to prevent System graphic shining through
 	background.reset(new Sprite());

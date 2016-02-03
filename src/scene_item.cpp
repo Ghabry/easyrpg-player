@@ -33,8 +33,8 @@ Scene_Item::Scene_Item(int item_index) :
 
 void Scene_Item::Start() {
 	// Create the windows
-	help_window.reset(new Window_Help(0, 0, Metrics::Display::Width(), 32));
-	item_window.reset(new Window_Item(0, 32, Metrics::Display::Width(), Metrics::Display::Height() - 32));
+	help_window.reset(new Window_Help(0, 0, Metrics::Display::OriginalWidth(), 32));
+	item_window.reset(new Window_Item(0, 32, Metrics::Display::OriginalWidth(), Metrics::Display::OriginalHeight() - 32));
 	item_window->SetHelpWindow(help_window.get());
 	item_window->Refresh();
 	item_window->SetIndex(item_index);

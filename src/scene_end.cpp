@@ -70,7 +70,7 @@ void Scene_End::CreateCommandWindow() {
 void Scene_End::CreateHelpWindow() {
 	int text_size = Font::Default()->GetSize(Data::terms.exit_game_message).width;
 
-	help_window.reset(new Window_Help((Metrics::Display::Width()/2) - (text_size + 16)/ 2,
+	help_window.reset(new Window_Help((Metrics::Display::OriginalWidth()/2) - (text_size + 16)/ 2,
 									  72, text_size + 16, 32));
 	help_window->SetText(Data::terms.exit_game_message);
 

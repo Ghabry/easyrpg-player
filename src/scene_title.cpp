@@ -131,11 +131,11 @@ void Scene_Title::CreateCommandWindow() {
 
 	command_window.reset(new Window_Command(options));
 	if (!Player::hide_title_flag) {
-		command_window->SetX(Metrics::Display::Width() / 2 - command_window->GetWidth() / 2);
-		command_window->SetY(Metrics::Display::Height() * 53 / 60 - command_window->GetHeight());
+		command_window->SetX(Metrics::Display::OriginalWidth() / 2 - command_window->GetWidth() / 2);
+		command_window->SetY(Metrics::Display::OriginalHeight() * 53 / 60 - command_window->GetHeight());
 	} else {
-		command_window->SetX(Metrics::Display::Width() / 2 - command_window->GetWidth() / 2);
-		command_window->SetY(Metrics::Display::Height() / 2 - command_window->GetHeight() / 2);
+		command_window->SetX(Metrics::Display::OriginalWidth() / 2 - command_window->GetWidth() / 2);
+		command_window->SetY(Metrics::Display::OriginalHeight() / 2 - command_window->GetHeight() / 2);
 	}
 	// Enable load game if available
 	continue_enabled = FileFinder::HasSavegame(*FileFinder::CreateSaveDirectoryTree());

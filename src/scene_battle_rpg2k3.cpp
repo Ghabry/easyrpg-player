@@ -111,7 +111,7 @@ void Scene_Battle_Rpg2k3::CreateUi() {
 	// No escape. FIXME: Only enabled when party has initiative.
 	options_window->DisableItem(2);
 
-	enemy_status_window.reset(new Window_BattleStatus(0, 0, Metrics::Display::Width() - 76, 80, true));
+	enemy_status_window.reset(new Window_BattleStatus(0, 0, Metrics::Display::OriginalWidth() - 76, 80, true));
 	enemy_status_window->SetVisible(false);
 
 	ally_cursor.reset(new Sprite());
@@ -122,7 +122,7 @@ void Scene_Battle_Rpg2k3::CreateUi() {
 		skill_window->SetY(64);
 
 		// Default window too small for 4 actors
-		status_window.reset(new Window_BattleStatus(0, Metrics::Display::Height() - 80, Metrics::Display::Width(), 80));
+		status_window.reset(new Window_BattleStatus(0, Metrics::Display::OriginalHeight() - 80, Metrics::Display::OriginalWidth(), 80));
 	}
 
 	if (Data::battlecommands.battle_type != RPG::BattleCommands::BattleType_traditional) {

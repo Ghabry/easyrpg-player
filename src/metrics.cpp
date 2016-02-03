@@ -27,12 +27,28 @@ namespace {
 	}
 }
 
+int Metrics::Rescale(int value, int scale_factor) {
+	int fac = scale() / scale_factor;
+	if (fac != 1) {
+		return value * fac;
+	}
+	return value;
+}
+
 int Display::Width() {
-	return 640;
+	return OriginalWidth() * scale();
 }
 
 int Display::Height() {
-	return 480;
+	return OriginalHeight() * scale();
+}
+
+int Display::OriginalWidth() {
+	return 320;
+}
+
+int Display::OriginalHeight() {
+	return 240;
 }
 
 Rect FaceSet::FaceRect(int face_index) {
@@ -115,3 +131,6 @@ Rect System::Border::BottomRight(int which) {
 	return r;
 }
 
+int System::Border::Padding() {
+	return 16 * scale();
+}
