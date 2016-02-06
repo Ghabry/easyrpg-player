@@ -27,10 +27,18 @@ namespace {
 	}
 }
 
-int Metrics::Rescale(int value, int scale_factor) {
+int Metrics::Upscale(int value, int scale_factor) {
 	int fac = scale() / scale_factor;
 	if (fac != 1) {
 		return value * fac;
+	}
+	return value;
+}
+
+int Metrics::Downscale(int value, int scale_factor) {
+	int fac = scale() / scale_factor;
+	if (fac != 1) {
+		return value / fac;
 	}
 	return value;
 }

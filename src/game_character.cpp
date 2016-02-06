@@ -21,14 +21,10 @@
 #include "game_map.h"
 #include "game_player.h"
 #include "game_switches.h"
-#include "game_system.h"
-#include "input.h"
 #include "main_data.h"
 #include "game_message.h"
-#include "player.h"
 #include "util_macro.h"
 #include <cmath>
-#include <cassert>
 #include <cstdlib>
 #include "metrics.h"
 

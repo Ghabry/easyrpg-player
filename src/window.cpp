@@ -136,9 +136,9 @@ void Window::Draw() {
 				}
 			} else {
 				dst->Blit(x, y, *frame_up, frame_up->GetRect(), opacity);
-				dst->Blit(x, y + height - 8, *frame_down, frame_down->GetRect(), opacity);
-				dst->Blit(x, y + 8, *frame_left, frame_left->GetRect(), opacity);
-				dst->Blit(x + (width - 8) * scale, y + (8 * scale), *frame_right, frame_right->GetRect(), opacity);
+				dst->Blit(x, y + height - (8 * scale), *frame_down, frame_down->GetRect(), opacity);
+				dst->Blit(x, y + (8 * scale), *frame_left, frame_left->GetRect(), opacity);
+				dst->Blit(x + (width - (8 * scale)), y + (8 * scale), *frame_right, frame_right->GetRect(), opacity);
 			}
 		}
 
@@ -192,7 +192,7 @@ void Window::Draw() {
 void Window::RefreshBackground() {
 	background_needs_refresh = false;
 
-	BitmapRef bitmap = Bitmap::Create(width, height, false, 1);
+	BitmapRef bitmap = Bitmap::Create(width, height, false);
 
 	int scale = DisplayUi->GetScaleFactor();
 
@@ -207,7 +207,6 @@ void Window::RefreshBackground() {
 
 void Window::RefreshFrame() {
 	frame_needs_refresh = false;
-
 
 	BitmapRef up_bitmap = Bitmap::Create(width, 8, true, 1);
 	BitmapRef down_bitmap = Bitmap::Create(width, 8, true, 1);
@@ -224,28 +223,26 @@ void Window::RefreshFrame() {
 
 	// Border Up
 	src_rect = Metrics::System::Border::Top(0);
-	dst_rect.Set(8, 0, max(width - 16, 1), 8);
-	dst_rect.Multiply(scale);
+	dst_rect.Set(8 * scale, 0, max(width - 16, 1), 8 * scale);
 
 	up_bitmap->TiledBlit(8, 0, src_rect, *windowskin, dst_rect, 255);
 
 	// Border Down
 	src_rect = Metrics::System::Border::Bottom(0);
-	dst_rect.Set(8, 0, max(width - 16, 1), 8);
-	dst_rect.Multiply(scale);
+	dst_rect.Set(8 * scale, 0, max(width - 16, 1), 8 * scale);
 	down_bitmap->TiledBlit(8, 0, src_rect, *windowskin, dst_rect, 255);
 
 	// Upper left corner
 	up_bitmap->Blit(0, 0, *windowskin, Metrics::System::Border::TopLeft(0), 255);
 
 	// Upper right corner
-	up_bitmap->Blit(width - 8, 0, *windowskin, Metrics::System::Border::TopRight(0), 255);
+	up_bitmap->Blit(width - (8 * scale), 0, *windowskin, Metrics::System::Border::TopRight(0), 255);
 
 	// Lower left corner
 	down_bitmap->Blit(0, 0, *windowskin, Metrics::System::Border::BottomLeft(0), 255);
 
 	// Lower right corner
-	down_bitmap->Blit(width - 8, 0, *windowskin, Metrics::System::Border::BottomRight(0), 255);
+	down_bitmap->Blit(width - (8 * scale), 0, *windowskin, Metrics::System::Border::BottomRight(0), 255);
 
 	frame_up = up_bitmap;
 	frame_down = down_bitmap;
@@ -262,15 +259,13 @@ void Window::RefreshFrame() {
 
 		// Border Left
 		src_rect = Metrics::System::Border::Left(0);
-		dst_rect.Set(0, 0, 8, height - 16);
-		dst_rect.Multiply(scale);
-		left_bitmap->TiledBlit(0, 8, src_rect, *windowskin, dst_rect, 255);
+		dst_rect.Set(0, 0, 8 * scale, height - 16 * scale);
+		left_bitmap->TiledBlit(0, 8 * scale, src_rect, *windowskin, dst_rect, 255);
 
 		// Border Right
 		src_rect = Metrics::System::Border::Right(0);
-		dst_rect.Set(0, 0, 8, height - 16);
-		dst_rect.Multiply(scale);
-		right_bitmap->TiledBlit(0, 8, src_rect, *windowskin, dst_rect, 255);
+		dst_rect.Set(0, 0, 8 * scale, height - 16 * scale);
+		right_bitmap->TiledBlit(0, 8 * scale, src_rect, *windowskin, dst_rect, 255);
 
 		frame_left = left_bitmap;
 		frame_right = right_bitmap;
@@ -439,24 +434,24 @@ void Window::SetDownArrow(bool ndown_arrow) {
 }
 
 int Window::GetX() const {
-	return x / DisplayUi->GetScaleFactor();
+	return Metrics::Downscale(x);
 }
 void Window::SetX(int nx) {
-	x = Metrics::Rescale(nx);
+	x = Metrics::Upscale(nx);
 }
 
 int Window::GetY() const {
-	return y / DisplayUi->GetScaleFactor();
+	return Metrics::Downscale(y);
 }
 void Window::SetY(int ny) {
-	y = Metrics::Rescale(ny);
+	y = Metrics::Upscale(ny);
 }
 
 int Window::GetWidth() const {
-	return width / DisplayUi->GetScaleFactor();
+	return Metrics::Downscale(width);
 }
 void Window::SetWidth(int nwidth) {
-	nwidth = Metrics::Rescale(nwidth);
+	nwidth = Metrics::Upscale(nwidth);
 	if (width != nwidth) {
 		background_needs_refresh = true;
 		frame_needs_refresh = true;
@@ -465,10 +460,10 @@ void Window::SetWidth(int nwidth) {
 }
 
 int Window::GetHeight() const {
-	return height / DisplayUi->GetScaleFactor();
+	return Metrics::Downscale(height);
 }
 void Window::SetHeight(int nheight) {
-	nheight = Metrics::Rescale(nheight);
+	nheight = Metrics::Upscale(nheight);
 	if (height != nheight) {
 		background_needs_refresh = true;
 		frame_needs_refresh = true;
@@ -485,31 +480,31 @@ void Window::SetZ(int nz) {
 }
 
 int Window::GetOx() const {
-	return ox;
+	return Metrics::Downscale(ox);
 }
 void Window::SetOx(int nox) {
-	ox = nox;
+	ox = Metrics::Upscale(nox);
 }
 
 int Window::GetOy() const {
-	return oy;
+	return Metrics::Downscale(oy);
 }
 void Window::SetOy(int noy) {
-	oy = noy;
+	oy = Metrics::Upscale(noy);
 }
 
 int Window::GetBorderX() const {
-	return border_x;
+	return Metrics::Downscale(border_x);
 }
 void Window::SetBorderX(int x) {
-	border_x = x;
+	border_x = Metrics::Upscale(x);
 }
 
 int Window::GetBorderY() const {
-	return border_y;
+	return Metrics::Downscale(border_y);
 }
 void Window::SetBorderY(int y) {
-	border_y = y;
+	border_y = Metrics::Upscale(y);
 }
 
 int Window::GetOpacity() const {
