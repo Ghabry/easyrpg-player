@@ -182,6 +182,8 @@ public:
 	 */
 	bool WritePNG(std::ostream& os) const;
 
+	void SetBackgroundColor(const Color& color);
+
 	/**
 	 * Gets the background color
 	 * Bitmap must have been loaded with the Bitmap::System flag
@@ -189,6 +191,8 @@ public:
 	 * @return background color.
 	 */
 	Color GetBackgroundColor();
+
+	void SetShadowColor(const Color& color);
 
 	/**
 	 * Gets the shadow color

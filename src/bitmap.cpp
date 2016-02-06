@@ -43,6 +43,8 @@ namespace {
 			int scale = DisplayUi->GetScaleFactor() / scale_factor;
 
 			BitmapRef bitmap = Bitmap::Create(src->GetWidth()*scale, src->GetHeight()*scale, src->GetTransparent());
+			bitmap->SetShadowColor(src->GetShadowColor());
+			bitmap->SetBackgroundColor(src->GetBackgroundColor());
 
 			bitmap->TransformBlit(bitmap->GetRect(), *src, src->GetRect(), Matrix::Scale(1.0 / scale, 1.0 / scale), Opacity::opaque);
 
@@ -179,8 +181,16 @@ Bitmap::TileOpacity Bitmap::GetTileOpacity(int row, int col) {
 	return opacity? (*opacity)[row][col] : Partial;
 }
 
+void Bitmap::SetBackgroundColor(const Color& color) {
+	bg_color = color;
+}
+
 Color Bitmap::GetBackgroundColor() {
 	return bg_color;
+}
+
+void Bitmap::SetShadowColor(const Color& color) {
+	sh_color = color;
 }
 
 Color Bitmap::GetShadowColor() {
