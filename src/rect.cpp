@@ -183,3 +183,10 @@ void Rect::Multiply(int i) {
 	width *= i;
 	height *= i;
 }
+
+void Rect::Divide(int i) {
+	x /= i;
+	y /= i;
+	width /= i;
+	height /= i;
+}

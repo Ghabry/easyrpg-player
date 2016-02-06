@@ -45,6 +45,7 @@
 #include "audio.h"
 #include "sdl_audio.h"
 #include "al_audio.h"
+#include "metrics.h"
 
 #include <cstdlib>
 #include <cstring>
@@ -414,7 +415,7 @@ bool SdlUi::RefreshDisplayMode() {
 		sdl_renderer = SDL_CreateRenderer(sdl_window, -1, rendered_flag);
 		if (!sdl_renderer)
 			return false;
-		SDL_RenderSetLogicalSize(sdl_renderer, 640, 480);
+		SDL_RenderSetLogicalSize(sdl_renderer, Metrics::Display::Width(), Metrics::Display::Height());
 
 		uint32_t const texture_format =
 			SDL_BYTEORDER == SDL_LIL_ENDIAN
@@ -424,7 +425,7 @@ bool SdlUi::RefreshDisplayMode() {
 		sdl_texture = SDL_CreateTexture(sdl_renderer,
 			texture_format,
 			SDL_TEXTUREACCESS_STREAMING,
-			640, 480);
+			Metrics::Display::Width(), Metrics::Display::Height());
 
 		if (!sdl_texture)
 			return false;
@@ -490,7 +491,7 @@ bool SdlUi::RefreshDisplayMode() {
 	if (!main_surface) {
 		// Drawing surface will be the window itself
 		main_surface = Bitmap::Create(
-			640, 480, Color(0, 0, 0, 255));
+			Metrics::Display::Width(), Metrics::Display::Height(), Color(0, 0, 0, 255));
 	}
 #endif
 

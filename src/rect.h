@@ -155,6 +155,13 @@ public:
 	 * @param i multiplier
 	 */
 	void Multiply(int i);
+
+	/**
+	* Divides i from all coordinates of a rectangle.
+	* @param i multiplier
+	*/
+	void Divide(int i);
+
 };
 
 #endif

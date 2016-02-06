@@ -44,8 +44,7 @@ namespace {
 
 			BitmapRef bitmap = Bitmap::Create(src->GetWidth()*scale, src->GetHeight()*scale, src->GetTransparent());
 
-			// FIXME: scale factor
-			bitmap->Blit2x(bitmap->GetRect(), *src, src->GetRect());
+			bitmap->TransformBlit(bitmap->GetRect(), *src, src->GetRect(), Matrix::Scale(1.0 / scale, 1.0 / scale), Opacity::opaque);
 
 			return bitmap;
 		}

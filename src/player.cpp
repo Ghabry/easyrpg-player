@@ -50,6 +50,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
+#include "metrics.h"
 
 #ifdef GEKKO
 	#include <fat.h>
@@ -159,8 +160,8 @@ void Player::Init(int argc, char *argv[]) {
 
 	if(! DisplayUi) {
 		DisplayUi = BaseUi::CreateUi
-			(640,
-			 480,
+			(Metrics::Display::Width(),
+			 Metrics::Display::Height(),
 			 game_title,
 			 !window_flag,
 			 RUN_ZOOM);

@@ -24,6 +24,7 @@ class Rect;
  * Metrics namespace contains shared size information for bitmaps and windows.
  */
 namespace Metrics {
+	int GetScale();
 	int Upscale(int value, int scale_factor = 1);
 
 	int Downscale(int value, int scale_factor = 1);

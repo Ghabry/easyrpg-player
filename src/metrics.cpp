@@ -27,6 +27,10 @@ namespace {
 	}
 }
 
+int Metrics::GetScale() {
+	return scale();
+}
+
 int Metrics::Upscale(int value, int scale_factor) {
 	int fac = scale() / scale_factor;
 	if (fac != 1) {
