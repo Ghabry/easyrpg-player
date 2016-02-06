@@ -127,13 +127,6 @@ bool Bitmap::GetTransparent() const {
 	return format.alpha_type != PF::NoAlpha;
 }
 
-Color Bitmap::GetTransparentColor() const {
-	return Color();
-}
-
-void Bitmap::SetTransparentColor(Color /* color */) {
-}
-
 Bitmap::TileOpacity Bitmap::CheckOpacity(const Rect& rect) {
 	bool all = true;
 	bool any = false;

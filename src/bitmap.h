@@ -163,20 +163,6 @@ public:
 	 */
 	bool GetTransparent() const;
 
-	/**
-	 * Gets current transparent color.
-	 *
-	 * @return current transparent color.
-	 */
-	Color GetTransparentColor() const;
-
-	/**
-	 * Sets transparent color.
-	 *
-	 * @param color new transparent color.
-	 */
-	void SetTransparentColor(Color color);
-
 	static const uint32_t System  = 0x80000000;
 	static const uint32_t Chipset = 0x40000000;
 

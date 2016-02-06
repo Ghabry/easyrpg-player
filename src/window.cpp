@@ -211,9 +211,6 @@ void Window::RefreshFrame() {
 	BitmapRef up_bitmap = Bitmap::Create(width, 8, true, 1);
 	BitmapRef down_bitmap = Bitmap::Create(width, 8, true, 1);
 
-	up_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
-	down_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
-
 	up_bitmap->Clear();
 	down_bitmap->Clear();
 
@@ -251,9 +248,6 @@ void Window::RefreshFrame() {
 		BitmapRef left_bitmap = Bitmap::Create(8, height - 16, true, 1);
 		BitmapRef right_bitmap = Bitmap::Create(8, height - 16, true, 1);
 
-		left_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
-		right_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
-
 		left_bitmap->Clear();
 		right_bitmap->Clear();
 
@@ -283,9 +277,6 @@ void Window::RefreshCursor() {
 
 	BitmapRef cursor1_bitmap = Bitmap::Create(cw, ch);
 	BitmapRef cursor2_bitmap = Bitmap::Create(cw, ch);
-
-	cursor1_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
-	cursor2_bitmap->SetTransparentColor(windowskin->GetTransparentColor());
 
 	cursor1_bitmap->Clear();
 	cursor2_bitmap->Clear();

@@ -29,9 +29,6 @@ Window_BattleMessage::Window_BattleMessage(int ix, int iy, int iwidth, int iheig
 	Window_Base(ix, iy, iwidth, iheight),
 	needs_refresh(true) {
 
-	SetContents(Bitmap::Create(width - 16, height - 16));
-	contents->SetTransparentColor(windowskin->GetTransparentColor());
-
 	visible = false;
 	SetZ(3001);
 }

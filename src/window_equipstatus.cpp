@@ -30,9 +30,6 @@ Window_EquipStatus::Window_EquipStatus(int ix, int iy, int iwidth, int iheight, 
 	draw_actorname(draw_actorname),
 	dirty(true) {
 
-	SetContents(Bitmap::Create(width - 16, height - 16));
-	contents->SetTransparentColor(windowskin->GetTransparentColor());
-
 	Refresh();
 }
 

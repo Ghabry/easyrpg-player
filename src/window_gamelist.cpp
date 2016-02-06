@@ -52,8 +52,6 @@ void Window_GameList::Refresh() {
 		}
 	}
 	else {
-		SetContents(Bitmap::Create(width - 16, height - 16));
-
 		DrawErrorText();
 	}
 }

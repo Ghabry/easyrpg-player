@@ -34,8 +34,6 @@ Window_BattleStatus::Window_BattleStatus(int ix, int iy, int iwidth, int iheight
 
 	SetBorderX(4);
 
-	SetContents(Bitmap::Create(width - 8, height - 16));
-
 	index = -1;
 
 	if (Data::battlecommands.battle_type == RPG::BattleCommands::BattleType_gauge) {

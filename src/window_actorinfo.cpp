@@ -28,9 +28,6 @@ Window_ActorInfo::Window_ActorInfo(int ix, int iy, int iwidth, int iheight, int 
 	Window_Base(ix, iy, iwidth, iheight),
 	actor_id(actor_id) {
 
-	SetContents(Bitmap::Create(width - 16, height - 16));
-	contents->SetTransparentColor(windowskin->GetTransparentColor());
-
 	Refresh();
 }
 
