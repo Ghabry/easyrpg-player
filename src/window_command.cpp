@@ -17,9 +17,8 @@
 
 // Headers
 #include "window_command.h"
-#include "color.h"
 #include "bitmap.h"
-#include "util_macro.h"
+#include "metrics.h"
 
 static int CalculateWidth(const std::vector<std::string>& commands, int width) {
 	if (width < 0) {
@@ -40,7 +39,7 @@ Window_Command::Window_Command(const std::vector<std::string>& commands, int wid
 	index = 0;
 	item_max = commands.size();
 
-	SetContents(Bitmap::Create(this->width - 16, item_max * 16));
+	SetContents(Bitmap::Create(this->width - Metrics::Upscale(16), item_max * Metrics::Upscale(16)));
 
 	Refresh();
 }
@@ -53,7 +52,9 @@ void Window_Command::Refresh() {
 }
 
 void Window_Command::DrawItem(int index, Font::SystemColor color) {
-	contents->ClearRect(Rect(0, 16 * index, contents->GetWidth() - 0, 16));
+	Rect r = contents->GetRect();
+
+	contents->ClearRect(Rect(0, Metrics::Upscale(16) * index, contents->GetWidth() - 0, Metrics::Upscale(16)));
 	contents->TextDraw(0, 16 * index + 2, color, commands[index]);
 }
 

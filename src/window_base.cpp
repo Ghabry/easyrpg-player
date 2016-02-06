@@ -60,10 +60,10 @@ void Window_Base::OnFaceReady(FileRequestResult* result, int face_index, int cx,
 	Rect src_rect = Metrics::FaceSet::FaceRect(face_index);
 
 	if (flip) {
-		contents->FlipBlit(cx, cy, *faceset, src_rect, true, false, Opacity::opaque);
+		contents->FlipBlit(Metrics::Upscale(cx), Metrics::Upscale(cy), *faceset, src_rect, true, false, Opacity::opaque);
 	}
 	else {
-		contents->Blit(cx, cy, *faceset, src_rect, 255);
+		contents->Blit(Metrics::Upscale(cx), Metrics::Upscale(cy), *faceset, src_rect, 255);
 	}
 }
 

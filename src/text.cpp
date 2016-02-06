@@ -18,12 +18,10 @@
 // Headers
 #include "data.h"
 #include "cache.h"
-#include "output.h"
-#include "utils.h"
 #include "bitmap.h"
 #include "font.h"
 #include "text.h"
-#include "game_system.h"
+#include "metrics.h"
 
 #include <cctype>
 
@@ -33,17 +31,20 @@
 void Text::Draw(Bitmap& dest, int x, int y, int color, std::string const& text, Text::Alignment align) {
 	if (text.length() == 0) return;
 
+	x = Metrics::Upscale(x);
+	y = Metrics::Upscale(y);
+
 	FontRef font = dest.GetFont();
 	Rect dst_rect = font->GetSize(text);
 
 	switch (align) {
-	case Text::AlignCenter:
-		dst_rect.x = x - dst_rect.width / 2; break;
-	case Text::AlignRight:
-		dst_rect.x = x - dst_rect.width; break;
-	case Text::AlignLeft:
-		dst_rect.x = x; break;
-	default: assert(false);
+		case Text::AlignCenter:
+			dst_rect.x = x - dst_rect.width / 2; break;
+		case Text::AlignRight:
+			dst_rect.x = x - dst_rect.width; break;
+		case Text::AlignLeft:
+			dst_rect.x = x; break;
+		default: assert(false);
 	}
 
 	dst_rect.y = y;

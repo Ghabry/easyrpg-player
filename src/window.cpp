@@ -41,8 +41,6 @@ Window::Window():
 	z(0),
 	ox(0),
 	oy(0),
-	border_x(8),
-	border_y(8),
 	opacity(255),
 	back_opacity(255),
 	contents_opacity(255),
@@ -53,6 +51,9 @@ Window::Window():
 	animation_increment(0.0) {
 
 	Graphics::RegisterDrawable(this);
+
+	border_x = Metrics::Upscale(8);
+	border_y = Metrics::Upscale(8);
 
 	background = BitmapRef();
 	frame_down = BitmapRef();
@@ -272,11 +273,11 @@ void Window::RefreshFrame() {
 void Window::RefreshCursor() {
 	cursor_needs_refresh = false;
 
-	int cw = cursor_rect.width;
-	int ch = cursor_rect.height;
+	int cw = Metrics::Downscale(cursor_rect.width);
+	int ch = Metrics::Downscale(cursor_rect.height);
 
-	BitmapRef cursor1_bitmap = Bitmap::Create(cw, ch);
-	BitmapRef cursor2_bitmap = Bitmap::Create(cw, ch);
+	BitmapRef cursor1_bitmap = Bitmap::Create(cw, ch, true, 1);
+	BitmapRef cursor2_bitmap = Bitmap::Create(cw, ch, true, 1);
 
 	cursor1_bitmap->Clear();
 	cursor2_bitmap->Clear();
@@ -328,8 +329,12 @@ void Window::RefreshCursor() {
 	// Background
 	dst_rect.Set(8, 8, cw - 16, ch - 16);
 	dst_rect.Multiply(scale);
-	cursor1_bitmap->TiledBlit(8, 8, Rect(64 + 8, 8, 16, 16), *windowskin, dst_rect, 255);
-	cursor2_bitmap->TiledBlit(8, 8, Rect(96 + 8, 8, 16, 16), *windowskin, dst_rect, 255);
+	Rect bg1(64 + 8, 8, 16, 16);
+	bg1.Multiply(scale);
+	Rect bg2(96 + 8, 8, 16, 16);
+	bg2.Multiply(scale);
+	cursor1_bitmap->TiledBlit(8 * scale, 8 * scale, bg1, *windowskin, dst_rect, 255);
+	cursor2_bitmap->TiledBlit(8 * scale, 8 * scale, bg2, *windowskin, dst_rect, 255);
 
 	cursor1 = cursor1_bitmap;
 	cursor2 = cursor2_bitmap;
@@ -385,8 +390,11 @@ Rect const& Window::GetCursorRect() const {
 	return cursor_rect;
 }
 void Window::SetCursorRect(Rect const& ncursor_rect) {
-	if (cursor_rect.width != ncursor_rect.width || cursor_rect.height != ncursor_rect.height) cursor_needs_refresh = true;
-	cursor_rect = ncursor_rect;
+	Rect nrect = ncursor_rect;
+	nrect.Multiply(Metrics::GetScale());
+
+	if (cursor_rect.width != nrect.width || cursor_rect.height != nrect.height) cursor_needs_refresh = true;
+	cursor_rect = nrect;
 }
 
 bool Window::GetActive() const {
