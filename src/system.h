@@ -60,7 +60,8 @@
 
 #ifdef USE_SDL
 #  define USE_SDL_MIXER
-
+#  define SUPPORT_AUDIO
+#
 #  ifdef PSP
 #    undef USE_SDL_MIXER
 #    define NO_SDL_MIXER
@@ -92,9 +93,9 @@
 #  endif
 
 #  ifdef NO_SDL_MIXER
-#    undef SUPPORT_AUDIO
-#  else
-#    define SUPPORT_AUDIO
+#    if !defined(HAVE_OPENAL)
+#      undef SUPPORT_AUDIO
+#    endif
 #  endif
 
 #  ifdef WANT_FMMIDI
