@@ -115,6 +115,13 @@ namespace {
 	FileRequestBinding system_request_id;
 	FileRequestBinding save_request_id;
 	FileRequestBinding map_request_id;
+
+	Input::InputButton debug_keys[] = {
+		Input::UP, Input::UP, Input::DOWN, Input::DOWN,
+		Input::LEFT, Input::RIGHT, Input::LEFT, Input::RIGHT,
+		Input::CANCEL, Input::DECISION,
+		Input::BUTTON_COUNT};
+	int debug_keys_index = 0;
 }
 
 void Player::Init(int argc, char *argv[]) {
@@ -317,6 +324,26 @@ void Player::Update(bool update_scene) {
 	}
 	if (Input::IsTriggered(Input::SHOW_LOG)) {
 		Output::ToggleLog();
+	}
+	if (Input::IsPressed(Input::SHIFT) && Input::GetAllPressed().size() <= 2) {
+		// When holding SHIFT and inputting the combination in the
+		// debug_keys array enable the debug_flag
+
+		if (debug_keys[debug_keys_index] == Input::BUTTON_COUNT) {
+			debug_keys_index = 0;
+			debug_flag = !debug_flag;
+
+			// Yeah!
+			Output::Post("Debug Mode %s", debug_flag ? "enabled" : "disabled");
+		} else if (Input::IsAnyTriggered()) {
+			if (Input::IsTriggered(debug_keys[debug_keys_index])) {
+				++debug_keys_index;
+			} else {
+				debug_keys_index = 0;
+			}
+		}
+	} else {
+		debug_keys_index = 0;
 	}
 
 	DisplayUi->ProcessEvents();
