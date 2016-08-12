@@ -25,6 +25,7 @@
 #include <functional>
 
 #include "audio_al.h"
+#include "audio_decoder.h"
 #include "filefinder.h"
 #include "output.h"
 #include "sndfile.h"
@@ -145,7 +146,6 @@ struct ALAudio::buffer_loader {
 	virtual unsigned midi_ticks() const {
 		return 0;
 	}
-
 	unsigned loop_count_ = 0;
 };
 
@@ -197,6 +197,10 @@ struct ALAudio::source {
 
 	int loop_count() {
 		return loader_->loop_count_;
+	}
+
+	bool looping() {
+		return loop_play_;
 	}
 
 	ALuint get() {
@@ -253,20 +257,25 @@ public:
 		is_fade_in_ = true;
 	}
 
-	void update() {
+	bool update() {
 		ALint processed;
 		alGetSourceiv(src_, AL_BUFFERS_PROCESSED, &processed);
 		std::vector<ALuint> unqueued(processed);
 		alSourceUnqueueBuffers(src_, processed, &unqueued.front());
 		int queuing_count = 0;
+		bool done = false;
 		for (; queuing_count < processed; ++queuing_count) {
 			if (!loop_play_ && loader_->is_end()) {
+				Output::Debug("A");
 				loader_.reset();
 				++queuing_count;
+				done = true;
 				break;
 			}
 
+			Output::Debug("B");
 			if (loader_->is_end()) {
+				Output::Debug("C");
 				ticks_.pop_front();
 				ticks_.push_back(0);
 			}
@@ -289,6 +298,8 @@ public:
 				alSourcef(src_, AL_GAIN, current_volume());
 			}
 		}
+
+		return !done;
 	}
 
 	void set_buffer_loader(std::shared_ptr<buffer_loader> const &l) {
@@ -308,7 +319,7 @@ public:
 
 		loader_ = l;
 		int queuing_count = 0;
-		assert(!l->is_end());
+		//assert(!l->is_end());
 		ticks_[0] = 0;
 		for (; queuing_count < BUFFER_NUMBER; ++queuing_count) {
 			buf_sizes_[queuing_count] = loader_->load_buffer(buffers_[queuing_count]);
@@ -376,6 +387,7 @@ struct ALAudio::sndfile_loader : public ALAudio::buffer_loader {
 		}
 
 		data_.resize(info_.channels * info_.samplerate * SECOND_PER_BUFFER);
+
 		sf_count_t const read_size =
 		    sf_readf_short(file_.get(), &data_.front(), data_.size() / info_.channels);
 		alBufferData(buf, format_, &data_.front(), sizeof(int16_t) * data_.size(),
@@ -446,12 +458,102 @@ private:
 	std::vector<int16_t> data_;
 };
 
+struct ALAudio::audiodecoder_loader : public ALAudio::buffer_loader {
+	static std::shared_ptr<buffer_loader> create(std::string const &filename, bool loop) {
+		std::shared_ptr<audiodecoder_loader> ad = std::make_shared<audiodecoder_loader>(filename.c_str(), loop);
+		if (ad->audio_decoder) {
+			return ad;
+		}
+
+		return std::shared_ptr<audiodecoder_loader>();
+	}
+
+	audiodecoder_loader(std::string const &filename, bool loop) : filename_(filename) {
+		audio_decoder.reset();
+		FILE* file = FileFinder::fopenUTF8(filename_, "rb");
+		audio_decoder = AudioDecoder::Create(file, filename_);
+		audio_decoder->Open(file);
+
+		AudioDecoder::Format format;
+
+		audio_decoder->GetFormat(sample_rate, format, channels);
+		if (format != AudioDecoder::Format::S8 ||
+			format != AudioDecoder::Format::S16) {
+			format = AudioDecoder::Format::S16;
+			audio_decoder->SetFormat(sample_rate, AudioDecoder::Format::S16, channels);
+		}
+
+		if (format == AudioDecoder::Format::S8) {
+			if (channels == 1) {
+				al_format = AL_FORMAT_MONO8;
+			} else {
+				al_format = AL_FORMAT_STEREO8;
+			}
+		} else if (format == AudioDecoder::Format::S16) {
+			if (channels == 1) {
+				al_format = AL_FORMAT_MONO16;
+			} else {
+				al_format = AL_FORMAT_STEREO16;
+			}
+		}
+
+		audio_decoder->SetLooping(loop);
+	}
+
+	bool is_end() const {
+		return audio_decoder->IsFinished();
+	}
+
+	size_t load_buffer(ALuint buf) {
+		data_.resize(1024 * 8);
+
+		size_t decoded = audio_decoder->Decode(data_.data(), 1024 * 8);
+
+		Output::Debug("%d %d", decoded, sample_rate);
+
+		alBufferData(buf, al_format, &data_.front(), 1024 * 8, sample_rate);
+
+		loop_count_ = audio_decoder->GetLoopCount();
+
+		if (is_end()) {
+			return 0;
+		}
+
+		if (decoded <= 0) {
+			int i = 1;
+			++i;
+		}
+
+		return decoded;
+	}
+
+	unsigned midi_ticks() const {
+		return 0;
+	}
+
+private:
+	std::string const filename_;
+
+	std::vector<uint8_t> data_;
+
+	std::unique_ptr<AudioDecoder> audio_decoder;
+
+	int sample_rate;
+	int al_format;
+	int channels;
+};
+
 std::shared_ptr<ALAudio::buffer_loader>
 ALAudio::create_loader(source &src, std::string const &filename) const {
 	SET_CONTEXT(ctx_);
 
 	if (filename.empty()) {
 		Output::Error("Failed loading audio file: %s", filename.c_str());
+	}
+
+	std::shared_ptr<buffer_loader> ad = audiodecoder_loader::create(filename, src.looping());
+	if (ad) {
+		return ad;
 	}
 
 	std::shared_ptr<buffer_loader> snd = sndfile_loader::create(filename);
@@ -472,11 +574,9 @@ void ALAudio::Update() {
 	bgm_src_->update();
 
 	for (source_list::iterator i = se_src_.begin(); i < se_src_.end(); ++i) {
-		i->get()->update();
+		bool cont = i->get()->update();
 
-		ALenum state = AL_INVALID_VALUE;
-		alGetSourcei(i->get()->get(), AL_SOURCE_STATE, &state);
-		if (state == AL_STOPPED) {
+		if (!cont) {
 			i = se_src_.erase(i);
 		}
 	}
@@ -495,9 +595,9 @@ ALAudio::ALAudio(char const *const dev_name) {
 
 	bgm_src_ = create_source(true);
 
-	if (!getenv("DEFAULT_SOUNDFONT")) {
-		Output::Error("Default sound font not found.");
-	}
+	//if (!getenv("DEFAULT_SOUNDFONT")) {
+	//	Output::Error("Default sound font not found.");
+	//}
 }
 
 std::shared_ptr<ALAudio::source> ALAudio::create_source(bool loop) const {

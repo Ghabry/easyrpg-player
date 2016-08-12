@@ -58,6 +58,7 @@ private:
 	struct buffer_loader;
 	struct sndfile_loader;
 	struct midi_loader;
+	struct audiodecoder_loader;
 
 	std::shared_ptr<source> create_source(bool loop) const;
 	std::shared_ptr<buffer_loader> create_loader(source &src, std::string const &file) const;

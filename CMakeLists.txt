@@ -122,6 +122,31 @@ set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL2 OpenAL)
 
 # Configure Audio backends
 
+# mpg123
+option(PLAYER_WITH_MPG123 "Play MP3 audio with libmpg123." ON)
+find_lib("mpg123" PLAYER_WITH_MPG123)
+if(${RETVAL})
+	add_definitions(-DHAVE_MPG123)
+endif()
+
+# libsndfile
+option(PLAYER_WITH_LIBSNDFILE "Play WAV audio with libsndfile." ON)
+find_lib("SndFile" PLAYER_WITH_LIBSNDFILE)
+if(${RETVAL})
+	add_definitions(-DHAVE_LIBSNDFILE)
+endif()
+
+# libogg
+option(PLAYER_WITH_LIBOGG "Play OGG audio with libogg." ON)
+find_lib("OggVorbis" PLAYER_WITH_SPEEXDSP)
+if(${RETVAL})
+	add_definitions(-DHAVE_OGGVORBIS)
+endif()
+
+        # Provide fmmidi options
+                add_definitions(-DWANT_FMMIDI=1)
+
+
 if(${PLAYER_AUDIO_BACKEND} MATCHES "SDL2_mixer")
 	# SDL2_mixer Audio
 	find_lib_req(SDL2_mixer ON)
