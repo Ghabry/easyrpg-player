@@ -180,7 +180,7 @@ void Scene_Map::Update() {
 	}
 
 	if (!Main_Data::game_player->IsMoving()) {
-		if (Game_Temp::menu_calling) {
+		/*if (Game_Temp::menu_calling) {
 			CallMenu();
 			return;
 		}
@@ -203,7 +203,7 @@ void Scene_Map::Update() {
 		if (Game_Temp::load_calling) {
 			CallLoad();
 			return;
-		}
+		}*/
 
 		if (Game_Temp::battle_calling) {
 			CallBattle();

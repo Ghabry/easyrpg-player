@@ -368,16 +368,32 @@ void Game_Player::Update() {
 	if (IsMovable() && !Game_Map::GetInterpreter().IsRunning()) {
 		switch (Input::dir4) {
 			case 2:
-				Move(Down);
+				if (!MakeWay(GetX(), GetY(), Down)) {
+					Move(Up);
+				} else {
+					Move(Down);
+				}
 				break;
 			case 4:
-				Move(Left);
+				if (!MakeWay(GetX(), GetY(), Left)) {
+					Move(Right);
+				} else {
+					Move(Left);
+				}
 				break;
 			case 6:
-				Move(Right);
+				if (!MakeWay(GetX(), GetY(), Right)) {
+					Move(Left);
+				} else {
+					Move(Right);
+				}
 				break;
 			case 8:
-				Move(Up);
+				if (!MakeWay(GetX(), GetY(), Up)) {
+					Move(Down);
+				} else {
+					Move(Up);
+				}
 		}
 	}
 

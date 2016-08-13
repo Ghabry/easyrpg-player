@@ -26,10 +26,6 @@
 #  include <config.h>
 #endif
 
-#if !(defined(USE_SDL) || defined(_3DS) || defined(PSP2))
-#  error "This build doesn't target a backend"
-#endif
-
 /*
  * TODO?: Combine system.h and options.h ?
  * options.h is oriented to configurations that the EasyRPG user might want
@@ -42,6 +38,8 @@
  * Smart pointer header.
  */
 #include "memory_management.h"
+
+#undef WANT_FMMIDI
 
 #ifdef PSP2
 #  define SUPPORT_JOYSTICK

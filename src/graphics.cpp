@@ -152,9 +152,9 @@ void Graphics::DrawFrame() {
 	if (transition_frames_left > 0) {
 		UpdateTransition();
 
-		for (Drawable* drawable : global_state->drawable_list) {
+		/*for (Drawable* drawable : global_state->drawable_list) {
 			drawable->Draw();
-		}
+		}*/
 
 		DrawOverlay();
 
@@ -166,6 +166,12 @@ void Graphics::DrawFrame() {
 		DisplayUi->CleanDisplay();
 		return;
 	}
+
+	if (!DisplayUi->draw_now) {
+		return;
+	}
+
+	DisplayUi->draw_now = false;
 
 	if (state->zlist_dirty) {
 		state->drawable_list.sort(SortDrawableList);
@@ -185,9 +191,9 @@ void Graphics::DrawFrame() {
 		drawable->Draw();
 	}
 
-	for (Drawable* drawable : global_state->drawable_list) {
+	/*for (Drawable* drawable : global_state->drawable_list) {
 		drawable->Draw();
-	}
+	}*/
 
 	DrawOverlay();
 
@@ -215,9 +221,9 @@ BitmapRef Graphics::SnapToBitmap() {
 		drawable->Draw();
 	}
 
-	for (Drawable* drawable : global_state->drawable_list) {
+	/*for (Drawable* drawable : global_state->drawable_list) {
 		drawable->Draw();
-	}
+	}*/
 
 	return DisplayUi->CaptureScreen();
 }

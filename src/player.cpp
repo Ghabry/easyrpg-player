@@ -293,6 +293,7 @@ void Player::Update(bool update_scene) {
 	// 1000s of times.
 	Graphics::Update(true);
 #else
+	Graphics::Update(true);/*
 	// Time left before next frame? Let's render the current frame.
 	double cur_time = (double)DisplayUi->GetTicks();
 	if (cur_time < next_frame) {
@@ -305,7 +306,7 @@ void Player::Update(bool update_scene) {
 		}
 	} else {
 		Graphics::Update(false);
-	}
+	}*/
 #endif
 
 	// Normal logic update

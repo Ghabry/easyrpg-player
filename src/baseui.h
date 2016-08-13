@@ -213,6 +213,8 @@ public:
 	 */
 	KeyStatus& GetKeyStates();
 
+	bool draw_now = false;
+
 protected:
 	/**
 	 * Protected Constructor. Use CreateBaseUi instead.

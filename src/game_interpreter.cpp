@@ -182,6 +182,13 @@ void Game_Interpreter::Update() {
 			break;
 		}
 
+		Game_Temp::menu_calling = false;
+		Game_Temp::shop_calling = false;
+		Game_Temp::name_calling = false;
+		Game_Temp::save_calling = false;
+		Game_Temp::load_calling = false;
+
+
 		if ((Game_Temp::battle_calling && !Game_Temp::battle_running) ||
 			Game_Temp::shop_calling ||
 			Game_Temp::name_calling ||

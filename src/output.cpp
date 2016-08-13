@@ -153,8 +153,11 @@ static void WriteLog(std::string const& type, std::string const& msg, Color cons
 		}
 	}
 }
-
+#include <stdlib.h>
+#include <unistd.h>
 static void HandleErrorOutput(const std::string& err) {
+	_exit(0);
+
 #ifdef EMSCRIPTEN
 	// Do not execute any game logic after an error happened
 	emscripten_cancel_main_loop();
@@ -224,7 +227,7 @@ bool Output::TakeScreenshot() {
 	do {
 		p = FileFinder::MakePath(Main_Data::GetSavePath(),
 								 "screenshot_"
-								 + Utils::ToString(index++)
+								 + (index <= 10 ? std::string("0") : std::string("")) + Utils::ToString(index++)
 								 + ".png");
 	} while(FileFinder::Exists(p));
 	return TakeScreenshot(p);
@@ -235,7 +238,7 @@ bool Output::TakeScreenshot(std::string const& file) {
 		FileFinder::openUTF8(file, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
 
 	if(ret) {
-		Output::Debug("Saving Screenshot %s", file.c_str());
+		//Output::Debug("Saving Screenshot %s", file.c_str());
 		return Output::TakeScreenshot(*ret);
 	}
 	return false;
@@ -257,6 +260,8 @@ void Output::Error(const char* fmt, ...) {
 	Output::ErrorStr(format_string(fmt, args));
 	va_end(args);
 }
+
+#include <unistd.h>
 
 void Output::ErrorStr(std::string const& err) {
 	WriteLog("Error", err);
@@ -282,7 +287,7 @@ void Output::ErrorStr(std::string const& err) {
 #endif
 	}
 
-	exit(EXIT_FAILURE);
+	_exit(0);
 }
 
 void Output::Warning(const char* fmt, ...) {

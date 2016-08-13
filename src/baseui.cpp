@@ -18,6 +18,7 @@
 // Headers
 #include "baseui.h"
 #include "bitmap.h"
+#include "dummy_ui.h"
 
 #ifdef USE_SDL
 #include "sdl_ui.h"
@@ -37,7 +38,7 @@ std::shared_ptr<BaseUi> BaseUi::CreateUi(long width, long height, bool fs_flag, 
 #elif PSP2
 	return std::make_shared<Psp2Ui>(width, height);
 #else
-#error cannot create UI
+	return std::make_shared<DummyUi>(width, height);
 #endif
 }
 

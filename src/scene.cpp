@@ -156,10 +156,10 @@ void Scene::Push(std::shared_ptr<Scene> const& new_scene, bool pop_stack_top) {
 
 	push_pop_operation = ScenePushed;
 
-	/*Output::Debug("Scene Stack after Push:");
+	Output::Debug("Scene Stack after Push:");
 	for (size_t i = 0; i < instances.size(); ++i) {
 		Output::Debug(scene_names[instances[i]->type]);
-	}*/
+	}
 }
 
 void Scene::Pop() {

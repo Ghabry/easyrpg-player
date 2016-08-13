@@ -284,7 +284,7 @@ void Window_Message::Update() {
 		if (!visible) {
 			// The MessageBox is not open yet but text output is needed
 			// Open and Close Animations are skipped in battle
-			SetOpenAnimation(Game_Temp::battle_running ? 0 : 5);
+			SetOpenAnimation(0);
 		} else if (closing) {
 			// Cancel closing animation
 			SetOpenAnimation(0);
@@ -309,10 +309,8 @@ void Window_Message::UpdateMessage() {
 	static int sleep_until = -1;
 	bool instant_speed = false;
 
-	if (Player::debug_flag && Input::IsPressed(Input::SHIFT)) {
-		sleep_until = -1;
-		instant_speed = true;
-	}
+	sleep_until = -1;
+	instant_speed = true;
 
 	if (sleep_until > -1) {
 		if (Player::GetFrames() >= sleep_until) {
@@ -584,8 +582,9 @@ void Window_Message::UpdateCursorRect() {
 
 void Window_Message::WaitForInput() {
 	active = true; // Enables the Pause arrow
-	if (Input::IsTriggered(Input::DECISION) ||
+	if (true || Input::IsTriggered(Input::DECISION) ||
 		Input::IsTriggered(Input::CANCEL)) {
+
 		active = false;
 		pause = false;
 
@@ -599,6 +598,11 @@ void Window_Message::WaitForInput() {
 }
 
 void Window_Message::InputChoice() {
+	Output::Debug("input");
+	Game_Message::choice_result = 0;
+	TerminateMessage();
+	return;
+
 	if (Input::IsTriggered(Input::CANCEL)) {
 		if (Game_Message::choice_cancel_type > 0) {
 			Game_System::SePlay(Game_System::GetSystemSE(Game_System::SFX_Cancel));
@@ -618,11 +622,11 @@ void Window_Message::InputChoice() {
 }
 
 void Window_Message::InputNumber() {
-	if (Input::IsTriggered(Input::DECISION)) {
+	//if (Input::IsTriggered(Input::DECISION)) {
 		Game_System::SePlay(Game_System::GetSystemSE(Game_System::SFX_Decision));
 		Game_Variables[Game_Message::num_input_variable_id] = number_input_window->GetNumber();
 		Game_Map::SetNeedRefresh(Game_Map::Refresh_Map);
 		TerminateMessage();
 		number_input_window->SetNumber(0);
-	}
+	//}
 }

@@ -146,14 +146,14 @@ void Scene_Title::CreateCommandWindow() {
 	// Enable load game if available
 	continue_enabled = FileFinder::HasSavegame();
 	if (continue_enabled) {
-		command_window->SetIndex(1);
+		//command_window->SetIndex(1);
 	} else {
 		command_window->DisableItem(1);
 	}
 
 	// Set the number of frames for the opening animation to last
 	if (!Player::hide_title_flag) {
-		command_window->SetOpenAnimation(8);
+		//command_window->SetOpenAnimation(8);
 	}
 
 	if (Player::IsRPG2k3E() && Data::battlecommands.transparency == RPG::BattleCommands::Transparency_transparent) {

@@ -346,6 +346,8 @@ void Game_Battle::RefreshEvents(std::function<bool(const RPG::TroopPage&)> predi
 }
 
 bool Game_Battle::IsEscapeAllowed() {
+	return false;
+
 	if (Game_Temp::battle_escape_mode == -1) {
 		return Game_System::GetAllowEscape();
 	}
