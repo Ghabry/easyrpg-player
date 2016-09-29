@@ -35,7 +35,7 @@ class Font {
 	Rect GetSize(std::string const& txt) const;
 	virtual Rect GetSize(std::u32string const& txt) const = 0;
 
-	virtual BitmapRef Glyph(char32_t code) = 0;
+	virtual BitmapRef Glyph(char32_t code, Rect& glyph_box) = 0;
 
 	void Render(Bitmap& bmp, int x, int y, Bitmap const& sys, int color, char32_t glyph);
 	void Render(Bitmap& bmp, int x, int y, Color const& color, char32_t glyph);
