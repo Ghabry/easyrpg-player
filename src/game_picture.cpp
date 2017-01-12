@@ -371,3 +371,7 @@ void Game_Picture::SyncCurrentToFinish() {
 RPG::SavePicture& Game_Picture::GetData() const {
 	return Main_Data::game_data.pictures[id - 1];
 }
+
+const Sprite* Game_Picture::GetSprite() const {
+	return sprite.get();
+}

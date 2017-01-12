@@ -70,6 +70,7 @@ public:
 	void Show(const ShowParams& params);
 	void Move(const MoveParams& params);
 	void Erase(bool force_erase);
+	const Sprite* GetSprite() const;
 
 	void Update();
 
