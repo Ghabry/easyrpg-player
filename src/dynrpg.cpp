@@ -19,13 +19,9 @@
 #include "dynrpg.h"
 #include "game_actors.h"
 #include "game_variables.h"
-#include "output.h"
 #include "player.h"
-#include "utils.h"
 
 #include <map>
-#include <sstream>
-#include <string>
 
 enum DynRpg_ParseMode {
 	ParseMode_Function,
@@ -35,112 +31,13 @@ enum DynRpg_ParseMode {
 	ParseMode_Token
 };
 
-typedef std::vector<std::string> dyn_arg_list;
-typedef bool(*dynfunc)(dyn_arg_list);
 typedef std::map<std::string, dynfunc> dyn_rpg_func;
 
 namespace {
+	bool init = false;
+
 	// already reported unknown funcs
 	std::map<std::string, int> unknown_functions;
-
-	float GetFloat(std::string str, bool* valid = NULL) {
-		std::istringstream iss(str);
-		float f;
-		iss >> f;
-
-		if (valid) {
-			*valid = iss.eof() && !iss.fail();
-		}
-
-		return f;
-	}
-
-	// Var arg referenced by $n
-	std::string ParseVarArg(const dyn_arg_list &args, int index) {
-		if (index >= args.size()) {
-			return "";
-		}
-
-		std::u32string::iterator text_index, end;
-		std::u32string text = Utils::DecodeUTF32(args[index]);
-		text_index = text.begin();
-		end = text.end();
-
-		std::stringstream msg;
-
-		for (; text_index != end; ++text_index) {
-			char32_t chr = *text_index;
-
-			// Test for "" -> append "
-			// otherwise end of string
-			if (chr == '$' && std::distance(text_index, end) > 1) {
-				char32_t n = *std::next(text_index, 1);
-
-				if (n == '$') {
-					// $$ = $
-					msg << n;
-					++text_index;
-				} else if (n >= '1' && n <= '9') {
-					int i = (int)(n - '0');
-
-					if (i + index < args.size()) {
-						msg << args[i + index];
-					}
-					else {
-						// $-ref out of range
-						return "";
-					}
-
-					++text_index;
-				} else {
-					msg << chr;
-				}
-			} else {
-				msg << chr;
-			}
-		}
-
-		return msg.str();
-	}
-
-	// Macros
-
-#define DYNRPG_FUNCTION(var) \
-	std::string func_name = var;
-
-#define DYNRPG_CHECK_ARG_LENGTH(len) \
-	if (args.size() != len) {\
-	Output::Warning("%s: Got %d args (needs %d)", func_name.c_str(), args.size(), len); \
-	return true; \
-	}
-
-#define DYNRPG_CHECK_ARG_MIN(len) \
-	if (args.size() < len) { \
-		Output::Warning("%s: Got %d args (needs %d or more)", func_name.c_str(), args.size(), len); \
-		return true; \
-	}
-
-#define DYNRPG_GET_FLOAT_ARG(i, var) \
-	float var; \
-	bool valid_float##var; \
-	var = GetFloat(args[i], &valid_float##var); \
-	if (!valid_float##var) { \
-	Output::Warning("%s: Arg %d (%s) is not numeric", func_name.c_str(), i, args[i].c_str()); \
-	return true; \
-	}
-
-#define DYNRPG_GET_INT_ARG(i, var) \
-	DYNRPG_GET_FLOAT_ARG(i, var##_float_arg) \
-	int var = (int)var##_float_arg;
-
-#define DYNRPG_GET_STR_ARG(i, var) \
-	std::string& var = args[i];
-
-#define DYNRPG_GET_VAR_ARG(i, var) \
-	std::string var = ParseVarArg(args, i); \
-	if (var.empty()) { \
-	Output::Warning("%s: Vararg %d out of range", func_name.c_str(), i); \
-	}
 
 	// DynRpg Functions
 
@@ -212,7 +109,7 @@ namespace {
 	bool Oput(dyn_arg_list args) {
 		DYNRPG_FUNCTION("output")
 
-		DYNRPG_CHECK_ARG_MIN(2);
+		DYNRPG_CHECK_ARG_LENGTH_MIN(2);
 		
 		DYNRPG_GET_STR_ARG(0, mode);
 		DYNRPG_GET_VAR_ARG(1, msg);
@@ -232,7 +129,7 @@ namespace {
 
 	// Function table
 
-	dyn_rpg_func const dyn_rpg_functions = {
+	dyn_rpg_func dyn_rpg_functions = {
 			{"add", Add},
 			{"sub", Sub},
 			{"mul", Mul},
@@ -240,6 +137,71 @@ namespace {
 			{"mod", Mod},
 			{"output", Oput}};
 }
+
+void DynRpg::RegisterFunction(const std::string& name, dynfunc func) {
+	dyn_rpg_functions[name] = func;
+}
+
+float DynRpg::GetFloat(std::string str, bool* valid) {
+	std::istringstream iss(str);
+	float f;
+	iss >> f;
+
+	if (valid) {
+		*valid = iss.eof() && !iss.fail();
+	}
+
+	return f;
+}
+
+// Var arg referenced by $n
+std::string DynRpg::ParseVarArg(const dyn_arg_list &args, int index) {
+	if (index >= args.size()) {
+		return "";
+	}
+
+	std::u32string::iterator text_index, end;
+	std::u32string text = Utils::DecodeUTF32(args[index]);
+	text_index = text.begin();
+	end = text.end();
+
+	std::stringstream msg;
+
+	for (; text_index != end; ++text_index) {
+		char32_t chr = *text_index;
+
+		// Test for "" -> append "
+		// otherwise end of string
+		if (chr == '$' && std::distance(text_index, end) > 1) {
+			char32_t n = *std::next(text_index, 1);
+
+			if (n == '$') {
+				// $$ = $
+				msg << n;
+				++text_index;
+			} else if (n >= '1' && n <= '9') {
+				int i = (int)(n - '0');
+
+				if (i + index < args.size()) {
+					msg << args[i + index];
+				}
+				else {
+					// $-ref out of range
+					return "";
+				}
+
+				++text_index;
+			} else {
+				msg << chr;
+			}
+		} else {
+			msg << chr;
+		}
+	}
+
+	return msg.str();
+}
+
 
 static std::string ParseToken(const std::string& token, const std::string& function_name) {
 	std::u32string::iterator text_index, end;
@@ -352,6 +314,11 @@ bool DynRpg::Invoke(RPG::EventCommand const& com) {
 	if (chr != '@') {
 		// Not a DynRPG function, normal comment
 		return true;
+	}
+
+	if (!init) {
+		init = true;
+		// Register functions here
 	}
 
 	DynRpg_ParseMode mode = ParseMode_Function;
