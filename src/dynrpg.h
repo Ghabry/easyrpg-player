@@ -38,12 +38,6 @@ typedef bool(*dynfunc)(dyn_arg_list);
 	std::string func_name = var;
 
 #define DYNRPG_CHECK_ARG_LENGTH(len) \
-	if (args.size() != len) {\
-	Output::Warning("%s: Got %d args (needs %d)", func_name.c_str(), args.size(), len); \
-	return true; \
-	}
-
-#define DYNRPG_CHECK_ARG_LENGTH_MIN(len) \
 	if (args.size() < len) { \
 		Output::Warning("%s: Got %d args (needs %d or more)", func_name.c_str(), args.size(), len); \
 		return true; \
