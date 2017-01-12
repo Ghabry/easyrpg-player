@@ -24,12 +24,10 @@
 
 #include <cstring>
 #include <fstream>
-
-#include "dynrpg_textplugin.h"
-
-#include <cstring>
-#include <fstream>
 #include <map>
+
+#include "dynrpg_pec.h"
+#include "dynrpg_textplugin.h"
 
 #include "dynrpg_textplugin.h"
 
@@ -361,6 +359,7 @@ void create_all_plugins() {
 	dyn_rpg_functions = dyn_rpg_builtin_functions;
 
 	plugins.emplace_back(new DynRpg::TextPlugin());
+	plugins.emplace_back(new DynRpg::Pec());
 	
 	for (auto& plugin : plugins) {
 		plugin->RegisterFunctions();
