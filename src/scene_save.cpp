@@ -97,6 +97,7 @@ void Scene_Save::Action(int index) {
 		filename = FileFinder::MakePath((*tree).directory_path, save_file);
 	}
 
+
 	LSD_Reader::PrepareSave(Main_Data::game_data);
 	auto data_copy = LSD_Reader::ClearDefaults(Main_Data::game_data, Game_Map::GetMapInfo(), Game_Map::GetMap());
 	// RPG_RT saves always have the scene set to this.
@@ -105,7 +106,9 @@ void Scene_Save::Action(int index) {
 	for (auto& sme: data_copy.map_info.events) {
 		sme.map_id = 0;
 	}
-	LSD_Reader::Save(filename, data_copy, Player::encoding);
+
+	auto save_stream = FileFinder::openUTF8Output(filename, std::ios::ios_base::out | std::ios::ios_base::binary);
+	LSD_Reader::Save(*save_stream, data_copy, Player::encoding);
 
 #ifdef EMSCRIPTEN
 	// Save changed file system
