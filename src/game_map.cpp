@@ -275,6 +275,7 @@ void Game_Map::SetupCommon(int _id, bool is_load_savegame) {
 	ss << "Map" << std::setfill('0') << std::setw(4) << location.map_id << ".emu";
 
 	std::string map_file = FileFinder::FindDefault(ss.str());
+	Output::Debug("Loading Map %s", ss.str().c_str());
 	if (map_file.empty()) {
 		ss.str("");
 		ss << "Map" << std::setfill('0') << std::setw(4) << location.map_id << ".lmu";
@@ -284,11 +285,12 @@ void Game_Map::SetupCommon(int _id, bool is_load_savegame) {
 			Output::Error("Loading of Map %s failed.\nThe map was not found.", ss.str().c_str());
 		}
 
-		map = LMU_Reader::Load(map_file, Player::encoding);
+		auto map_stream = FileFinder::openUTF8Input(map_file, std::ios::ios_base::in| std::ios::ios_base::binary);
+		map = LMU_Reader::Load(*map_stream, Player::encoding);
 	} else {
-		map = LMU_Reader::LoadXml(map_file);
+		auto map_stream = FileFinder::openUTF8Input(map_file, std::ios::ios_base::in);
+		map = LMU_Reader::LoadXml(*map_stream);
 	}
-
 	Output::Debug("Loading Map %s", ss.str().c_str());
 
 	if (map.get() == NULL) {
