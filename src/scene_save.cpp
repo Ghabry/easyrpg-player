@@ -97,10 +97,12 @@ void Scene_Save::Action(int index) {
 	if (filename.empty()) {
 		filename = FileFinder::MakePath((*tree).directory_path, save_file);
 	}
+	auto save_stream = FileFinder::openUTF8Output(filename, std::ios::ios_base::out | std::ios::ios_base::binary);
+	LSD_Reader::Save(*save_stream, Main_Data::game_data, Player::encoding);
 
 	Main_Data::game_data.title.timestamp = LSD_Reader::GenerateTimestamp();
 
-	LSD_Reader::Save(filename, Main_Data::game_data, Player::encoding);
+	LSD_Reader::Save(*save_stream, Main_Data::game_data, Player::encoding);
 
 #ifdef EMSCRIPTEN
 	// Save changed file system

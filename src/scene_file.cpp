@@ -59,8 +59,9 @@ void Scene_File::Start() {
 
 		if (!file.empty()) {
 			// File found
+			auto save_stream = FileFinder::openUTF8Input(file, std::ios::ios_base::in | std::ios::ios_base::binary);
 			std::unique_ptr<RPG::Save> savegame =
-				LSD_Reader::Load(file, Player::encoding);
+				LSD_Reader::Load(*save_stream, Player::encoding);
 
 			if (savegame.get())	{
 				std::vector<std::pair<int, std::string> > party;
