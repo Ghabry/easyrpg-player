@@ -37,7 +37,7 @@ public:
 
 	bool WasInited() const override;
 
-	bool Open(FILE* file) override;
+	bool Open(std::shared_ptr<FileFinder::istream> stream) override;
 
 	bool Seek(size_t offset, Origin origin) override;
 
@@ -47,14 +47,14 @@ public:
 
 	bool SetFormat(int frequency, AudioDecoder::Format format, int channels) override;
 
-	static bool IsMp3(FILE* stream);
+	static bool IsMp3(std::shared_ptr<FileFinder::istream> stream);
 private:
 	int FillBuffer(uint8_t* buffer, int length) override;
 
 #ifdef HAVE_MPG123
 	std::unique_ptr<mpg123_handle, decltype(&mpg123_delete)> handle;
 #endif
-	FILE* file_handle;
+	std::shared_ptr<FileFinder::istream> stream;
 	int err = 0;
 	bool finished = false;
 
