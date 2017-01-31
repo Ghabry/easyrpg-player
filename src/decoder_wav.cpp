@@ -35,7 +35,7 @@ WavDecoder::~WavDecoder() {
 	}
 }
 
-bool WavDecoder::Open(FILE* file) {
+bool WavDecoder::Open(std::shared_ptr<FileFinder::istream> stream) {
 	file_=file;
 	fseek(file_, 16, SEEK_SET);
 	fread(&chunk_size, 1, 4, file_);
