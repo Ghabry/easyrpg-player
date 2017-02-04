@@ -103,7 +103,7 @@ public:
 		}
 
 		if (fixed) {
-			DisplayUi->GetDisplaySurface()->Blit(x - Game_Map::GetDisplayX(), y - Game_Map::GetDisplayY(), *bitmap, bitmap->GetRect(), sprite->GetOpacity());
+			DisplayUi->GetDisplaySurface()->Blit(x - Game_Map::GetDisplayX() / 16, y - Game_Map::GetDisplayY() / 16, *bitmap, bitmap->GetRect(), sprite->GetOpacity());
 		} else {
 			DisplayUi->GetDisplaySurface()->Blit(x, y, *bitmap, bitmap->GetRect(), sprite->GetOpacity());
 		}
@@ -122,7 +122,7 @@ public:
 
 		if (sprite) {
 			if (z != sprite->GetZ()) {
-				z = sprite->GetZ();
+				z = sprite->GetZ() + 1;
 				Graphics::UpdateZCallback();
 			}
 		}
@@ -494,7 +494,7 @@ static bool RemoveText(const dyn_arg_list& args) {
 	DYNRPG_GET_STR_ARG(0, id)
 	DYNRPG_GET_STR_ARG(1, nothing)
 
-	DynRpgText* handle = get_text(id);
+	DynRpgText* handle = get_text(id, true);
 
 	if (!handle) {
 		return true;
