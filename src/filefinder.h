@@ -20,11 +20,9 @@
 
 // Headers
 #include "system.h"
-
+#include "filesystem.h"
 #include <string>
 #include <cstdio>
-#include <ios>
-#include <istream>
 #include <unordered_map>
 #include <vector>
 
@@ -164,12 +162,12 @@ namespace FileFinder {
 	std::shared_ptr<std::iostream> openUTF8(const std::string& name, std::ios_base::openmode m);
 
 	/**
-	 * A input stream anotated with the size of the connected file
-	 */
+	* A input stream anotated with the size of the connected file
+	*/
 	class istream : public std::istream {
 	public:
-		inline istream(std::streambuf * buf, std::streamsize size):
-			std::istream(buf),size(size),buffer(buf){}
+		inline istream(std::streambuf * buf, std::streamsize size) :
+			std::istream(buf), size(size), buffer(buf) {}
 		~istream() { delete buffer; }
 		inline std::streamsize get_size() { return size; }
 	private:
@@ -269,7 +267,7 @@ namespace FileFinder {
 	/**
 	 * GetDirectoryMembers member listing mode.
 	 */
-	enum Mode {
+	enum class Mode {
 		ALL, /**< list files and directory */
 		FILES, /**< list only non-directory files */
 		DIRECTORIES, /**< list only directories */
@@ -281,10 +279,10 @@ namespace FileFinder {
 	 *
 	 * @param dir directory to list members.
 	 * @param m member listing mode.
-	 * @param parent name of current relative folder (used if m is RECURSIVE)
+	 * @param max_depth max recursion depth if m is RECURSIVE (the max stack depth will be 2 times as high, because two functions are involved)
 	 * @return member list.
 	 */
-	Directory GetDirectoryMembers(const std::string& dir, Mode m = ALL, const std::string& parent = "");
+	Directory GetDirectoryMembers(const std::string& dir, Mode m = Mode::ALL, uint32_t max_depth = 10);
 
 	/**
 	 * Sets the directory tree that is used for executing the current RPG Maker
