@@ -30,41 +30,6 @@
 #ifdef _WIN32
 #  include <windows.h>
 #  include <shlobj.h>
-#  include <sys/types.h>
-#  include <sys/stat.h>
-#  define StatBuf struct _stat
-#  define GetStat _stat
-#  ifdef __MINGW32__
-#    include <dirent.h>
-#  elif defined(_MSC_VER)
-#    include "dirent_win.h"
-#  endif
-#else
-#  ifdef PSP2
-#    include <psp2/io/dirent.h>
-#    include <psp2/io/stat.h>
-#    define S_ISDIR SCE_S_ISDIR
-#    define opendir sceIoDopen
-#    define closedir sceIoDclose
-#    define dirent SceIoDirent
-#    define readdir sceIoDread
-#    define stat SceIoStat
-#    define lstat sceIoGetstat
-#    define StatBuf SceIoStat
-#    define GetStat sceIoGetstat
-#  else
-#    include <dirent.h>
-#    include <sys/stat.h>
-#    define StatBuf struct stat
-#    define GetStat stat
-#  endif
-#  include <unistd.h>
-#  include <sys/types.h>
-#endif
-
-#ifdef __ANDROID__
-#   include <jni.h>
-#   include <SDL_system.h>
 #endif
 
 #ifdef __MORPHOS__
@@ -80,6 +45,7 @@
 #include "registry.h"
 #include "rtp_table.h"
 #include "main_data.h"
+#include "filesystem_os.h"
 
 // MinGW shlobj.h does not define this
 #ifndef SHGFP_TYPE_CURRENT
@@ -90,6 +56,8 @@ namespace {
 #ifdef SUPPORT_MOVIES
 	const char* const MOVIE_TYPES[] = { ".avi", ".mpg" };
 #endif
+
+	OSFilesystem rootFilesystem("");
 
 	typedef std::vector<std::shared_ptr<FileFinder::DirectoryTree>> search_path_list;
 	std::shared_ptr<FileFinder::DirectoryTree> game_directory_tree;
@@ -115,7 +83,7 @@ namespace {
 		std::string const escape_symbol = Player::escape_symbol;
 		std::string corrected_name = Utils::LowerCase(name);
 
-		std::string combined_path = MakePath(lower_dir, corrected_name);
+		std::string combined_path = Filesystem::CombinePath(lower_dir, corrected_name);
 		std::string canon = MakeCanonical(combined_path, 1);
 		if (combined_path != canon) {
 			// Very few games (e.g. Yume2kki) use path traversal (..) in the filenames to point
@@ -155,7 +123,7 @@ namespace {
 		for(char const** c = exts; *c != NULL; ++c) {
 			string_map::const_iterator const name_it = dir_map.find(corrected_name + *c);
 			if(name_it != dir_map.end()) {
-				return MakePath
+				return Filesystem::CombinePath
 					(std::string(tree.directory_path).append("/")
 					 .append(dir_it->second), name_it->second);
 			}
@@ -218,6 +186,7 @@ namespace {
 	}
 } // anonymous namespace
 
+
 const std::shared_ptr<FileFinder::DirectoryTree> FileFinder::GetDirectoryTree() {
 	return game_directory_tree;
 }
@@ -230,7 +199,7 @@ const std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateSaveDirectory
 	std::shared_ptr<DirectoryTree> tree = std::make_shared<DirectoryTree>();
 	tree->directory_path = save_path;
 
-	Directory mem = GetDirectoryMembers(tree->directory_path, FILES);
+	Directory mem = GetDirectoryMembers(tree->directory_path, Mode::FILES);
 
 	for (auto& i : mem.files) {
 		tree->files[i.first] = i.second;
@@ -251,7 +220,7 @@ std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateDirectoryTree(const
 	std::shared_ptr<DirectoryTree> tree = std::make_shared<DirectoryTree>();
 	tree->directory_path = p;
 
-	Directory mem = GetDirectoryMembers(tree->directory_path, ALL);
+	Directory mem = GetDirectoryMembers(tree->directory_path, Mode::ALL);
 	for (auto& i : mem.files) {
 		tree->files[i.first] = i.second;
 	}
@@ -261,20 +230,14 @@ std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateDirectoryTree(const
 
 	if (recursive) {
 		for (auto& i : mem.directories) {
-			GetDirectoryMembers(MakePath(tree->directory_path, i.second), RECURSIVE).files.swap(tree->sub_members[i.first]);
+			GetDirectoryMembers(Filesystem::CombinePath(tree->directory_path, i.second), Mode::RECURSIVE).files.swap(tree->sub_members[i.first]);
 		}
 	}
 	return tree;
 }
 
-std::string FileFinder::MakePath(const std::string& dir, const std::string& name) {
-	std::string str = dir.empty()? name : dir + "/" + name;
-#ifdef _WIN32
-	std::replace(str.begin(), str.end(), '/', '\\');
-#else
-	std::replace(str.begin(), str.end(), '\\', '/');
-#endif
-	return str;
+std::string FileFinder::MakePath(std::string const& dir, std::string const& name) {
+	return std::string(Filesystem::CombinePath(dir, name));
 }
 
 std::string FileFinder::MakeCanonical(const std::string& path, int initial_deepness) {
@@ -300,7 +263,7 @@ std::string FileFinder::MakeCanonical(const std::string& path, int initial_deepn
 
 	std::string ret;
 	for (std::string s : path_can) {
-		ret = MakePath(ret, s);
+		ret = Filesystem::CombinePath(ret, s);
 	}
 
 	return ret;
@@ -352,7 +315,7 @@ std::string GetFontsPath() {
 #ifdef UNICODE
 			WideCharToMultiByte(CP_ACP, WC_NO_BEST_FIT_CHARS | WC_COMPOSITECHECK, path, MAX_PATH, fpath, MAX_PATH, NULL, NULL);
 #endif
-			fonts_path = FileFinder::MakePath(fpath, "");
+			fonts_path = Filesystem::CombinePath(fpath, "");
 		}
 
 		init = true;
@@ -576,16 +539,10 @@ std::shared_ptr<std::iostream> FileFinder::openUTF8(const std::string& name,
 std::shared_ptr<FileFinder::istream> FileFinder::openUTF8Input(const std::string& name,
 	std::ios_base::openmode m)
 {
-	std::streamsize size = FileFinder::GetFileSize(name);
-	std::filebuf *buf = new std::filebuf();
+	std::streamsize size = rootFilesystem.GetFilesize(name);
+	std::streambuf * buf = rootFilesystem.CreateInputStreambuffer(name, m);
 
-	std::shared_ptr<FileFinder::istream> ret(new FileFinder::istream(buf->open(
-#ifdef _MSC_VER
-		Utils::ToWideString(name).c_str(),
-#else
-		name.c_str(),
-#endif
-		m), size));
+	std::shared_ptr<FileFinder::istream> ret(new FileFinder::istream(buf, size));
 
 	return (*ret) ? ret : std::shared_ptr<FileFinder::istream>();
 }
@@ -593,13 +550,11 @@ std::shared_ptr<FileFinder::istream> FileFinder::openUTF8Input(const std::string
 std::shared_ptr<std::ostream> FileFinder::openUTF8Output(const std::string& name,
 	std::ios_base::openmode m)
 {
-	std::shared_ptr<std::ofstream> ret(new std::ofstream(
-#ifdef _MSC_VER
-		Utils::ToWideString(name).c_str(),
-#else
-		name.c_str(),
-#endif
-		m));
+	std::streamsize size = rootFilesystem.GetFilesize(name);
+	std::streambuf * buf = rootFilesystem.CreateOutputStreambuffer(name, m);
+
+	std::shared_ptr<std::ostream> ret(new std::ostream(buf, size));
+
 	return (*ret) ? ret : std::shared_ptr<std::ofstream>();
 }
 
@@ -637,7 +592,7 @@ std::string FileFinder::FindDefault(const DirectoryTree& tree, const std::string
 
 		std::string f;
 		for (auto it = path_comps.begin() + 1; it != path_comps.end(); ++it) {
-			f = MakePath(f, *it);
+			f = Filesystem::CombinePath(f, *it);
 		}
 
 		return FindDefault(path_comps[0], f);
@@ -647,7 +602,7 @@ std::string FileFinder::FindDefault(const DirectoryTree& tree, const std::string
 
 	string_map::const_iterator const it = files.find(Utils::LowerCase(name));
 
-	return(it != files.end()) ? MakePath(p.directory_path, it->second) : "";
+	return(it != files.end()) ? Filesystem::CombinePath(p.directory_path, it->second) : "";
 }
 
 bool FileFinder::IsValidProject(DirectoryTree const & dir) {
@@ -706,158 +661,96 @@ std::string FileFinder::FindSound(const std::string& name) {
 }
 
 bool FileFinder::Exists(const std::string& filename) {
-#ifdef _WIN32
-	return ::GetFileAttributesW(Utils::ToWideString(filename).c_str()) != (DWORD)-1;
-#elif (defined(GEKKO) || defined(_3DS) || defined(SWITCH))
-	struct stat sb;
-	return ::stat(filename.c_str(), &sb) == 0;
-#elif defined(PSP2)
-	struct SceIoStat sb;
-	return (sceIoGetstat(filename.c_str(), &sb) >= 0);
-#else
-	return ::access(filename.c_str(), F_OK) != -1;
-#endif
+	return rootFilesystem.Exists(filename);
 }
 
 bool FileFinder::IsDirectory(const std::string& dir) {
-#if (defined(GEKKO) || defined(_3DS) || defined(SWITCH))
-	struct stat sb;
-	if (::stat(dir.c_str(), &sb) == 0)
-		return S_ISDIR(sb.st_mode);
-	return false;
-#else
-	if (!Exists(dir)) {
-		return false;
-	}
-
-#  ifdef _WIN32
-	int attribs = ::GetFileAttributesW(Utils::ToWideString(dir).c_str());
-	return (attribs & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))
-	      == FILE_ATTRIBUTE_DIRECTORY;
-#  else
-	struct stat sb;
-	::lstat(dir.c_str(), &sb);
-	return S_ISDIR(sb.st_mode);
-#  endif
-#endif
+	return rootFilesystem.IsDirectory(dir);
 }
 
-FileFinder::Directory FileFinder::GetDirectoryMembers(const std::string& path, FileFinder::Mode const m, const std::string& parent) {
-	assert(FileFinder::Exists(path));
-	assert(FileFinder::IsDirectory(path));
+//This namespace contains global variables which are needed for the recursive mode of 
+//GetDirectoryMembers - as well as the callback used to receive the parsed directory entries
+namespace GetDirectoryMembersHelper {
+	FileFinder::Directory temporary_directory;
+	FileFinder::Mode mode;
+	std::string parent;
+	std::string root_path;
+	uint32_t max_depth = 0;
 
-	Directory result;
+	void ListDirectoryEntriesCallback(Filesystem const* filesystem,Filesystem::DirectoryEntry const & entry) {
+		if (max_depth == 0) return; //recursion is a scary thing, so stay on the save side by limiting the depth.
+		std::string combinedWithParent = Filesystem::CombinePath(parent, entry.name);
 
-	result.base = path;
-
-#ifdef _WIN32
-#  define DIR _WDIR
-#  define opendir _wopendir
-#  define closedir _wclosedir
-#  define wpath Utils::ToWideString(path)
-#  define dirent _wdirent
-#  define readdir _wreaddir
-#else
-#  define wpath path
-#endif
-	#ifdef PSP2
-	int dir = opendir(wpath.c_str());
-	if (dir < 0) {
-	#else
-	std::shared_ptr< ::DIR> dir(::opendir(wpath.c_str()), [](::DIR* d) { if (d) ::closedir(d); });
-	if (!dir) {
-	#endif
-		Output::Debug("Error opening dir %s: %s", path.c_str(),
-					  ::strerror(errno));
-		return result;
-	}
-
-#ifdef PSP2
-	struct dirent ent;
-	while (readdir(dir, &ent) > 0) {
-#else
-	struct dirent* ent;
-	while ((ent = ::readdir(dir.get())) != NULL) {
-#endif
-#ifdef _WIN32
-		std::string const name = Utils::FromWideString(ent->d_name);
-#else
-	#ifdef PSP2
-		std::string const name = ent.d_name;
-	#else
-		std::string const name = ent->d_name;
-	#endif
-#endif
-
-		static bool has_fast_dir_stat = true;
-		bool is_directory = false;
-		if (has_fast_dir_stat) {
-			#ifdef PSP2
-			is_directory = S_ISDIR(ent.d_stat.st_mode);
-			#elif defined(_DIRENT_HAVE_D_TYPE) || defined(_3DS)
-			if (ent->d_type == DT_UNKNOWN) {
-				has_fast_dir_stat = false;
-			} else {
-				is_directory = ent->d_type == DT_DIR;
-			}
-			#else
-			has_fast_dir_stat = false;
-			#endif
-		}
-
-		if (!has_fast_dir_stat) {
-			is_directory = IsDirectory(MakePath(path, name));
-		}
-
-		if (name == "." || name == "..") {
-			continue;
-		}
-
-		switch(m) {
-		case FILES:
-			if (is_directory) { continue; }
-		    break;
-		case DIRECTORIES:
-			if (!is_directory) { continue; }
+		switch (mode) {
+		case FileFinder::Mode::FILES:
+			if (entry.isDirectory) { return; } //Ignore this entry
 			break;
-		case ALL:
+		case FileFinder::Mode::DIRECTORIES:
+			if (!entry.isDirectory) { return; } //Ignore this entry
 			break;
-		case RECURSIVE:
-			if (is_directory) {
-				Directory rdir = GetDirectoryMembers(MakePath(path, name), RECURSIVE, MakePath(parent, name));
-				result.files.insert(rdir.files.begin(), rdir.files.end());
-				result.directories.insert(rdir.directories.begin(), rdir.directories.end());
-				continue;
+		case FileFinder::Mode::ALL:
+			break;
+		case FileFinder::Mode::RECURSIVE:
+			
+			if (entry.isDirectory) {
+				//this is tricky, let's comment
+				//first store the current parent value in a temporary variable on stack - we want to restore it after the following calls
+				std::string parent_temp = parent;
+				//Now overwrite the global variable with the directory one step deeper (the one we now want the listing from)
+				parent = combinedWithParent;
+				//the same asserts for the depth ( the sub will never go beneath 0 as we check for null earlier)
+				uint32_t current_depth = max_depth;
+				max_depth--;
+				//Now here comes the recursion - register this function itself as callback
+				//Now this function will be called as much times as the subdirectory has entries
+				filesystem->ListDirectoryEntries(Filesystem::CombinePath(root_path,parent), ListDirectoryEntriesCallback);
+				//After the recursion took place we're back here - so let's restore our parent and depth
+				parent = parent_temp;
+				max_depth = current_depth;
+				//and now let the calling function process the rest of the dir
+				return;
 			}
 
-			result.files[Utils::LowerCase(MakePath(parent, name))] = MakePath(parent, name);
-			continue;
+			//The entry is a file in recursive mode, store relative path
+			temporary_directory.files[Utils::LowerCase(combinedWithParent)] = combinedWithParent;
+			return;
 		}
-		if (is_directory) {
-			result.directories[Utils::LowerCase(name)] = name;
-		} else {
-			result.files[Utils::LowerCase(name)] = name;
+		if (entry.isDirectory) { 
+			//The entry is a directory in non recursive mode, store name
+			temporary_directory.directories[Utils::LowerCase(entry.name)] = entry.name;
+		}
+		else {
+			//The entry is a file in non recursive mode, store name
+			temporary_directory.files[Utils::LowerCase(entry.name)] = entry.name;
 		}
 	}
 
-#ifdef _WIN32
-#  undef DIR
-#  undef opendir
-#  undef closedir
-#  undef dirent
-#  undef readdir
-#endif
-#undef wpath
-#ifdef PSP2
-	closedir(dir);
-#endif
-	return result;
 }
 
-Offset FileFinder::GetFileSize(const std::string& file) {
-	StatBuf sb;
-	int result = GetStat(file.c_str(), &sb);
-	return (result == 0) ? sb.st_size : -1;
+FileFinder::Directory FileFinder::GetDirectoryMembers(std::string const& dir, Mode m ,uint32_t max_depth){
+	assert(Exists(dir));
+	assert(IsDirectory(dir));
+
+	//Aquire the mounted filesystem
+	Filesystem * filesystem = &rootFilesystem;
+
+	//Initialize helpers
+	GetDirectoryMembersHelper::temporary_directory.base = dir;
+	GetDirectoryMembersHelper::temporary_directory.directories.clear();
+	GetDirectoryMembersHelper::temporary_directory.files.clear();
+	GetDirectoryMembersHelper::mode = m;
+	GetDirectoryMembersHelper::parent = "";
+	GetDirectoryMembersHelper::root_path = dir;
+	GetDirectoryMembersHelper::max_depth = max_depth;
+
+	filesystem->ListDirectoryEntries(dir, GetDirectoryMembersHelper::ListDirectoryEntriesCallback);
+
+	return GetDirectoryMembersHelper::temporary_directory;
+}
+
+
+Offset FileFinder::GetFileSize(std::string const& file) {
+	return rootFilesystem.GetFilesize(file);
 }
 
 bool FileFinder::IsMajorUpdatedTree() {
