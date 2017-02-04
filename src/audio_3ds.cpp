@@ -68,15 +68,14 @@ void CtrAudio::BGM_Play(std::string const& file, int volume, int pitch, int fade
 	if (!dsp_inited)
 		return;
 
-	FILE* filehandle = FileFinder::fopenUTF8(file, "rb");
-	if (!filehandle) {
-		Output::Warning("Couldn't play BGM %s: File not readable", file.c_str());
+	auto filestream = FileFinder::openUTF8Input(file, std::ios::ios_base::in | std::ios::ios_base::binary);
+	if (!filestream) {		Output::Warning("Couldn't play BGM %s: File not readable", file.c_str());
 		return;
 	}
 
 	LockMutex();
-	bgm_decoder = AudioDecoder::Create(filehandle, file);
-	if (bgm_decoder && bgm_decoder->Open(filehandle)) {
+	bgm_decoder = AudioDecoder::Create(filestream, file);
+	if (bgm_decoder && bgm_decoder->Open(filestream)) {
 		int frequency;
 		AudioDecoder::Format format, out_format;
 		int channels;
@@ -92,7 +91,6 @@ void CtrAudio::BGM_Play(std::string const& file, int volume, int pitch, int fade
 		ndspChnSetRate(bgm_channel, frequency);
 	} else {
 		Output::Warning("Couldn't play BGM %s: Format not supported", file.c_str());
-		fclose(filehandle);
 	}
 
 	UnlockMutex();
