@@ -48,18 +48,18 @@
 #include "font.h"
 
 namespace {
-	std::ofstream LOG_FILE;
+	std::shared_ptr<std::ostream> LOG_FILE;
 	bool init = false;
 
 	std::ostream& output_time() {
 		if (!init) {
-			LOG_FILE.open(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(), std::ios_base::out | std::ios_base::app);
+			LOG_FILE=FileFinder::openUTF8Output(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(), std::ios_base::out | std::ios_base::app);
 			init = true;
 		}
 		std::time_t t = std::time(NULL);
 		char timestr[100];
 		strftime(timestr, 100, "[%Y-%m-%d %H:%M:%S] ", std::localtime(&t));
-		return LOG_FILE << timestr;
+		return *LOG_FILE << timestr;
 	}
 
 	bool ignore_pause = false;
@@ -202,30 +202,30 @@ static void HandleErrorOutput(const std::string& err) {
 }
 
 void Output::Quit() {
-	if (LOG_FILE.is_open()) {
-		LOG_FILE.close();
+	if (LOG_FILE) {
+		LOG_FILE.reset();
 	}
 
 	int log_size = 1024 * 100;
 
 	char* buf = new char[log_size];
 
-	std::ifstream in;
-	in.open(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str());
-	if (!in.bad()) {
-		in.seekg(0, std::ios_base::end);
-		if (in.tellg() > log_size) {
-			in.seekg(-log_size, std::ios_base::end);
+	std::shared_ptr<FileFinder::istream> in;
+	in=FileFinder::openUTF8Input(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),std::ios::ios_base::in);
+	if (in&&!in->bad()) {
+		in->seekg(0, std::ios_base::end);
+		if (in->tellg() > log_size) {
+			in->seekg(-log_size, std::ios_base::end);
 			// skip current incomplete line
-			in.getline(buf, 1024 * 100);
-			in.read(buf, 1024 * 100);
-			size_t read = in.gcount();
-			in.close();
+			in->getline(buf, 1024 * 100);
+			in->read(buf, 1024 * 100);
+			size_t read = in->gcount();
+			in.reset();
 
-			std::ofstream out;
-			out.open(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str());
-			out.write(buf, read);
-			out.close();
+			std::shared_ptr<std::ostream> out;
+			out=FileFinder::openUTF8Output(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(), std::ios::ios_base::out);
+			out->write(buf, read);
+			out.reset();
 		}
 	}
 
