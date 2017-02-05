@@ -73,6 +73,8 @@ namespace DynRpg {
 	float GetFloat(std::string str, bool* valid = NULL);
 	std::string ParseVarArg(const dyn_arg_list &args, int index);
 	bool Invoke(RPG::EventCommand const& com);
+	void Update();
+	void Reset();
 }
 
 #endif
