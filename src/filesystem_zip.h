@@ -15,11 +15,12 @@
 * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _EASYRPG_PLAYER_FILESYSTEM_OS_H_
-#define _EASYRPG_PLAYER_FILESYSTEM_OS_H_
+#ifndef _EASYRPG_PLAYER_FILESYSTEM_ZIP_H_
+#define _EASYRPG_PLAYER_FILESYSTEM_ZIP_H_
 
 #include "filesystem.h"
-
+#include <fstream>
+#include <unordered_map>
 
 class ZIPFilesystem : public Filesystem {
 public:
@@ -27,7 +28,7 @@ public:
 	/**
 	* Initializes a  OS Filesystem inside the given ZIP File
 	*/
-	ZIPFilesystem(std::istream & zipFileStream, uint32_t zipFileSize);
+	ZIPFilesystem(std::string os_path, uint32_t zipFileSize);
 
 	~ZIPFilesystem();
 	/**
@@ -73,6 +74,27 @@ public:
 	std::streambuf * CreateOutputStreambuffer(std::string const & path, int mode) override;
 
 	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const;
+
+private:
+	enum class StorageMethod {unknown,deflate,store};
+	struct ZipEntry {
+		uint32_t filesize;
+		uint32_t fileoffset;
+		bool isDirectory;
+	};
+
+	struct StreamPoolEntry {
+		std::filebuf* filebuffer;
+		bool used;
+	};
+
+	bool FindCentralDirectory(std::istream & stream, uint32_t & offset, uint32_t & size, uint16_t & numberOfEntries);
+	bool ReadCentralDirectoryEntry(std::istream & zipfile, std::string & filepath, uint32_t & offset, uint32_t & uncompressed_size);
+
+
+	bool m_isValid;
+	std::vector<StreamPoolEntry> m_InputPool;
+	std::unordered_map<std::string, ZipEntry> m_zipContent;
 
 };
 
