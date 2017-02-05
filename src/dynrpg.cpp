@@ -127,15 +127,45 @@ namespace {
 		return true;
 	}
 
-	// Function table
+	bool Call(dyn_arg_list args);
 
+	// Function table
 	dyn_rpg_func dyn_rpg_functions = {
 			{"add", Add},
 			{"sub", Sub},
 			{"mul", Mul},
 			{"div", Div},
 			{"mod", Mod},
-			{"output", Oput}};
+			{"output", Oput},
+			{"call", Call}
+	};
+
+	bool Call(dyn_arg_list args) {
+		DYNRPG_FUNCTION("call")
+
+		DYNRPG_CHECK_ARG_LENGTH(1)
+
+		DYNRPG_GET_STR_ARG(0, token)
+
+		if (token.empty()) {
+			// empty function name
+			Output::Warning("call: Empty RPGSS function name");
+
+			return true;
+		}
+
+		if (dyn_rpg_functions.find(token) == dyn_rpg_functions.end()) {
+			// Not a supported function
+			// Avoid spamming by reporting only once per function
+			if (unknown_functions.find(token) == unknown_functions.end()) {
+				unknown_functions[token] = 1;
+				Output::Warning("Unsupported RPGSS function: %s", token.c_str());
+			}
+			return true;
+		}
+
+		return true;
+	}
 }
 
 void DynRpg::RegisterFunction(const std::string& name, dynfunc func) {
