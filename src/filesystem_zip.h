@@ -28,7 +28,7 @@ public:
 	/**
 	* Initializes a  OS Filesystem inside the given ZIP File
 	*/
-	ZIPFilesystem(std::string os_path, uint32_t zipFileSize);
+	ZIPFilesystem(std::string const & os_path, std::string const & sub_path, uint32_t zipFileSize);
 
 	~ZIPFilesystem();
 	/**
