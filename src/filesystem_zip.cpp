@@ -8,7 +8,16 @@ static const int32_t endOfCentralDirectorySize = 22;
 
 static const uint32_t centralDirectoryEntry = 0x02014b50;
 
-ZIPFilesystem::ZIPFilesystem(std::string os_path, uint32_t zipFileSize) {
+#define STRING_BEGINS_WITH(_string, _begin)  (_string.size()!=_begin.size()&&_string.substr(0,_begin.size())==_begin)
+
+static std::string normalize_path(std::string const & path) {
+	if (path == "." || path == "/") return "";
+	std::string inner_path = Utils::LowerCase(path);
+	if (inner_path.size() != 0 && inner_path.back() != '/') { inner_path = inner_path + "/"; }
+	return inner_path;
+}
+
+ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & sub_path, uint32_t zipFileSize) {
 	//Open first entry of the input filebuffer pool
 	m_isValid = false;
 	StreamPoolEntry initialEntry;
@@ -23,18 +32,39 @@ ZIPFilesystem::ZIPFilesystem(std::string os_path, uint32_t zipFileSize) {
 	ZipEntry entry;
 	std::string filepath = "";
 
+	//inner path is needed to achieve an offset inside the archive
+	std::string inner_path = normalize_path(sub_path);
+
 	std::istream zipfile(initialEntry.filebuffer); //Take the first streambuffer of the pool
 
 	if (FindCentralDirectory(zipfile,centralDirectoryOffset, centralDirectorySize, centralDirectoryEntries)) {
 		zipfile.seekg(centralDirectoryOffset); //Seek to the start of the central directory
 		while (ReadCentralDirectoryEntry(zipfile, filepath, entry.fileoffset, entry.filesize)) {
-			if (filepath.back() == '/') {
-				entry.isDirectory = true;
-				filepath=filepath.substr(0, filepath.size() - 1);
-			}
 			//zip is case insensitive, so store only the lower case
-			m_zipContent.insert(std::pair<std::string,ZipEntry>(Utils::LowerCase(filepath), entry));
+			filepath = Utils::LowerCase(filepath);
+			if (STRING_BEGINS_WITH(filepath,inner_path)) {
+				//remove the offset directory from the front of the path
+				filepath=filepath.substr(inner_path.size(), filepath.size() - inner_path.size());
+				
+				//check if the entry is an directory or not (indicated by trailing /)
+				if (filepath.back() == '/') {
+					entry.isDirectory = true;
+					filepath = filepath.substr(0, filepath.size() - 1);
+				}
+				else {
+					entry.isDirectory = false;
+				}
+
+				
+				m_zipContent.insert(std::pair<std::string, ZipEntry>(filepath, entry));
+			}
 		}
+
+		//Insert root path
+		entry.isDirectory = true;
+		entry.fileoffset = 0;
+		entry.filesize = 0;
+		m_zipContent.insert(std::pair<std::string, ZipEntry>("", entry));
 
 		zipfile.seekg(0);
 		initialEntry.used = false;
@@ -111,7 +141,6 @@ bool ZIPFilesystem::ReadCentralDirectoryEntry(std::istream & zipfile, std::strin
 	return true;
 }
 
-//https://github.com/Zipios/Zipios/blob/master/src/zipinputstreambuf.cpp
 
 ZIPFilesystem::~ZIPFilesystem() {
 	for (auto it = m_InputPool.begin(); it != m_InputPool.end(); it++) {
@@ -121,7 +150,8 @@ ZIPFilesystem::~ZIPFilesystem() {
 }
 
 bool ZIPFilesystem::IsFile(std::string const & path) const {
-	auto it = m_zipContent.find(Utils::LowerCase(path));
+	std::string path_lower = normalize_path(path);
+	auto it = m_zipContent.find(path_lower);
 	if (it != m_zipContent.end()) {
 		return !it->second.isDirectory;
 	}
@@ -131,7 +161,8 @@ bool ZIPFilesystem::IsFile(std::string const & path) const {
 }
 
 bool ZIPFilesystem::IsDirectory(std::string const & path) const {
-	auto it = m_zipContent.find(Utils::LowerCase(path));
+	std::string path_lower = normalize_path(path);
+	auto it = m_zipContent.find(path_lower);
 	if (it != m_zipContent.end()) {
 		return it->second.isDirectory;
 	}
@@ -141,12 +172,15 @@ bool ZIPFilesystem::IsDirectory(std::string const & path) const {
 }
 
 bool ZIPFilesystem::Exists(std::string const & path) const {
-	auto it = m_zipContent.find(Utils::LowerCase(path));
+	std::string path_lower = normalize_path(path);
+	auto it = m_zipContent.find(path_lower);
 	return (it != m_zipContent.end());
 }
 
 uint32_t ZIPFilesystem::GetFilesize(std::string const & path) const {
-	auto it = m_zipContent.find(Utils::LowerCase(path));
+	std::string path_lower = normalize_path(path);
+
+	auto it = m_zipContent.find(path_lower);
 	if (it != m_zipContent.end()) {
 		return it->second.filesize;
 	}
@@ -165,12 +199,16 @@ std::streambuf * ZIPFilesystem::CreateOutputStreambuffer(std::string const & pat
 
 bool ZIPFilesystem::ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const {
 	if (!m_isValid) return false;
+
+	std::string path_lower = normalize_path(path);
+
 	DirectoryEntry entry;
 	for (auto it = m_zipContent.begin(); it != m_zipContent.end(); it++) {
-		if (it->first.size() != path.size() && it->first.substr(0, path.size()) == Utils::LowerCase(path)&&it->first.substr(path.size(),it->first.size()).find_last_of('/')==0) {
-			//Everything that starts with the path but isn't the path and does only contain a slash at the start
-			entry.name = it->first.substr(path.size() + 1, it->first.size());
+		if (STRING_BEGINS_WITH(it->first,path_lower)&&it->first.substr(path_lower.size(),it->first.size()- path_lower.size()).find_last_of('/')==std::string::npos) {
+			//Everything that starts with the path but isn't the path and does contain no slash
+			entry.name = it->first.substr(path_lower.size(), it->first.size()- path_lower.size());
 			entry.isDirectory = it->second.isDirectory;
+			callback(this, entry);
 		}
 	}
 
