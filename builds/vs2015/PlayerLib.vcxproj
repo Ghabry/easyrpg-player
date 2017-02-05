@@ -453,6 +453,7 @@
     <ClCompile Include="..\..\src\decoder_xmp.cpp" />
     <ClCompile Include="..\..\src\drawable.cpp" />
     <ClCompile Include="..\..\src\dynrpg.cpp" />
+    <ClCompile Include="..\..\src\dynrpg_particle.cpp" />
     <ClCompile Include="..\..\src\dynrpg_pec.cpp" />
     <ClCompile Include="..\..\src\dynrpg_textplugin.cpp" />
     <ClCompile Include="..\..\src\filefinder.cpp" />
@@ -617,6 +618,7 @@
     <ClInclude Include="..\..\src\dirent_win.h" />
     <ClInclude Include="..\..\src\drawable.h" />
     <ClInclude Include="..\..\src\dynrpg.h" />
+    <ClInclude Include="..\..\src\dynrpg_particle.h" />
     <ClInclude Include="..\..\src\dynrpg_pec.h" />
     <ClInclude Include="..\..\src\dynrpg_textplugin.h" />
     <ClInclude Include="..\..\src\exfont.h" />
