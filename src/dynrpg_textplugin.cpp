@@ -515,7 +515,7 @@ static bool RemoveAll(const dyn_arg_list& args) {
 	return true;
 }
 
-void DynRpg::TextPlugin::RegisterAll() {
+void DynRpg::TextPlugin::RegisterFunctions() {
 	DynRpg::RegisterFunction("write_text", WriteText);
 	DynRpg::RegisterFunction("append_line", AppendLine);
 	DynRpg::RegisterFunction("append_text", AppendText);
@@ -529,4 +529,8 @@ void DynRpg::TextPlugin::Update() {
 	for (auto& g : graphics) {
 		g.second->Update();
 	}
+}
+
+DynRpg::TextPlugin::~TextPlugin() {
+	graphics.clear();
 }

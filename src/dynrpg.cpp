@@ -24,6 +24,9 @@
 
 #include <cstring>
 #include <fstream>
+
+#include "dynrpg_textplugin.h"
+
 #include <map>
 
 #include "dynrpg_textplugin.h"
@@ -355,7 +358,7 @@ static bool ValidFunction(const std::string& token) {
 void create_all_plugins() {
 	dyn_rpg_functions = dyn_rpg_builtin_functions;
 
-	plugins.emplace_back(new DynRpg::TextPlugin());	
+	plugins.emplace_back(new DynRpg::TextPlugin());
 	
 	for (auto& plugin : plugins) {
 		plugin->RegisterFunctions();

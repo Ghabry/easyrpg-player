@@ -78,6 +78,7 @@ namespace DynRpg {
 	void Load(int slot);
 	void Save(int slot);
 	void Update();
+	void Reset();
 }
 
 class DynRpgPlugin {

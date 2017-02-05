@@ -21,11 +21,15 @@
 #include "dynrpg.h"
 
 namespace DynRpg {
-	namespace TextPlugin {
-		void RegisterAll();
-		void Update();
-	}
-}
+	class TextPlugin : public DynRpgPlugin {
+	public:
+		~TextPlugin();
 
+		void RegisterFunctions();
+		void Update();
+		void Load(std::vector<uint8_t>&) {}
+		//std::vector<uint8_t> Save() {}
+	};
+}
 
 #endif
