@@ -44,15 +44,15 @@
     <ClCompile>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4996;4512</DisableSpecificWarnings>
-      <PreprocessorDefinitions>UNICODE;_CRT_SECURE_NO_WARNINGS;MSVC;USE_SDL;NO_SDL_MIXER;__WINRT__;WINVER=0x0601;_WIN32_WINNT=0x0601;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>UNICODE;_CRT_SECURE_NO_WARNINGS;MSVC;NO_SDL_MIXER;__WINRT__;WINDOWS_UWP;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>..\..\lib\liblcf\src;..\..\lib\liblcf\src\generated;..\..\lib\shinonome;$(EASYDEV_MSVC)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Generated Files\ui;src;ui;..\..\src;..\..\lib\liblcf\src;..\..\lib\liblcf\src\generated;..\..\lib\shinonome;$(EASYDEV_MSVC)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir);$(EASYDEV_MSVC)\lib\$(PlatformShortName)\$(Configuration)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>PlayerLib$(PlatformSuffix)$(DebugSuffix).lib;freetype_noharfbuzz.lib;libexpat.lib;libmad.lib;libogg.lib;libpng.lib;libvorbis.lib;libvorbisfile.lib;libmodplug.lib;native_midi.lib;sicudt$(DebugSuffix).lib;sicuuc$(DebugSuffix).lib;sicuin$(DebugSuffix).lib;SDL2_mixer.lib;zlib.lib;pixman.lib;liblcf.lib;winmm.lib;Imm32.lib;Version.lib;Rpcrt4.lib;Usp10.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>PlayerLib$(PlatformSuffix)$(DebugSuffix).lib;freetype_noharfbuzz.lib;libexpat.lib;mpg123.lib;libsndfile.lib;libspeexdsp.lib;libmad.lib;libogg.lib;libpng.lib;libvorbis.lib;libvorbisfile.lib;sicudt$(DebugSuffix).lib;sicuuc$(DebugSuffix).lib;sicuin$(DebugSuffix).lib;zlib.lib;pixman.lib;liblcf.lib;d2d1.lib;d3d11.lib;dxgi.lib;windowscodecs.lib;dwrite.lib;kernel32.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />

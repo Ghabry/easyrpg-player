@@ -59,6 +59,9 @@ test-driver
 /builds/vs20*/Player*/x86/
 /builds/vs20*/Player*/x64/
 /builds/vs20*/Player*/ARM/
+/builds/vs20*/Generated Files/
+/builds/vs20*/*.VC.*db
+/builds/vs20*/*.pfx
 /builds/psp/PARAM.SFO
 /builds/psp/EBOOT.PBP
 /builds/wii/obj

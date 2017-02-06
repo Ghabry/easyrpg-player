@@ -217,9 +217,7 @@ void Player::Init(int argc, char *argv[]) {
 
 	Main_Data::Init();
 
-	DisplayUi.reset();
-
-	if(! DisplayUi) {
+	if (!DisplayUi) {
 		DisplayUi = BaseUi::CreateUi
 			(SCREEN_TARGET_WIDTH,
 			 SCREEN_TARGET_HEIGHT,

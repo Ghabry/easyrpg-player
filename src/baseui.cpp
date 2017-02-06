@@ -36,6 +36,9 @@ std::shared_ptr<BaseUi> BaseUi::CreateUi(long width, long height, bool fs_flag, 
 	return std::make_shared<CtrUi>(width, height);
 #elif PSP2
 	return std::make_shared<Psp2Ui>(width, height);
+#elif WINDOWS_UWP
+	// Created by UWP from the outside
+	return nullptr;
 #else
 #error cannot create UI
 #endif

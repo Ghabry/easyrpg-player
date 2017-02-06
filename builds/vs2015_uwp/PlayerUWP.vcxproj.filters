@@ -1,40 +1,89 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Objekte">
-      <UniqueIdentifier>0d83c4c6-e23d-4c61-9f08-da974a966389</UniqueIdentifier>
-      <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    <Filter Include="Helper">
+      <UniqueIdentifier>{61c7a783-77a8-4b2f-9f32-33a4c20ed368}</UniqueIdentifier>
     </Filter>
-    <Image Include="Assets\LockScreenLogo.scale-200.png">
-      <Filter>Objekte</Filter>
-    </Image>
-    <Image Include="Assets\SplashScreen.scale-200.png">
-      <Filter>Objekte</Filter>
-    </Image>
-    <Image Include="Assets\Square150x150Logo.scale-200.png">
-      <Filter>Objekte</Filter>
-    </Image>
-    <Image Include="Assets\Square44x44Logo.scale-200.png">
-      <Filter>Objekte</Filter>
-    </Image>
-    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
-      <Filter>Objekte</Filter>
-    </Image>
-    <Image Include="Assets\StoreLogo.png">
-      <Filter>Objekte</Filter>
-    </Image>
-    <Image Include="Assets\Wide310x150Logo.scale-200.png">
-      <Filter>Objekte</Filter>
-    </Image>
+    <Filter Include="Source">
+      <UniqueIdentifier>{422d1a6f-c25d-4cd4-857d-81581bd34d2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Ui">
+      <UniqueIdentifier>{31dc7b4d-b535-43a0-8172-3678edcd5091}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{7edf1f74-3610-48b9-95bc-6f6022cb3c0d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SDL_winrt_main_NonXAML.cpp" />
-    <ClCompile Include="..\..\src\main.cpp" />
+    <ClCompile Include="src\pch.cpp">
+      <Filter>Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DeviceResources.cpp">
+      <Filter>Helper</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DxAppXAMLMain.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="App.xaml.cpp" />
+    <ClCompile Include="ui\DirectXPage.xaml.cpp" />
+    <ClCompile Include="src\uwp_ui.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PlayerUWP_TemporaryKey.pfx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\DeviceResources.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DirectXHelper.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="src\pch.h">
+      <Filter>Helper</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DxAppXAMLMain.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="App.xaml.h" />
+    <ClInclude Include="ui\DirectXPage.xaml.h" />
+    <ClInclude Include="src\uwp_ui.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="ui\DirectXPage.xaml">
+      <Filter>Ui</Filter>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
 </Project>
