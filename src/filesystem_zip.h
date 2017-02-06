@@ -27,8 +27,15 @@ public:
 
 	/**
 	* Initializes a  OS Filesystem inside the given ZIP File
+	* If you don't know the encoding, or want toknow which sub path contains a certain file
+	* use the static function CheckIfContains
 	*/
-	ZIPFilesystem(std::string const & os_path, std::string const & sub_path, uint32_t zipFileSize);
+	ZIPFilesystem(std::string const & os_path, std::string const & sub_path, std::string const & encoding);
+
+	/**
+	 * Returns the path of the checked file or an empty string if not contained.
+	 */
+	static bool CheckIfContains(std::string const & os_path, std::string const & filename, std::string & sub_path, std::string & encoding);
 
 	~ZIPFilesystem();
 	/**
@@ -88,9 +95,11 @@ private:
 		bool used;
 	};
 
-	bool FindCentralDirectory(std::istream & stream, uint32_t & offset, uint32_t & size, uint16_t & numberOfEntries);
-	bool ReadCentralDirectoryEntry(std::istream & zipfile, std::string & filepath, uint32_t & offset, uint32_t & uncompressed_size);
+	//No standard Constructor
+	ZIPFilesystem() {};
 
+	static bool FindCentralDirectory(std::istream & stream, uint32_t & offset, uint32_t & size, uint16_t & numberOfEntries);
+	static bool ReadCentralDirectoryEntry(std::istream & zipfile, std::vector<char> & filepath, uint32_t & offset, uint32_t & uncompressed_size);
 
 	bool m_isValid;
 	std::vector<StreamPoolEntry> m_InputPool;
