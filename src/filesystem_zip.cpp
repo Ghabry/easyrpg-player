@@ -1,8 +1,9 @@
 #include "filesystem_zip.h"
 #include <zlib.h>
 #include "utils.h"
+#include <reader_util.h>
 #include <iostream>
-
+#include <sstream>
 static const uint32_t endOfCentralDirectory = 0x06054b50;
 static const int32_t endOfCentralDirectorySize = 22;
 
@@ -17,7 +18,41 @@ static std::string normalize_path(std::string const & path) {
 	return inner_path;
 }
 
-ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & sub_path, uint32_t zipFileSize) {
+ bool ZIPFilesystem::CheckIfContains(std::string const & os_path, std::string const & filename, std::string & sub_path, std::string & encoding) {
+	uint16_t centralDirectoryEntries = 0;
+	uint32_t centralDirectorySize = 0;
+	uint32_t centralDirectoryOffset = 0;
+
+	std::ifstream zipfile(os_path, std::ios::ios_base::in | std::ios::ios_base::binary);
+	bool found = false;
+	ZipEntry entry;
+	std::vector<char> filepath_arr;
+	std::string filename_lower = Utils::LowerCase(filename);
+	std::ostringstream encodingdetection;
+	std::unordered_map<std::string, ZipEntry> preliminaryContent;
+
+	if (FindCentralDirectory(zipfile, centralDirectoryOffset, centralDirectorySize, centralDirectoryEntries)) {
+		zipfile.seekg(centralDirectoryOffset); //Seek to the start of the central directory
+		while (ReadCentralDirectoryEntry(zipfile, filepath_arr, entry.fileoffset, entry.filesize)) {
+			encodingdetection << filepath_arr.data();
+			preliminaryContent.insert(std::pair<std::string, ZipEntry>(filepath_arr.data(), entry));
+		}
+		encoding=ReaderUtil::DetectEncoding(encodingdetection.str());
+		for (auto it = preliminaryContent.begin(); it != preliminaryContent.end(); it++) {
+			std::string recoded = Utils::LowerCase(ReaderUtil::Recode(it->first, encoding));
+			int pos = recoded.size() - filename_lower.size();
+			if (pos>=0&&recoded.substr(pos,filename_lower.size())==filename_lower) {
+				found = true;
+				sub_path = Utils::LowerCase(ReaderUtil::Recode(it->first, encoding)).substr(0, pos);
+				break;
+			}
+		}
+	}
+	zipfile.close();
+	return found;
+}
+
+ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & sub_path, std::string const & encoding) {
 	//Open first entry of the input filebuffer pool
 	m_isValid = false;
 	StreamPoolEntry initialEntry;
@@ -30,6 +65,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 	uint32_t centralDirectoryOffset = 0;
 
 	ZipEntry entry;
+	std::vector<char> filepath_arr;
 	std::string filepath = "";
 
 	//inner path is needed to achieve an offset inside the archive
@@ -37,15 +73,17 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 
 	std::istream zipfile(initialEntry.filebuffer); //Take the first streambuffer of the pool
 
-	if (FindCentralDirectory(zipfile,centralDirectoryOffset, centralDirectorySize, centralDirectoryEntries)) {
+	if (encoding!=""&&FindCentralDirectory(zipfile,centralDirectoryOffset, centralDirectorySize, centralDirectoryEntries)) {
 		zipfile.seekg(centralDirectoryOffset); //Seek to the start of the central directory
-		while (ReadCentralDirectoryEntry(zipfile, filepath, entry.fileoffset, entry.filesize)) {
+
+		while (ReadCentralDirectoryEntry(zipfile, filepath_arr, entry.fileoffset, entry.filesize)) {
 			//zip is case insensitive, so store only the lower case
-			filepath = Utils::LowerCase(filepath);
-			if (STRING_BEGINS_WITH(filepath,inner_path)) {
+			filepath = filepath_arr.data();
+			filepath = Utils::LowerCase(ReaderUtil::Recode(filepath, encoding));
+			if (STRING_BEGINS_WITH(filepath, inner_path)) {
 				//remove the offset directory from the front of the path
-				filepath=filepath.substr(inner_path.size(), filepath.size() - inner_path.size());
-				
+				filepath = filepath.substr(inner_path.size(), filepath.size() - inner_path.size());
+
 				//check if the entry is an directory or not (indicated by trailing /)
 				if (filepath.back() == '/') {
 					entry.isDirectory = true;
@@ -55,17 +93,16 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 					entry.isDirectory = false;
 				}
 
-				
 				m_zipContent.insert(std::pair<std::string, ZipEntry>(filepath, entry));
 			}
 		}
 
-		//Insert root path
+		//Insert root path into m_zipContent
 		entry.isDirectory = true;
 		entry.fileoffset = 0;
 		entry.filesize = 0;
 		m_zipContent.insert(std::pair<std::string, ZipEntry>("", entry));
-
+		
 		zipfile.seekg(0);
 		initialEntry.used = false;
 		m_InputPool.push_back(initialEntry);
@@ -111,12 +148,11 @@ bool ZIPFilesystem::FindCentralDirectory(std::istream & zipfile, uint32_t & offs
 	}
 }
 
-bool ZIPFilesystem::ReadCentralDirectoryEntry(std::istream & zipfile, std::string & filepath, uint32_t & offset, uint32_t & uncompressed_size) {
+bool ZIPFilesystem::ReadCentralDirectoryEntry(std::istream & zipfile, std::vector<char> & filename, uint32_t & offset, uint32_t & uncompressed_size) {
 	uint32_t magic = 0;
 	uint16_t filepath_length;
 	uint16_t extra_field_length;
 	uint16_t comment_length;
-	std::vector<char> filename;
 
 	zipfile.read(reinterpret_cast<char*>(&magic), sizeof(magic));
 	Utils::SwapByteOrder(magic); //Take care of big endian systems
@@ -133,10 +169,11 @@ bool ZIPFilesystem::ReadCentralDirectoryEntry(std::istream & zipfile, std::strin
 	zipfile.seekg(8, std::ios::ios_base::cur); // Jump over currently not needed entries
 	zipfile.read(reinterpret_cast<char*>(&offset), sizeof(uint32_t));
 	Utils::SwapByteOrder(offset);
-	filename.resize(filepath_length+1);
-	filename[filepath_length] = '\0';
+	if (filename.capacity() < filepath_length+1) {
+		filename.resize(filepath_length + 1);
+	}
+	filename.data()[filepath_length] = '\0';
 	zipfile.read(reinterpret_cast<char*>(filename.data()),filepath_length);
-	filepath = filename.data();
 	zipfile.seekg(comment_length+ extra_field_length, std::ios::ios_base::cur); // Jump over currently not needed entries
 	return true;
 }
