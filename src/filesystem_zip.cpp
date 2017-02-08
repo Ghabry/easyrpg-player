@@ -278,7 +278,6 @@ private:
 };
 
 
-#define STRING_BEGINS_WITH(_string, _begin)  (_string.size()!=_begin.size()&&_string.substr(0,_begin.size())==_begin)
 
 static std::string normalize_path(std::string const & path) {
 	
@@ -354,7 +353,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 			//zip is case insensitive, so store only the lower case
 			filepath = filepath_arr.data();
 			filepath = Utils::LowerCase(ReaderUtil::Recode(filepath, encoding));
-			if (STRING_BEGINS_WITH(filepath, inner_path)) {
+			if (filepath.size()!=inner_path.size()&&Utils::BeginsWith(filepath, inner_path)) {
 				//remove the offset directory from the front of the path
 				filepath = filepath.substr(inner_path.size(), filepath.size() - inner_path.size());
 
@@ -604,7 +603,7 @@ bool ZIPFilesystem::ListDirectoryEntries(std::string const& path, ListDirectoryE
 
 	DirectoryEntry entry;
 	for (auto it = m_zipContent.begin(); it != m_zipContent.end(); it++) {
-		if (STRING_BEGINS_WITH(it->first,path_lower)&&it->first.substr(path_lower.size(),it->first.size()- path_lower.size()).find_last_of('/')==std::string::npos) {
+		if (Utils::BeginsWith(it->first,path_lower)&&it->first.substr(path_lower.size(),it->first.size()- path_lower.size()).find_last_of('/')==std::string::npos) {
 			//Everything that starts with the path but isn't the path and does contain no slash
 			entry.name = it->first.substr(path_lower.size(), it->first.size()- path_lower.size());
 			entry.isDirectory = it->second.isDirectory;

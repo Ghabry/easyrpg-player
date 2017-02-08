@@ -103,31 +103,9 @@ bool OSFilesystem::Exists(std::string const & path) const {
 	std::string filename = MakeAbsolutePath( path);
 #ifdef _WIN32
 	return ::GetFileAttributesW(Utils::ToWideString(filename).c_str()) != (DWORD)-1;
-#elif defined(GEKKO)
+#elif defined(GEKKO) || defined(_3DS)
 	struct stat sb;
 	return ::stat(filename.c_str(), &sb) == 0;
-#elif defined(_3DS)
-	FILE* tmp = fopen(filename.c_str(), "r");
-	if (tmp == NULL) {
-		DIR* tmp2 = opendir(filename.c_str());
-		if (tmp2 == NULL) {
-			std::string tmp_str = filename + "/";
-			tmp2 = opendir(tmp_str.c_str());
-			if (tmp2 == NULL) return false;
-			else {
-				closedir(tmp2);
-				return true;
-			}
-		}
-		else {
-			closedir(tmp2);
-			return true;
-		}
-	}
-	else {
-		fclose(tmp);
-		return true;
-	}
 #elif defined(PSP2)
 	struct SceIoStat sb;
 	return (sceIoGetstat(filename.c_str(), &sb) >= 0);
