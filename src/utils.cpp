@@ -55,6 +55,11 @@ bool Utils::EndsWith(const std::string& str, const std::string& end) {
 		0 == str.compare(str.length() - end.length(), end.length(), end);
 }
 
+bool Utils::BeginsWith(const std::string& str, const std::string& begin) {
+	return str.length() >= begin.length() &&
+		0 == str.compare(0, begin.length(), begin);
+}
+
 std::u16string Utils::DecodeUTF16(const std::string& str) {
 	std::u16string result;
 	for (auto it = str.begin(), str_end = str.end(); it < str_end; ++it) {

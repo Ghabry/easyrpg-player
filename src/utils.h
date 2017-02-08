@@ -61,6 +61,15 @@ namespace Utils {
 	bool EndsWith(const std::string& str, const std::string& end);
 
 	/**
+	* Tests if a string begins with a substring.
+	*
+	* @param str String to search in
+	* @param begin Substring to check at the beginning of str
+	* @return true when the end matches
+	*/
+	bool BeginsWith(const std::string& str, const std::string& begin);
+
+	/**
 	 * Converts Utf8 to UTF-16.
 	 *
 	 * @param str string to convert.
