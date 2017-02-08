@@ -83,7 +83,7 @@ public:
 	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const;
 
 private:
-	enum class StorageMethod {unknown,deflate,store};
+	enum class StorageMethod {Unknown,Plain,Deflate};
 	struct ZipEntry {
 		uint32_t filesize;
 		uint32_t fileoffset;
@@ -94,14 +94,17 @@ private:
 		std::filebuf* filebuffer;
 		bool used;
 	};
-
+	class StorageIStreambuf;
+	class DeflateIStreambuf;
 	//No standard Constructor
 	ZIPFilesystem() {};
 
 	static bool FindCentralDirectory(std::istream & stream, uint32_t & offset, uint32_t & size, uint16_t & numberOfEntries);
 	static bool ReadCentralDirectoryEntry(std::istream & zipfile, std::vector<char> & filepath, uint32_t & offset, uint32_t & uncompressed_size);
+	static bool ReadLocalHeader(std::istream & zipfile, uint32_t & offset, StorageMethod & method,uint32_t & compressedSize);
 
 	bool m_isValid;
+	std::string m_OSPath;
 	std::vector<StreamPoolEntry> m_InputPool;
 	std::unordered_map<std::string, ZipEntry> m_zipContent;
 
