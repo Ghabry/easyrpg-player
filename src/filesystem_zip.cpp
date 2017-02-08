@@ -118,7 +118,7 @@ public:
 		m_backingStream = backingStream;
 		m_backingStream->used = true;
 		//seek to the beginning of the file
-		m_backingStream->filebuffer->pubseekpos(fileoffset, std::ios::ios_base::in);
+		m_backingStream->filebuffer->pubseekpos(fileoffset);
 		zlibstream.zalloc = Z_NULL;
 		zlibstream.zfree = Z_NULL;
 		zlibstream.opaque = Z_NULL;
@@ -130,6 +130,7 @@ public:
 	}
 	virtual ~DeflateIStreambuf() {
 		//unuse the provided buffer (free for another zipstream to use)
+		inflateEnd(&zlibstream);
 		m_backingStream->used = false;
 	}
 	DeflateIStreambuf(DeflateIStreambuf const& other) = delete;
@@ -238,7 +239,7 @@ protected:
 		}
 
 		//now underflow till the position we want to reach is inside the outbuffer	
-		while ((new_offset  ) >= (m_filelength - m_remaining)) {
+		while ((new_offset  ) >= (m_filelength - m_remaining) && !(m_remaining==0&& new_offset== m_filelength) ) {
 			underflow();
 		}
 		first_buffer_entry = (m_filelength - (m_remaining + (egptr() - eback())));
@@ -281,7 +282,7 @@ private:
 
 static std::string normalize_path(std::string const & path) {
 	
-	if (path == "." || path == "/") return "";
+	if (path == "." || path == "/" || path=="") return "";
 	std::string inner_path = Utils::LowerCase(path);
 	std::replace(inner_path.begin(), inner_path.end(), '\\', '/');
 	if (inner_path.front() == '.') inner_path = inner_path.substr(1, inner_path.size() - 1);
