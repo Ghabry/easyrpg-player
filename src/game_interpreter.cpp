@@ -406,7 +406,22 @@ bool Game_Interpreter::ExecuteCommand() {
 		case Cmd::Comment:
 		case Cmd::Comment_2:
 			if ((Player::patch & Player::PatchDynRpg) == Player::PatchDynRpg) {
-				return DynRpg::Invoke(com);
+				if (com.string.empty() || com.string[0] != '@') {
+					return true;
+				}
+
+				std::string command = com.string;
+				// Concat everything that is not another command or a new comment block
+				for (size_t i = index + 1; i < list.size(); ++i) {
+					const RPG::EventCommand& cmd = list[i];
+					if (cmd.code == Cmd::Comment_2 && !cmd.string.empty() && cmd.string[0] != '@') {
+						command += cmd.string;
+					} else {
+						break;
+					}
+				}
+
+				return DynRpg::Invoke(command);
 			}
 			return true;
 		case Cmd::GameOver:
