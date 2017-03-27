@@ -45,6 +45,14 @@ public:
 		AddLine(text);
 	}
 
+	DynRpgText(int pic_id, int x, int y, const std::vector<std::string>& text) : pic_id(pic_id), x(x), y(y) {
+		Graphics::RegisterDrawable(this);
+
+		for (auto& s : text) {
+			AddLine(s);
+		}
+	}
+
 	~DynRpgText() {
 		Graphics::RemoveDrawable(this);
 	};
@@ -126,6 +134,34 @@ public:
 				Graphics::UpdateZCallback();
 			}
 		}
+	}
+
+	std::vector<uint8_t> Save(const std::string& id) {
+		std::stringstream ss;
+		ss << x << "," << y << ",";
+		for (int i = 0; i < texts.size(); ++i) {
+			std::string t = texts[i];
+			// Replace , with a sentinel 0x01 to not mess up the tokenizer
+			std::replace(t.begin(), t.end(), ',', '\1');
+			ss << t;
+			if (i < texts.size() - 1) {
+				ss << "\n";
+			}
+
+		}
+		ss << "," << color << "," << id;
+
+		ss << "," << 255 << "," << (fixed ? "1" : "0") << "," << pic_id;
+
+		std::vector<uint8_t> data;
+
+		std::string s = ss.str();
+		size_t slen = s.size();
+
+		data.resize(slen);
+		data.insert(data.end(), s.begin(), s.end());
+
+		return data;
 	}
 
 	static int ParseParameter(bool& is_valid, std::u32string::iterator& text_index, std::u32string::iterator& end) {
@@ -515,6 +551,10 @@ static bool RemoveAll(const dyn_arg_list& args) {
 	return true;
 }
 
+std::string DynRpg::TextPlugin::GetIdentifier() {
+	return "DynTextPlugin";
+}
+
 void DynRpg::TextPlugin::RegisterFunctions() {
 	DynRpg::RegisterFunction("write_text", WriteText);
 	DynRpg::RegisterFunction("append_line", AppendLine);
@@ -533,4 +573,83 @@ void DynRpg::TextPlugin::Update() {
 
 DynRpg::TextPlugin::~TextPlugin() {
 	graphics.clear();
+}
+
+void DynRpg::TextPlugin::Load(const std::vector<uint8_t>& in_buffer) {
+	size_t counter = 0;
+
+	std::string str((char*)in_buffer.data(), in_buffer.size());
+
+	std::vector<std::string> tokens = Utils::Tokenize(str, [&] (char32_t c) { return c == ','; });
+
+	int x = 0;
+	int y = 0;
+	std::vector<std::string> texts;
+	int color = 0;
+	std::string id = "";
+	bool fixed = false;
+	int pic_id = 1;
+
+	for (auto& t : tokens) {
+		switch (counter) {
+			case 0:
+				x = atoi(t.c_str());
+				break;
+			case 1:
+				y = atoi(t.c_str());
+				break;
+			case 2:
+			{
+				// Replace sentinel \1 with ,
+				std::replace(t.begin(), t.end(), '\1', ',');
+
+				texts = Utils::Tokenize(t, [&] (char32_t c) { return c == '\n'; });
+			}
+				break;
+			case 3:
+				color = atoi(t.c_str());
+				break;
+			case 4:
+				// transparency, but isn't that from the picture?
+				break;
+			case 5:
+				fixed = t == "1";
+				break;
+			case 6:
+				pic_id = atoi(t.c_str());
+				break;
+			case 7:
+				id = t.c_str();
+				break;
+			default:
+				break;
+		}
+
+		++counter;
+
+		if (counter == 8) {
+			counter = 0;
+
+			graphics[id] = std::unique_ptr<DynRpgText>(new DynRpgText(pic_id, x, y + 2, texts));
+			texts.clear();
+			graphics[id]->SetColor(color);
+			graphics[id]->SetFixed(fixed);
+		}
+	}
+}
+
+std::vector<uint8_t> DynRpg::TextPlugin::Save() {
+	std::vector<uint8_t> save_data;
+	std::stringstream ss;
+
+	for (auto& g : graphics) {
+		std::vector<uint8_t> res = g.second->Save(g.first);
+		save_data.reserve(save_data.size() + res.size() + 1);
+		save_data.insert(save_data.end(), res.begin(), res.end());
+
+		save_data.push_back(',');
+	}
+	save_data.pop_back();
+
+	return DynRpgPlugin::Save();
 }

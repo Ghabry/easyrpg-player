@@ -77,8 +77,6 @@ namespace DynRpg {
 	void Reset();
 	void Load(int slot);
 	void Save(int slot);
-	void Update();
-	void Reset();
 }
 
 class DynRpgPlugin {
@@ -88,7 +86,7 @@ public:
 	virtual std::string GetIdentifier() = 0;
 	virtual void RegisterFunctions() {}
 	virtual void Update() {}
-	virtual void Load(std::vector<uint8_t>&) {}
+	virtual void Load(const std::vector<uint8_t>&) {}
 	virtual std::vector<uint8_t> Save() { return {}; }
 
 protected:

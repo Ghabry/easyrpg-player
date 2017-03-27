@@ -25,10 +25,11 @@ namespace DynRpg {
 	public:
 		~TextPlugin();
 
+		std::string GetIdentifier();
 		void RegisterFunctions();
 		void Update();
-		void Load(std::vector<uint8_t>&) {}
-		//std::vector<uint8_t> Save() {}
+		void Load(const std::vector<uint8_t>&);
+		std::vector<uint8_t> Save();
 	};
 }
 

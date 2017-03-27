@@ -27,6 +27,8 @@
 
 #include "dynrpg_textplugin.h"
 
+#include <cstring>
+#include <fstream>
 #include <map>
 
 #include "dynrpg_textplugin.h"
