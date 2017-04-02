@@ -40,9 +40,10 @@
 #include "input.h"
 #include "screen.h"
 #include "scene_load.h"
+#include "dynrpg.h"
 
-Scene_Map::Scene_Map(bool from_save) :
-	from_save(from_save) {
+Scene_Map::Scene_Map(int load_save_id) :
+	load_save_id(load_save_id) {
 	type = Scene::Map;
 }
 
@@ -52,8 +53,9 @@ void Scene_Map::Start() {
 
 	// Called here instead of Scene Load, otherwise wrong graphic stack
 	// is used.
-	if (from_save) {
+	if (load_save_id) {
 		Main_Data::game_screen->CreatePicturesFromSave();
+		DynRpg::Load(load_save_id);
 	}
 
 	Player::FrameReset();

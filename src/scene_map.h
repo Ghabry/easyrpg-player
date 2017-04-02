@@ -32,7 +32,7 @@ public:
 	/**
 	 * Constructor.
 	 */
-	Scene_Map(bool from_save = false);
+	Scene_Map(int load_save_id = 0);
 	~Scene_Map() override;
 
 	void Start() override;
@@ -59,7 +59,7 @@ private:
 
 	std::unique_ptr<Window_Message> message_window;
 
-	bool from_save;
+	int load_save_id = 0;
 	bool auto_transition = false;
 	bool auto_transition_erase = false;
 	int debug_menuoverwrite_counter = 0;

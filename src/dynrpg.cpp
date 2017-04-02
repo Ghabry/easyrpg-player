@@ -136,7 +136,7 @@ namespace {
 	bool Call(const dyn_arg_list& args);
 
 	// Function table
-	dyn_rpg_func dyn_rpg_functions = {
+	dyn_rpg_func dyn_rpg_builtin_functions = {
 			{"add", Add},
 			{"sub", Sub},
 			{"mul", Mul},
@@ -145,6 +145,8 @@ namespace {
 			{"output", Oput},
 			{"call", Call}
 	};
+
+	dyn_rpg_func dyn_rpg_functions;
 
 	bool Call(const dyn_arg_list& args) {
 		DYNRPG_FUNCTION("call")
@@ -349,6 +351,8 @@ static bool ValidFunction(const std::string& token) {
 }
 
 void create_all_plugins() {
+	dyn_rpg_functions = dyn_rpg_builtin_functions;
+
 	for (auto& plugin : plugins) {
 		plugin->RegisterFunctions();
 	}
@@ -663,7 +667,7 @@ void DynRpg::Save(int slot) {
 		Utils::SwapByteOrder(len);
 
 		out->write((char*)&len, 4);
-		out->write((char*)&data, data.size());
+		out->write((char*)data.data(), data.size());
 	}
 }
 
@@ -674,6 +678,7 @@ void DynRpg::Update() {
 }
 
 void DynRpg::Reset() {
+	init = false;
 	dyn_rpg_functions.clear();
 	plugins.clear();
 }
