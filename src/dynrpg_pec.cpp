@@ -56,8 +56,8 @@ static bool SetColor(const dyn_arg_list& args) {
 		return true;
 	}
 
-	picture->SetColorEffect(red, green, blue, saturation);
-	picture->SetTransition(0);
+	//picture->SetColorEffect(red, green, blue, saturation);
+	//picture->SetTransition(0);
 
 	return true;
 }
@@ -114,8 +114,8 @@ static bool SetPosition(const dyn_arg_list& args) {
 		return true;
 	}
 
-	picture->SetMovementEffect(x, y);
-	picture->SetTransition(0);
+	//icture->SetMovementEffect(x, y);
+	//picture->SetTransition(0);
 
 	return true;
 }
@@ -161,8 +161,8 @@ static bool SetTransparency(const dyn_arg_list& args) {
 		return true;
 	}
 
-	picture->SetTransparencyEffect(transparency, transparency);
-	picture->SetTransition(0);
+	//picture->SetTransparencyEffect(transparency, transparency);
+	//picture->SetTransition(0);
 
 	return true;
 }
@@ -205,8 +205,8 @@ static bool SetZoom(const dyn_arg_list& args) {
 		return true;
 	}
 
-	picture->SetZoomEffect(zoom);
-	picture->SetTransition(0);
+	//picture->SetZoomEffect(zoom);
+	//picture->SetTransition(0);
 
 	return true;
 }
@@ -294,8 +294,8 @@ static bool SetEffectStrength(const dyn_arg_list& args) {
 		return true;
 	}
 
-	picture->SetWaverEffect(strength);
-	picture->SetTransition(0);
+	///picture->SetWaverEffect(strength);
+	//picture->SetTransition(0);
 
 	return true;
 }
