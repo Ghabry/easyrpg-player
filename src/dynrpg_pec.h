@@ -21,10 +21,13 @@
 #include "dynrpg.h"
 
 namespace DynRpg {
-	namespace Pec {
-		void RegisterAll();
+	class Pec : public DynRpgPlugin {
+	public:
+		~Pec();
+
+		void RegisterFunctions();
 		void Update();
-	}
+	};
 }
 
 #endif

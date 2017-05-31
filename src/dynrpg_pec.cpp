@@ -124,7 +124,7 @@ bool DestroySpritesheet(dyn_arg_list args) {
 	return true;
 }
 
-void DynRpg::Pec::RegisterAll() {
+void DynRpg::Pec::RegisterFunctions() {
 	/*DynRpg::RegisterFunction("pec_set_color", SetColor);
 	DynRpg::RegisterFunction("pec_get_color", GetColor);
 	DynRpg::RegisterFunction("pec_set_position", SetPosition);
@@ -145,4 +145,8 @@ void DynRpg::Pec::RegisterAll() {
 
 void DynRpg::Pec::Update() {
 	// no-op
+}
+
+DynRpg::Pec::~Pec() {
+	attrib.clear();
 }
