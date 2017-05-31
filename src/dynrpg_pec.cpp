@@ -366,7 +366,7 @@ static bool IsFlippedHorizontal(const dyn_arg_list& args) {
 void set_frame(Sprite* sprite, const PecAttribute& attrib) {
 	int sx = 0;
 	int sy = 0;
-	if (attrib.current_frame > 0) {
+	if (attrib.current_frame >= 0) {
 		sx = attrib.current_frame % attrib.frame_cols * attrib.frame_width;
 		sy = attrib.current_frame / attrib.frame_cols * attrib.frame_height;
 	}
@@ -477,8 +477,6 @@ static bool DestroySpritesheet(const dyn_arg_list& args) {
 	}
 
 	attrib.erase(picture_id);
-
-	sprite->SetSrcRect(sprite->GetBitmap()->GetRect());
 
 	return true;
 }
