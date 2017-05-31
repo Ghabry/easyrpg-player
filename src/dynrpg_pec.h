@@ -25,6 +25,7 @@ namespace DynRpg {
 	public:
 		~Pec();
 
+		std::string GetIdentifier();
 		void RegisterFunctions();
 		void Update();
 	};

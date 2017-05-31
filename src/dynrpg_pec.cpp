@@ -481,6 +481,10 @@ static bool DestroySpritesheet(const dyn_arg_list& args) {
 	return true;
 }
 
+std::string DynRpg::Pec::GetIdentifier() {
+	return "DynPEC";
+}
+
 void DynRpg::Pec::RegisterFunctions() {
 	DynRpg::RegisterFunction("pec_set_color", SetColor);
 	DynRpg::RegisterFunction("pec_get_color", GetColor);
