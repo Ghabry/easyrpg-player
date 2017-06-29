@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Based on DynRPG Particle Effects by Kazesui. (MIT license)
  */
 
 // Headers
+#include <array>
+#include <cmath>
 #include <map>
 
+#include "drawable.h"
 #include "dynrpg_particle.h"
 #include "baseui.h"
 #include "bitmap.h"
@@ -25,6 +30,7 @@
 #include "game_screen.h"
 #include "game_map.h"
 #include "game_switches.h"
+#include "graphics.h"
 
 class ParticleEffect;
 
@@ -34,81 +40,13 @@ namespace {
 	ptag_t pfx_list;
 }
 
-void linear_fade(BitmapRef image, uint32_t color0, uint32_t color1, int fade, int delay) {
-	int palette[256] = { 0 };
-	float b = (color0 >> 16) & 0xff;
-	float g = (color0 >> 8) & 0xff;
-	float r = (color0 & 0xff);
-	if (delay >= fade) delay = fade - 1;
+void linear_fade(ParticleEffect* effect, uint32_t color0, uint32_t color1, int fade, int delay);
+void linear_fade_texture(uint32_t color0, uint32_t color1, int fade, int delay, uint8_t* dst_r, uint8_t* dst_g, uint8_t* dst_b);
 
-	float dr, dg, db;
-	{
-		float end_b = (color1 >> 16) & 0xff;
-		float end_g = (color1 >> 8) & 0xff;
-		float end_r = (color1 & 0xff);
-
-		dr = (end_r - r) / (fade - delay);
-		dg = (end_g - g) / (fade - delay);
-		db = (end_b - b) / (fade - delay);
-	}
-
-	int i = 0;
-	for (; i < delay; ++i) {
-		palette[i] |= (int)r << 16;
-		palette[i] |= (int)g << 8;
-		palette[i] |= (int)b;
-	}
-	for (; i < fade; ++i) {
-		palette[i] |= (int)r << 16;
-		palette[i] |= (int)g << 8;
-		palette[i] |= (int)b;
-		r += dr;
-		g += dg;
-		b += db;
-	}
-
-	//image->setPalette(palette);
-	//image->applyPalette();
-}
-
-void linear_fade_texture(uint32_t color0, uint32_t color1, int fade, int delay, uint8_t* dst_r, uint8_t* dst_g, uint8_t* dst_b) {
-	float src_b = (color0 >> 16) & 0xff;
-	float src_g = (color0 >> 8) & 0xff;
-	float src_r = (color0 & 0xff);
-	if (delay >= fade) delay = fade - 1;
-
-	float dr, dg, db;
-	{
-		float end_b = (color1 >> 16) & 0xff;
-		float end_g = (color1 >> 8) & 0xff;
-		float end_r = (color1 & 0xff);
-
-		dr = (end_r - src_r) / (fade - delay);
-		dg = (end_g - src_g) / (fade - delay);
-		db = (end_b - src_b) / (fade - delay);
-	}
-
-	int i = 0;
-	for (; i < delay; ++i) {
-		dst_r[i] = src_r;
-		dst_g[i] = src_g;
-		dst_b[i] = src_b;
-	}
-	for (; i < fade; ++i) {
-		dst_r[i] = src_r;
-		dst_g[i] = src_g;
-		dst_b[i] = src_b;
-		src_r += dr;
-		src_g += dg;
-		src_b += db;
-	}
-}
-
-
-class ParticleEffect {
+class ParticleEffect : Drawable {
 public:
 	ParticleEffect();
-	virtual void draw() {}
+	virtual void Draw() {}
 	virtual void clear() {}
 	virtual void setSimul(int newSimul) {}
 	virtual void setAmount(int newAmount);
@@ -130,6 +68,17 @@ public:
 	virtual void setColor0(uint8_t r, uint8_t g, uint8_t b);
 	virtual void setColor1(uint8_t r, uint8_t g, uint8_t b);
 	static void create_trig_lut();
+
+	virtual int GetZ() const {
+		return z;
+	}
+
+	virtual DrawableType GetType() const {
+		return TypeSprite;
+	}
+
+	std::array<Color, 256> palette;
+
 protected:
 
 	enum ColoringMode {
@@ -177,33 +126,109 @@ protected:
 	void alloc_rgb();
 	void update_color();
 	static float sin_lut[32];
+
+	const static int layer_mask = (10 << 16);
+	const static int default_priority = Priority_Timer + layer_mask;
+
+	int z = default_priority;
 };
 
+
+void linear_fade(ParticleEffect* effect, uint32_t color0, uint32_t color1, int fade, int delay) {
+
+	std::array<Color, 256> palette;
+	float r = (color0 >> 16) & 0xff;
+	float g = (color0 >> 8) & 0xff;
+	float b = (color0 & 0xff);
+	if (delay >= fade) delay = fade - 1;
+
+	float dr, dg, db;
+	{
+		float end_r = (color1 >> 16) & 0xff;
+		float end_g = (color1 >> 8) & 0xff;
+		float end_b = (color1 & 0xff);
+
+		dr = (end_r - r) / (fade - delay);
+		dg = (end_g - g) / (fade - delay);
+		db = (end_b - b) / (fade - delay);
+	}
+
+	int i = 0;
+	for (; i < delay; ++i) {
+		palette[i] = Color(r, g, b, 255);
+	}
+	for (; i < fade; ++i) {
+		palette[i] = Color(r, g, b, 255);
+		r += dr;
+		g += dg;
+		b += db;
+	}
+
+	effect->palette = palette;
+}
+
+void linear_fade_texture(uint32_t color0, uint32_t color1, int fade, int delay, uint8_t* dst_r, uint8_t* dst_g, uint8_t* dst_b) {
+	float src_r = (color0 >> 16) & 0xff;
+	float src_g = (color0 >> 8) & 0xff;
+	float src_b = (color0 & 0xff);
+	if (delay >= fade) delay = fade - 1;
+
+	float dr, dg, db;
+	{
+		float end_r = (color1 >> 16) & 0xff;
+		float end_g = (color1 >> 8) & 0xff;
+		float end_b = (color1 & 0xff);
+
+		dr = (end_r - src_r) / (fade - delay);
+		dg = (end_g - src_g) / (fade - delay);
+		db = (end_b - src_b) / (fade - delay);
+	}
+
+	int i = 0;
+	for (; i < delay; ++i) {
+		dst_r[i] = src_r;
+		dst_g[i] = src_g;
+		dst_b[i] = src_b;
+	}
+	for (; i < fade; ++i) {
+		dst_r[i] = src_r;
+		dst_g[i] = src_g;
+		dst_b[i] = src_b;
+		src_r += dr;
+		src_g += dg;
+		src_b += db;
+	}
+}
 
 float ParticleEffect::sin_lut[32];
 
 ParticleEffect::ParticleEffect() : r0(50), rand_r(0), rand_x(0), rand_y(0), spd(0.5), rand_spd(0.5),
 s0(1), s1(1), ds(0), gx(0), gy(0), ax0(0), ay0(0), afc(0), beta(6.2832),
 alpha(0), theta(0), fade(30), delay(0), amount(50) {
-	r = NULL;
-	g = NULL;
-	b = NULL;
+	r = nullptr;
+	g = nullptr;
+	b = nullptr;
 	da = 255 / fade;
 	col_mode = LINEAR;
 	color0 = 0x00ffffff;
 	color1 = 0x00ffffff;
 	isScreenRelative = false;
+
+	image = Bitmap::Create(1, 1, true);
+
+	Graphics::RegisterDrawable(this);
+
 }
 
 void ParticleEffect::setTexture(std::string filename) {
-	std::string filepath = "Picture/";
-	filepath += filename;
+	FileRequestAsync* req = AsyncHandler::RequestFile("Picture", filename);
+	req->Start();
 	Cache::Picture(filename, true);
 	linear_fade_texture(color0, color1, fade, delay, r, g, b);
 }
 
 void ParticleEffect::unloadTexture() {
-	linear_fade(image, color0, color1, fade, delay);
+	linear_fade(this, color0, color1, fade, delay);
 }
 
 void ParticleEffect::setGravityDirection(float angle, float factor) {
@@ -293,7 +318,7 @@ void ParticleEffect::setColor1(uint8_t r, uint8_t g, uint8_t b) {
 void ParticleEffect::update_color() {
 	switch (col_mode) {
 	case LINEAR:
-		linear_fade(image, color0, color1, fade, delay);
+		linear_fade(this, color0, color1, fade, delay);
 		break;
 	case LINEAR_TEXTURE:
 		linear_fade_texture(color0, color1, fade, delay, r, g, b);
@@ -328,7 +353,7 @@ class Stream : public ParticleEffect {
 public:
 	Stream();
 	~Stream();
-	void draw();
+	void Draw();
 	void clear();
 	void stopAll();
 	void stop(std::string tag);
@@ -491,10 +516,12 @@ void Stream::init_radial(int a, int b, int idx) {
 }
 
 void Stream::draw_block_basic(int ref, uint8_t n, uint8_t z, uint8_t c0, int16_t cam_x, int16_t cam_y) {
-	/*float bright = RPG::screen->canvas->brightness / 100.0;
+	if (!image.get()) {
+		return;
+	}
+
 	for (uint8_t i = 0; i < n; i++) {
-		image->pixels[0] = i + c0;
-		image->alpha = (255 - da * (i + c0)) * bright;
+		image->Fill(palette[i + c0]);
 		int idx = ref + z * amount;
 		float tx, ty, tsqr;
 		for (int j = 0; j < amount; j++) {
@@ -506,24 +533,23 @@ void Stream::draw_block_basic(int ref, uint8_t n, uint8_t z, uint8_t c0, int16_t
 			dx[idx] += gx + afc * tx / tsqr;
 			dy[idx] += gy + afc * ty / tsqr;
 			s[idx] += ds;
-			RPG::screen->canvas->drawStretched(x[idx] - cam_x - s[idx] / 2, y[idx] - cam_y - s[idx] / 2, s[idx], s[idx], image);
+			Rect dst_rect(x[idx] - cam_x - s[idx] / 2, y[idx] - cam_y - s[idx] / 2, s[idx], s[idx]);
+			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *image, image->GetRect(), Opacity::opaque);
 			idx++;
 		}
 		z = (z + 1) % fade;
-	}*/
+	}
 
 }
 
 void Stream::draw_block_texture(int ref, uint8_t n, uint8_t z, uint8_t c0, int16_t cam_x, int16_t cam_y) {
-	/*float w = image->width;
-	float h = image->height;
-	float bright = RPG::screen->canvas->brightness / 100.0;
+	if (!image.get()) {
+		return;
+	}
+
+	float w = image->width();
+	float h = image->height();
 	for (uint8_t i = 0; i < n; i++) {
-		image->colorControl1->red = r[i + c0];
-		image->colorControl1->blue = b[i + c0];
-		image->colorControl1->green = g[i + c0];
-		image->alpha = (255 - da * (i + c0)) * bright;
-		image->applyPalette();
 		int idx = ref + z * amount;
 		float tx, ty, tsqr;
 		for (int j = 0; j < amount; j++) {
@@ -535,11 +561,12 @@ void Stream::draw_block_texture(int ref, uint8_t n, uint8_t z, uint8_t c0, int16
 			dx[idx] += gx + afc * tx / tsqr;
 			dy[idx] += gy + afc * ty / tsqr;
 			s[idx] += ds;
-			RPG::screen->canvas->drawStretched(x[idx] - cam_x - s[idx] / 2, y[idx] - cam_y - s[idx] / 2, w*s[idx], h*s[idx], image);
+			Rect dst_rect(x[idx] - cam_x - s[idx] / 2, y[idx] - cam_y - s[idx] / 2, w*s[idx], h*s[idx]);
+			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *image, image->GetRect(), Opacity::opaque);
 			idx++;
 		}
 		z = (z + 1) % fade;
-	}*/
+	}
 }
 
 void Stream::setPosition(std::string tag, int x, int y) {
@@ -552,6 +579,8 @@ void Stream::setPosition(std::string tag, int x, int y) {
 }
 
 void Stream::setTexture(std::string filename) {
+	FileRequestAsync* req = AsyncHandler::RequestFile("Picture", filename);
+	req->Start();
 	alloc_rgb();
 	image = Cache::Picture(filename, true);
 	draw_block = &Stream::draw_block_texture;
@@ -566,10 +595,10 @@ void Stream::unloadTexture() {
 	update_color();
 }
 
-void Stream::draw() {
+void Stream::Draw() {
 	if (simulCnt <= 0) return;
-	int cam_x = (isScreenRelative) ? 0 : Game_Map::GetDisplayX();
-	int cam_y = (isScreenRelative) ? 0 : Game_Map::GetDisplayY();
+	int cam_x = (isScreenRelative) ? 0 : Game_Map::GetDisplayX() / 16;
+	int cam_y = (isScreenRelative) ? 0 : Game_Map::GetDisplayY() / 16;
 	int block_size = amount * fade;
 	int i = 0;
 
@@ -747,7 +776,7 @@ class Burst : public ParticleEffect {
 public:
 	Burst();
 	~Burst();
-	void draw();
+	void Draw();
 	void clear();
 	void newBurst(int x, int y);
 
@@ -848,7 +877,7 @@ void Burst::init_radial(int x0, int y0, int a, int b) {
 	}
 }
 
-void Burst::draw() {
+void Burst::Draw() {
 	if (simulCnt <= 0) return;
 	if (simulCnt > 1) {
 		for (int i = 0; i < simulCnt - 1; i++) {
@@ -867,16 +896,18 @@ void Burst::draw() {
 		if (itr[simulCnt - 1] >= fade) simulCnt--;
 	} else if (itr[0] >= fade) --simulCnt;
 
-	int cam_x = (isScreenRelative) ? 0 : Game_Map::GetDisplayX();
-	int cam_y = (isScreenRelative) ? 0 : Game_Map::GetDisplayY();
+	int cam_x = (isScreenRelative) ? 0 : Game_Map::GetDisplayX() / 16;
+	int cam_y = (isScreenRelative) ? 0 : Game_Map::GetDisplayY() / 16;
 	(this->*draw_function)(cam_x, cam_y);
 }
 
 void Burst::draw_standard(int cam_x, int cam_y) {
-	/*float bright = RPG::screen->canvas->brightness / 100.0;
+	if (!image.get()) {
+		return;
+	}
+
 	for (int i = 0; i < simulCnt; i++) {
-		image->pixels[0] = itr[i];
-		image->alpha = (255 - da * itr[i]) * bright;
+		image->Fill(palette[itr[i]]);
 		itr[i]++;
 		float tx, ty, tsqr;
 		for (int j = i * amount; j < (i + 1) * amount; j++) {
@@ -888,22 +919,21 @@ void Burst::draw_standard(int cam_x, int cam_y) {
 			dx[j] += gx + afc * tx / tsqr;
 			dy[j] += gy + afc * ty / tsqr;
 			s[j] += ds;
-			RPG::screen->canvas->drawStretched(x[j] - cam_x - s[j] / 2, y[j] - cam_y - s[j] / 2, s[j], s[j], image);
+			Rect dst_rect(x[j] - cam_x - s[j] / 2, y[j] - cam_y - s[j] / 2, s[j], s[j]);
+			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *image, image->GetRect(), Opacity::opaque);
 		}
-	}*/
+	}
 }
 
 void Burst::draw_texture(int cam_x, int cam_y) {
-	/*float w = image->width;
-	float h = image->height;
-	float bright = RPG::screen->canvas->brightness / 100.0;
+	if (!image.get()) {
+		return;
+	}
+
+	float w = image->width();
+	float h = image->height();
 	for (int i = 0; i < simulCnt; i++) {
 		uint8_t idx = itr[i];
-		image->colorControl1->red = r[idx];
-		image->colorControl1->blue = b[idx];
-		image->colorControl1->green = g[idx];
-		image->alpha = (255 - da * idx) * bright;
-		image->applyPalette();
 		itr[i]++;
 		float tx, ty, tsqr;
 		for (int j = i * amount; j < (i + 1) * amount; j++) {
@@ -915,9 +945,10 @@ void Burst::draw_texture(int cam_x, int cam_y) {
 			dx[j] += gx + afc * tx / tsqr;
 			dy[j] += gy + afc * ty / tsqr;
 			s[j] += ds;
-			RPG::screen->canvas->drawStretched(x[j] - cam_x - s[j] / 2, y[j] - cam_y - s[j] / 2, w*s[j], h*s[j], image);
+			Rect dst_rect(x[j] - cam_x - s[j] / 2, y[j] - cam_y - s[j] / 2, w*s[j], h*s[j]);
+			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *image, image->GetRect(), Opacity::opaque);
 		}
-	}*/
+	}
 
 }
 
@@ -996,16 +1027,15 @@ std::string DynRpg::Particle::GetIdentifier() {
 	return "KazeParticles";
 }
 
-
 static bool create_effect(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_create_effect")
 
 	DYNRPG_CHECK_ARG_LENGTH(2)
 
-		DYNRPG_GET_STR_ARG(0, tag)
+	DYNRPG_GET_STR_ARG(0, tag)
+	DYNRPG_GET_STR_ARG(1, typ)
 
-		DYNRPG_GET_STR_ARG(1, typ)
-		std::string type = typ;
+	std::string type = typ;
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr == pfx_list.end()) {
 		std::transform(type.begin(), type.end(), type.begin(), ::tolower);
@@ -1018,7 +1048,9 @@ static bool create_effect(const dyn_arg_list& args) {
 
 static bool destroy_effect(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_destroy_effect")
-		DYNRPG_CHECK_ARG_LENGTH(1)
+
+	DYNRPG_CHECK_ARG_LENGTH(1)
+
 	DYNRPG_GET_STR_ARG(0, tag)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
@@ -1043,9 +1075,10 @@ static bool destroy_all(const dyn_arg_list& args) {
 
 static bool does_effect_exist(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_does_effect_exist")
-		DYNRPG_CHECK_ARG_LENGTH(2)
-	DYNRPG_GET_STR_ARG(0, tag)
 
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_INT_ARG(1, idx)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
@@ -1061,9 +1094,10 @@ static bool does_effect_exist(const dyn_arg_list& args) {
 
 static bool burst(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_burst")
-		DYNRPG_CHECK_ARG_LENGTH(3)
-	DYNRPG_GET_STR_ARG(0, tag)
 
+	DYNRPG_CHECK_ARG_LENGTH(3)
+
+	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_INT_ARG(1, idx)
 	DYNRPG_GET_INT_ARG(2, idx2)
 
@@ -1076,10 +1110,11 @@ static bool burst(const dyn_arg_list& args) {
 
 static bool start(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_start")
-		DYNRPG_CHECK_ARG_LENGTH(4)
+
+	DYNRPG_CHECK_ARG_LENGTH(4)
+
 	DYNRPG_GET_STR_ARG(0, tag1)
 	DYNRPG_GET_STR_ARG(1, tag2)
-
 	DYNRPG_GET_INT_ARG(2, idx)
 	DYNRPG_GET_INT_ARG(3, idx2)
 
@@ -1092,9 +1127,12 @@ static bool start(const dyn_arg_list& args) {
 
 static bool stop(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_stop")
-		DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
 	DYNRPG_GET_STR_ARG(0, tag1)
 	DYNRPG_GET_STR_ARG(1, tag2)
+
 	ptag_t::iterator itr = pfx_list.find(tag1);
 	if (itr != pfx_list.end()) {
 		((Stream*)itr->second)->stop(tag2);
@@ -1104,7 +1142,9 @@ static bool stop(const dyn_arg_list& args) {
 
 static bool stopall(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_stopall")
-		DYNRPG_CHECK_ARG_LENGTH(1)
+
+	DYNRPG_CHECK_ARG_LENGTH(1)
+
 	DYNRPG_GET_STR_ARG(0, tag)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
@@ -1116,9 +1156,9 @@ static bool stopall(const dyn_arg_list& args) {
 
 static bool set_simul(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_simul")
-		DYNRPG_CHECK_ARG_LENGTH(2)
-	DYNRPG_GET_STR_ARG(0, tag)
+	DYNRPG_CHECK_ARG_LENGTH(2)
 
+	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_INT_ARG(1, idx)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
@@ -1130,9 +1170,10 @@ static bool set_simul(const dyn_arg_list& args) {
 
 static bool set_amount(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_amount")
-		DYNRPG_CHECK_ARG_LENGTH(2)
-	DYNRPG_GET_STR_ARG(0, tag)
 
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_INT_ARG(1, idx)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
@@ -1144,9 +1185,10 @@ static bool set_amount(const dyn_arg_list& args) {
 
 static bool set_timeout(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_timeout")
-		DYNRPG_CHECK_ARG_LENGTH(3)
-	DYNRPG_GET_STR_ARG(0, tag)
 
+	DYNRPG_CHECK_ARG_LENGTH(3)
+
+	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_INT_ARG(1, val)
 	DYNRPG_GET_INT_ARG(2, val2)
 
@@ -1159,13 +1201,13 @@ static bool set_timeout(const dyn_arg_list& args) {
 
 static bool set_initial_color(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_initial_color")
-		DYNRPG_CHECK_ARG_LENGTH(4)
+
+	DYNRPG_CHECK_ARG_LENGTH(4)
+
 	DYNRPG_GET_STR_ARG(0, tag)
-
-		DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
-		DYNRPG_GET_INT_ARG(3, val3)
-
+	DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(2, val2)
+	DYNRPG_GET_INT_ARG(3, val3)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1176,13 +1218,13 @@ static bool set_initial_color(const dyn_arg_list& args) {
 
 static bool set_final_color(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_final_color")
-		DYNRPG_CHECK_ARG_LENGTH(4)
+
+	DYNRPG_CHECK_ARG_LENGTH(4)
+
 	DYNRPG_GET_STR_ARG(0, tag)
-
-		DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
-		DYNRPG_GET_INT_ARG(3, val3)
-
+	DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(2, val2)
+	DYNRPG_GET_INT_ARG(3, val3)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1193,12 +1235,12 @@ static bool set_final_color(const dyn_arg_list& args) {
 
 static bool set_growth(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_growth")
-		DYNRPG_CHECK_ARG_LENGTH(3)
+
+	DYNRPG_CHECK_ARG_LENGTH(3)
+
 	DYNRPG_GET_STR_ARG(0, tag)
-
-		DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
-
+	DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(2, val2)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1209,12 +1251,13 @@ static bool set_growth(const dyn_arg_list& args) {
 
 static bool set_position(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_position")
-		DYNRPG_CHECK_ARG_LENGTH(4)
+
+	DYNRPG_CHECK_ARG_LENGTH(4)
+
 	DYNRPG_GET_STR_ARG(0, tag1)
 	DYNRPG_GET_STR_ARG(1, tag2)
-
-		DYNRPG_GET_INT_ARG(2, val)
-		DYNRPG_GET_INT_ARG(3, val2)
+	DYNRPG_GET_INT_ARG(2, val)
+	DYNRPG_GET_INT_ARG(3, val2)
 
 	ptag_t::iterator itr = pfx_list.find(tag1);
 	if (itr != pfx_list.end()) {
@@ -1225,11 +1268,12 @@ static bool set_position(const dyn_arg_list& args) {
 
 static bool set_random_position(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_random_position")
-		DYNRPG_CHECK_ARG_LENGTH(3)
-	DYNRPG_GET_STR_ARG(0, tag)
 
-		DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
+	DYNRPG_CHECK_ARG_LENGTH(3)
+
+	DYNRPG_GET_STR_ARG(0, tag)
+	DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(2, val2)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1240,10 +1284,11 @@ static bool set_random_position(const dyn_arg_list& args) {
 
 static bool set_random_radius(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_random_radius")
-		DYNRPG_CHECK_ARG_LENGTH(2)
-	DYNRPG_GET_STR_ARG(0, tag)
-		DYNRPG_GET_INT_ARG(1, radius)
 
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_GET_STR_ARG(0, tag)
+	DYNRPG_GET_INT_ARG(1, radius)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1254,10 +1299,11 @@ static bool set_random_radius(const dyn_arg_list& args) {
 
 static bool set_radius(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_radius")
-		DYNRPG_CHECK_ARG_LENGTH(2)
-	DYNRPG_GET_STR_ARG(0, tag)
 
-		DYNRPG_GET_INT_ARG(1, radius)
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_GET_STR_ARG(0, tag)
+	DYNRPG_GET_INT_ARG(1, radius)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1268,7 +1314,9 @@ static bool set_radius(const dyn_arg_list& args) {
 
 static bool set_texture(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_texture")
-		DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
 	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_STR_ARG(1, txt)
 
@@ -1281,12 +1329,13 @@ static bool set_texture(const dyn_arg_list& args) {
 
 static bool set_acceleration_point(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_acceleration_point")
-		DYNRPG_CHECK_ARG_LENGTH(4)
+
+	DYNRPG_CHECK_ARG_LENGTH(4)
 	DYNRPG_GET_STR_ARG(0, tag)
 
-		DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
-		DYNRPG_GET_INT_ARG(3, val3)
+	DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(2, val2)
+	DYNRPG_GET_INT_ARG(3, val3)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1297,11 +1346,12 @@ static bool set_acceleration_point(const dyn_arg_list& args) {
 
 static bool set_gravity_direction(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_gravity_direction")
-		DYNRPG_CHECK_ARG_LENGTH(3)
+
+	DYNRPG_CHECK_ARG_LENGTH(3)
 	DYNRPG_GET_STR_ARG(0, tag)
 
 	DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
+	DYNRPG_GET_INT_ARG(2, val2)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1312,12 +1362,12 @@ static bool set_gravity_direction(const dyn_arg_list& args) {
 
 static bool set_velocity(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_velocity")
-		DYNRPG_CHECK_ARG_LENGTH(3)
+
+	DYNRPG_CHECK_ARG_LENGTH(3)
 	DYNRPG_GET_STR_ARG(0, tag)
 
-		DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
-
+	DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(2, val2)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1329,11 +1379,12 @@ static bool set_velocity(const dyn_arg_list& args) {
 
 static bool set_angle(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_angle")
-		DYNRPG_CHECK_ARG_LENGTH(3)
+
+	DYNRPG_CHECK_ARG_LENGTH(3)
 	DYNRPG_GET_STR_ARG(0, tag)
 
-		DYNRPG_GET_INT_ARG(1, val)
-		DYNRPG_GET_INT_ARG(2, val2)
+	DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(2, val2)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1344,10 +1395,11 @@ static bool set_angle(const dyn_arg_list& args) {
 
 static bool set_secondary_angle(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_secondary_angle")
-		DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_CHECK_ARG_LENGTH(2)
 	DYNRPG_GET_STR_ARG(0, tag)
 
-		DYNRPG_GET_INT_ARG(1, val)
+	DYNRPG_GET_INT_ARG(1, val)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
 	if (itr != pfx_list.end()) {
@@ -1358,7 +1410,9 @@ static bool set_secondary_angle(const dyn_arg_list& args) {
 
 static bool set_generating_function(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_generating_function")
-		DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
 	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_STR_ARG(1, func)
 
@@ -1371,7 +1425,9 @@ static bool set_generating_function(const dyn_arg_list& args) {
 
 static bool use_screen_relative(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_use_screen_relative")
-		DYNRPG_CHECK_ARG_LENGTH(2)
+
+	DYNRPG_CHECK_ARG_LENGTH(2)
+
 	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_STR_ARG(1, bol)
 
@@ -1385,7 +1441,8 @@ static bool use_screen_relative(const dyn_arg_list& args) {
 
 static bool unload_texture(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_unload_texture")
-		DYNRPG_CHECK_ARG_LENGTH(1)
+
+	DYNRPG_CHECK_ARG_LENGTH(1)
 	DYNRPG_GET_STR_ARG(0, tag)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
@@ -1439,7 +1496,7 @@ void DynRpg::Particle::RegisterFunctions() {
 void DynRpg::Particle::Update() {
 	ptag_t::iterator itr = pfx_list.begin();
 	while (itr != pfx_list.end()) {
-		itr->second->draw();
+		//itr->second->draw();
 		itr++;
 	}
 }

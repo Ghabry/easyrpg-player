@@ -13,6 +13,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Based on DynRPG Particle Effects by Kazesui. (MIT license)
  */
 
 #ifndef _EASYRPG_DYNRPG_PARTICLE_H_
