@@ -20,6 +20,7 @@
 
 #include "filesystem.h"
 #include <fstream>
+#include <memory>
 #include <unordered_map>
 
 class ZIPFilesystem : public Filesystem {
@@ -105,7 +106,7 @@ private:
 
 	bool m_isValid;
 	std::string m_OSPath;
-	std::vector<StreamPoolEntry> m_InputPool;
+	std::vector<StreamPoolEntry*> m_InputPool;
 	std::unordered_map<std::string, ZipEntry> m_zipContent;
 
 };
