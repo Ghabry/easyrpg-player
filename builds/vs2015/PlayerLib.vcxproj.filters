@@ -518,6 +518,15 @@
     <ClCompile Include="..\..\src\decoder_xmp.cpp">
       <Filter>Source Files\Backend\Audio</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\filesystem_os.cpp">
+      <Filter>Source Files\Tools\Filefinder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\filesystem_zip.cpp">
+      <Filter>Source Files\Tools\Filefinder</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\filesystem.cpp">
+      <Filter>Source Files\Tools\Filefinder</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\audio.h">
@@ -1017,6 +1026,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\decoder_xmp.h">
       <Filter>Source Files\Backend\Audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\filesystem_os.h">
+      <Filter>Source Files\Tools\Filefinder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\filesystem_zip.h">
+      <Filter>Source Files\Tools\Filefinder</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\filesystem.h">
+      <Filter>Source Files\Tools\Filefinder</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

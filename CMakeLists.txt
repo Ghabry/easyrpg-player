@@ -33,6 +33,9 @@ set(PLAYER_SRCS
 	src/decoder_wildmidi.cpp
 	src/decoder_xmp.cpp
 	src/filefinder.cpp
+	src/filesystem.cpp
+	src/filesystem_os.cpp
+	src/filesystem_zip.cpp
 	src/font.cpp
 	src/fps_overlay.cpp
 	src/frame.cpp
