@@ -43,6 +43,7 @@
 #include "rtp_table.h"
 #include "main_data.h"
 #include "filesystem_os.h"
+#include "filesystem_zip.h"
 
 // MinGW shlobj.h does not define this
 #ifndef SHGFP_TYPE_CURRENT
@@ -54,10 +55,9 @@ namespace {
 	const char* const MOVIE_TYPES[] = { ".avi", ".mpg" };
 #endif
 
-	OSFilesystem rootFilesystem("");
-
 	typedef std::vector<std::shared_ptr<FileFinder::DirectoryTree>> search_path_list;
 	std::shared_ptr<FileFinder::DirectoryTree> game_directory_tree;
+	std::unique_ptr<Filesystem> rootFilesystem;
 	search_path_list search_paths;
 	std::string fonts_path;
 
@@ -211,6 +211,10 @@ void FileFinder::SetDirectoryTree(std::shared_ptr<FileFinder::DirectoryTree> dir
 }
 
 std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateDirectoryTree(const std::string& p, bool recursive) {
+	// XXX FIXME Currently hardcoded
+	//rootFilesystem.reset(new ZIPFilesystem("C:\\Spiele\\RPG Maker\\Standstill Girl.zip", "Standstill Girl", "windows-1252"));
+	rootFilesystem.reset(new OSFilesystem(""));
+
 	if(! (Exists(p) && IsDirectory(p))) { return std::shared_ptr<DirectoryTree>(); }
 	std::shared_ptr<DirectoryTree> tree = std::make_shared<DirectoryTree>();
 	tree->directory_path = p;
@@ -531,8 +535,8 @@ std::shared_ptr<std::iostream> FileFinder::openUTF8(const std::string& name,
 std::shared_ptr<FileFinder::istream> FileFinder::openUTF8Input(const std::string& name,
 	std::ios_base::openmode m)
 {
-	std::streamsize size = rootFilesystem.GetFilesize(name);
-	std::streambuf * buf = rootFilesystem.CreateInputStreambuffer(name, m);
+	std::streamsize size = rootFilesystem->GetFilesize(name);
+	std::streambuf * buf = rootFilesystem->CreateInputStreambuffer(name, m);
 
 	std::shared_ptr<FileFinder::istream> ret(new FileFinder::istream(buf, size));
 
@@ -542,8 +546,8 @@ std::shared_ptr<FileFinder::istream> FileFinder::openUTF8Input(const std::string
 std::shared_ptr<std::ostream> FileFinder::openUTF8Output(const std::string& name,
 	std::ios_base::openmode m)
 {
-	std::streamsize size = rootFilesystem.GetFilesize(name);
-	std::streambuf * buf = rootFilesystem.CreateOutputStreambuffer(name, m);
+	std::streamsize size = rootFilesystem->GetFilesize(name);
+	std::streambuf * buf = rootFilesystem->CreateOutputStreambuffer(name, m);
 
 	std::shared_ptr<std::ostream> ret(new std::ostream(buf, size));
 
@@ -653,11 +657,11 @@ std::string FileFinder::FindSound(const std::string& name) {
 }
 
 bool FileFinder::Exists(const std::string& filename) {
-	return rootFilesystem.Exists(filename);
+	return rootFilesystem->Exists(filename);
 }
 
 bool FileFinder::IsDirectory(const std::string& dir) {
-	return rootFilesystem.IsDirectory(dir);
+	return rootFilesystem->IsDirectory(dir);
 }
 
 //This namespace contains global variables which are needed for the recursive mode of 
@@ -724,7 +728,7 @@ FileFinder::Directory FileFinder::GetDirectoryMembers(std::string const& dir, Mo
 	assert(IsDirectory(dir));
 
 	//Aquire the mounted filesystem
-	Filesystem * filesystem = &rootFilesystem;
+	Filesystem* filesystem = rootFilesystem.get();
 
 	//Initialize helpers
 	GetDirectoryMembersHelper::temporary_directory.base = dir;
@@ -742,7 +746,7 @@ FileFinder::Directory FileFinder::GetDirectoryMembers(std::string const& dir, Mo
 
 
 Offset FileFinder::GetFileSize(std::string const& file) {
-	return rootFilesystem.GetFilesize(file);
+	return rootFilesystem->GetFilesize(file);
 }
 
 bool FileFinder::IsMajorUpdatedTree() {
