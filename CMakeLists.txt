@@ -29,6 +29,9 @@ add_library(${PROJECT_NAME}
 	src/decoder_xmp.cpp
 	src/drawable.cpp
 	src/filefinder.cpp
+	src/filesystem.cpp
+	src/filesystem_os.cpp
+	src/filesystem_zip.cpp
 	src/font.cpp
 	src/fps_overlay.cpp
 	src/frame.cpp
