@@ -328,10 +328,10 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 	//Open first entry of the input filebuffer pool
 	m_isValid = false;
 	m_OSPath = os_path;
-	StreamPoolEntry initialEntry;
-	initialEntry.filebuffer = new std::filebuf();
-	initialEntry.used = true;
-	initialEntry.filebuffer->open(os_path, std::ios::ios_base::in | std::ios::ios_base::binary);
+	StreamPoolEntry* initialEntry = new StreamPoolEntry();
+	initialEntry->filebuffer = new std::filebuf();
+	initialEntry->used = true;
+	initialEntry->filebuffer->open(os_path, std::ios::ios_base::in | std::ios::ios_base::binary);
 	
 	uint16_t centralDirectoryEntries = 0;
 	uint32_t centralDirectorySize = 0;
@@ -345,7 +345,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 	std::string inner_path = normalize_path(sub_path);
 	if(inner_path.size()!=0 && inner_path.back() != '/') inner_path += "/";
 
-	std::istream zipfile(initialEntry.filebuffer); //Take the first streambuffer of the pool
+	std::istream zipfile(initialEntry->filebuffer); //Take the first streambuffer of the pool
 
 	if (encoding!=""&&FindCentralDirectory(zipfile,centralDirectoryOffset, centralDirectorySize, centralDirectoryEntries)) {
 		zipfile.seekg(centralDirectoryOffset); //Seek to the start of the central directory
@@ -378,12 +378,13 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 		m_zipContent.insert(std::pair<std::string, ZipEntry>("", entry));
 		
 		zipfile.seekg(0);
-		initialEntry.used = false;
+		initialEntry->used = false;
 		m_InputPool.push_back(initialEntry);
 		m_isValid = true;
 	}
 	else {
-		delete initialEntry.filebuffer;
+		delete initialEntry->filebuffer;
+		delete initialEntry;
 	}
 }
 
@@ -494,8 +495,9 @@ bool ZIPFilesystem::ReadLocalHeader(std::istream & zipfile, uint32_t & offset, S
 
 ZIPFilesystem::~ZIPFilesystem() {
 	for (auto it = m_InputPool.begin(); it != m_InputPool.end(); it++) {
-		it->used = false;
-		delete it->filebuffer;
+		(*it)->used = false;
+		delete (*it)->filebuffer;
+		delete (*it);
 	}
 }
 
@@ -549,18 +551,18 @@ std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path
 		StreamPoolEntry * inputStream = nullptr;
 		//search for an unused stream in our streampool 
 		for (int i = 0; i < m_InputPool.size(); i++) {
-			if (!m_InputPool[i].used) {
-				inputStream = &m_InputPool[i];
+			if (!m_InputPool[i]->used) {
+				inputStream = m_InputPool[i];
 			}
 		}
 		//If theres no unused stream in the pool - create a new one ;)
 		if (inputStream == nullptr) {
-			StreamPoolEntry newEntry;
-			newEntry.filebuffer = new std::filebuf();
-			newEntry.filebuffer->open(m_OSPath, std::ios_base::in | std::ios_base::binary);
-			newEntry.used = false;
+			StreamPoolEntry* newEntry = new StreamPoolEntry();
+			newEntry->filebuffer = new std::filebuf();
+			newEntry->filebuffer->open(m_OSPath, std::ios_base::in | std::ios_base::binary);
+			newEntry->used = false;
 			m_InputPool.push_back(newEntry);
-			inputStream = &m_InputPool.back();
+			inputStream = m_InputPool.back();
 		}
 
 		//now seek to the file and check it's local header
