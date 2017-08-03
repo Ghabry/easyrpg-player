@@ -35,13 +35,13 @@ static int vio_seek_func(void* stream, opus_int64 offset, int whence) {
 	if (f->eof()) f->clear(); //emulate behaviour of fseek
 	switch (whence) {
 		case SEEK_CUR:
-			f->seekg(offset, std::ios::ios_base::cur);
+			f->seekg(offset, std::ios_base::cur);
 			break;
 		case SEEK_SET:
-			f->seekg(offset, std::ios::ios_base::beg);
+			f->seekg(offset, std::ios_base::beg);
 			break;
 		case SEEK_END:
-			f->seekg(offset, std::ios::ios_base::end);
+			f->seekg(offset, std::ios_base::end);
 			break;
 		default:
 			return -1;

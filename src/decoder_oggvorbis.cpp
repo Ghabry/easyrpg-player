@@ -43,13 +43,13 @@ static int vio_seek_func(void* userdata, ogg_int64_t offset, int seek_type) {
 	if (f->eof()) f->clear(); //emulate behaviour of fseek
 	switch (seek_type) {
 	case SEEK_CUR:
-		f->seekg(offset, std::ios::ios_base::cur);
+		f->seekg(offset, std::ios_base::cur);
 		break;
 	case SEEK_SET:
-		f->seekg(offset, std::ios::ios_base::beg);
+		f->seekg(offset, std::ios_base::beg);
 		break;
 	case SEEK_END:
-		f->seekg(offset, std::ios::ios_base::end);
+		f->seekg(offset, std::ios_base::end);
 		break;
 	default:
 		return -1;

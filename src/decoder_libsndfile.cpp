@@ -45,13 +45,13 @@ static sf_count_t sf_vio_seek_impl(sf_count_t offset, int seek_type, void *userd
 	if (f->eof()) f->clear(); //emulate behaviour of fseek
 	switch (seek_type) {
 	case SEEK_CUR:
-		f->seekg(offset, std::ios::ios_base::cur);
+		f->seekg(offset, std::ios_base::cur);
 		break;
 	case SEEK_SET:
-		f->seekg(offset, std::ios::ios_base::beg);
+		f->seekg(offset, std::ios_base::beg);
 		break;
 	case SEEK_END:
-		f->seekg(offset, std::ios::ios_base::end);
+		f->seekg(offset, std::ios_base::end);
 		break;
 	}
 	return f->tellg();
@@ -68,9 +68,9 @@ static SF_VIRTUAL_IO vio = {
 	sf_vio_read_impl,
 	sf_vio_write_impl,
 	sf_vio_tell_impl
-}; 
+};
 
-LibsndfileDecoder::LibsndfileDecoder() 
+LibsndfileDecoder::LibsndfileDecoder()
 {
 	music_type = "wav";
 	soundfile=0;
