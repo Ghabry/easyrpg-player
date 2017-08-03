@@ -32,7 +32,6 @@
 #include "output.h"
 #include "decoder_oggvorbis.h"
 
-
 static size_t vio_read_func(void *ptr, size_t size,size_t nmemb,void* userdata) {
 	FileFinder::istream* f = reinterpret_cast<FileFinder::istream*>(userdata);
 	if (size == 0) return 0;
@@ -55,7 +54,7 @@ static int vio_seek_func(void* userdata, ogg_int64_t offset, int seek_type) {
 	default:
 		return -1;
 	}
-	
+
 	return f->tellg();
 }
 
@@ -66,9 +65,9 @@ static long vio_tell_func(void* userdata) {
 
 static ov_callbacks vio = {
 	vio_read_func,
-	vio_seek_func, /* Set to null to disable seeking*/
-	NULL,
-	vio_tell_func /* Set to null to disable seeking*/
+	vio_seek_func,
+	nullptr, // close not supported by istream interface
+	vio_tell_func
 };
 
 OggVorbisDecoder::OggVorbisDecoder() {
