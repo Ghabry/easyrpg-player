@@ -51,13 +51,13 @@ namespace {
 		FileFinder::istream* stream = (*reinterpret_cast<std::shared_ptr<FileFinder::istream>*>(context->hidden.unknown.data1)).get();
 		switch (whence) {
 		case RW_SEEK_CUR:
-			stream->seekg(offset, std::ios::ios_base::cur);
+			stream->seekg(offset, std::ios_base::cur);
 			break;
 		case RW_SEEK_SET:
-			stream->seekg(offset, std::ios::ios_base::beg);
+			stream->seekg(offset, std::ios_base::beg);
 			break;
 		case RW_SEEK_END:
-			stream->seekg(offset, std::ios::ios_base::end);
+			stream->seekg(offset, std::ios_base::end);
 			break;
 		default:
 			return -1;
@@ -309,7 +309,7 @@ void SdlMixerAudio::BGM_OnPlayedOnce() {
 }
 
 void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int fadein) {
-	auto filestream = FileFinder::openUTF8Input(file, std::ios::ios_base::in| std::ios::ios_base::binary);
+	auto filestream = FileFinder::openUTF8Input(file, std::ios_base::in| std::ios_base::binary);
 	if (!filestream) {
 		Output::Warning("Music not readable: %s", file.c_str());
 		return;
@@ -319,8 +319,8 @@ void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int
 		SetupAudioDecoder(filestream, file, volume, pitch, fadein);
 		return;
 	}
-	
-	filestream = FileFinder::openUTF8Input(file, std::ios::ios_base::in | std::ios::ios_base::binary);
+
+	filestream = FileFinder::openUTF8Input(file, std::ios_base::in | std::ios_base::binary);
 	SDL_RWops *rw = create_StreamRWOps(filestream); //SDL_RWFromFile(file.c_str(), "rb");
 
 	bgm_stop = false;
@@ -343,13 +343,13 @@ void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int
 #if WANT_FMMIDI == 2
 		// Fallback to FMMIDI when SDL Midi failed
 		char magic[4] = { 0 };
-		auto filestream = FileFinder::openUTF8Input(file, std::ios::ios_base::in | std::ios::ios_base::binary);
+		auto filestream = FileFinder::openUTF8Input(file, std::ios_base::in | std::ios_base::binary);
 		if (!filestream) {
 			Output::Warning("Music not readable: %s", file.c_str());
 			return;
 		}
 		filestream->read(magic, sizeof(magic));
-		filestream->seekg(0, std::ios::ios_base::beg);
+		filestream->seekg(0, std::ios_base::beg);
 		if (!strncmp(magic, "MThd", 4)) {
 			Output::Debug("FmMidi fallback: %s", file.c_str());
 			audio_decoder.reset(new FmMidiDecoder());

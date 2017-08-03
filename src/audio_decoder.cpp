@@ -132,7 +132,7 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(std::shared_ptr<FileFinder::i
 	if (stream->read(magic, sizeof(magic)).gcount() == 0) {
 		return nullptr;
 	}
-	stream->seekg(0, std::ios::ios_base::beg);
+	stream->seekg(0, std::ios_base::beg);
 
 #if !(defined(HAVE_WILDMIDI) || defined(HAVE_XMP))
 	/* WildMidi and XMP are the only audio decoders that need the filename passed
@@ -177,11 +177,11 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(std::shared_ptr<FileFinder::i
 	// Try to use internal OGG decoder
 	if (!strncmp(magic, "OggS", 4)) { // OGG
 #ifdef HAVE_OPUS
-		stream->seekg(28, std::ios::ios_base::beg);
+		stream->seekg(28, std::ios_base::beg);
 		if (stream->read(magic, sizeof(magic)).gcount() == 0) {
 			return nullptr;
 		}
-		stream->seekg(0, std::ios::ios_base::beg);
+		stream->seekg(0, std::ios_base::beg);
 
 		if (!strncmp(magic, "Opus", 4)) {
 #  ifdef USE_AUDIO_RESAMPLER
@@ -193,11 +193,11 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(std::shared_ptr<FileFinder::i
 #endif
 
 #if defined(HAVE_TREMOR) || defined(HAVE_OGGVORBIS)
-		stream->seekg(29, std::ios::ios_base::beg);
+		stream->seekg(29, std::ios_base::beg);
 		if (stream->read(magic, sizeof(magic)).gcount() == 0) {
 			return nullptr;
 		}
-		stream->seekg(0, std::ios::ios_base::beg);
+		stream->seekg(0, std::ios_base::beg);
 
 		if (!strncmp(magic, "vorb", 4)) {
 #  ifdef USE_AUDIO_RESAMPLER
@@ -212,12 +212,12 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(std::shared_ptr<FileFinder::i
 #ifdef WANT_FASTWAV
 	// Try to use a basic decoder for faster wav decoding if not ADPCM
 	if (!strncmp(magic, "RIFF", 4)) {
-		stream->seekg(20, std::ios::ios_base::beg);
+		stream->seekg(20, std::ios_base::beg);
 		uint16_t raw_enc;
 		stream->read(reinterpret_cast<char*>(&raw_enc), 2);
 
 		Utils::SwapByteOrder(raw_enc);
-		stream->seekg(0, std::ios::ios_base::beg);
+		stream->seekg(0, std::ios_base::beg);
 		if (raw_enc == 0x01) { // Codec is normal PCM
 #  ifdef USE_AUDIO_RESAMPLER
 			return std::unique_ptr<AudioDecoder>(new AudioResampler(std::unique_ptr<AudioDecoder>(new WavDecoder())));
@@ -284,7 +284,7 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(std::shared_ptr<FileFinder::i
 		// Parsing MP3s seems to be the only reliable way to detect them
 		if (Mpg123Decoder::IsMp3(stream)) {
 			stream->clear();
-			stream->seekg(0, std::ios::ios_base::beg);
+			stream->seekg(0, std::ios_base::beg);
 #  ifdef USE_AUDIO_RESAMPLER
 			mp3dec = new AudioResampler(std::unique_ptr<AudioDecoder>(new Mpg123Decoder()));
 #  else
@@ -303,7 +303,7 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(std::shared_ptr<FileFinder::i
 #endif
 
 	stream->clear();
-	stream->seekg(0, std::ios::ios_base::beg);
+	stream->seekg(0, std::ios_base::beg);
 	return nullptr;
 }
 

@@ -41,7 +41,7 @@ class ZIPFilesystem::StorageIStreambuf : public std::streambuf {
 			m_backingStream = backingStream;
 			m_backingStream->used = true;
 			//seek to the beginning of the file
-			m_backingStream->filebuffer->pubseekpos(fileoffset, std::ios::ios_base::in);
+			m_backingStream->filebuffer->pubseekpos(fileoffset, std::ios_base::in);
 			//the buffer is empty at the start
 			setg(&m_buffer[0], &m_buffer[0] + bufsize, &m_buffer[0] + bufsize);
 		}
@@ -155,7 +155,7 @@ public:
 
 protected:
 
-	virtual std::streambuf::int_type  underflow() override {
+	virtual std::streambuf::int_type underflow() override {
 		//either fill the buffer full, or with what is remaining
 		size_t numberOfBytes = bufsize;
 		if (m_remaining < bufsize) {
@@ -163,7 +163,6 @@ protected:
 		}
 		zlibstream.avail_out = numberOfBytes; //We want to decompress bufsize bytes
 		zlibstream.next_out = reinterpret_cast<Bytef *>(&m_outbuffer[0]); //Where to store decompressed data
-
 
 		int zlib_error = Z_OK;
 		while (zlibstream.avail_out > 0 && zlib_error == Z_OK) {
@@ -201,8 +200,7 @@ protected:
 		}
 	}
 
-	std::streambuf::int_type pbackfail(int_type ch)
-	{
+	std::streambuf::int_type pbackfail(int_type ch) override {
 			return traits_type::eof();
 	}
 
@@ -311,7 +309,7 @@ static std::string normalize_path(std::string const & path) {
 	uint32_t centralDirectorySize = 0;
 	uint32_t centralDirectoryOffset = 0;
 
-	std::ifstream zipfile(os_path, std::ios::ios_base::in | std::ios::ios_base::binary);
+	std::ifstream zipfile(os_path, std::ios_base::in | std::ios_base::binary);
 	bool found = false;
 	ZipEntry entry;
 	std::vector<char> filepath_arr;
@@ -347,7 +345,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 	StreamPoolEntry* initialEntry = new StreamPoolEntry();
 	initialEntry->filebuffer = new std::filebuf();
 	initialEntry->used = true;
-	initialEntry->filebuffer->open(os_path, std::ios::ios_base::in | std::ios::ios_base::binary);
+	initialEntry->filebuffer->open(os_path, std::ios_base::in | std::ios_base::binary);
 
 	uint16_t centralDirectoryEntries = 0;
 	uint32_t centralDirectorySize = 0;
@@ -409,7 +407,7 @@ bool ZIPFilesystem::FindCentralDirectory(std::istream & zipfile, uint32_t & offs
 	bool found = false;
 
 
-	zipfile.seekg(-endOfCentralDirectorySize, std::ios::ios_base::end); //seek to the first position where the endOfCentralDirectory Signature may occur
+	zipfile.seekg(-endOfCentralDirectorySize, std::ios_base::end); //seek to the first position where the endOfCentralDirectory Signature may occur
 
 	//The only variable length field in the end of central directory is the comment which has a maximum length of UINT16_MAX - so if we seek longer, this is no zip file
 	for (size_t i = 0; i < UINT16_MAX&&zipfile.good() && !found; i++) {
@@ -420,12 +418,12 @@ bool ZIPFilesystem::FindCentralDirectory(std::istream & zipfile, uint32_t & offs
 		}
 		else {
 			//if not yet found the magic number step one byte back in the file
-			zipfile.seekg(-(sizeof(magic) + 1), std::ios::ios_base::cur);
+			zipfile.seekg(-(sizeof(magic) + 1), std::ios_base::cur);
 		}
 	}
 
 	if (found) {
-		zipfile.seekg(6, std::ios::ios_base::cur); // Jump over multiarchive related fields
+		zipfile.seekg(6, std::ios_base::cur); // Jump over multiarchive related fields
 		zipfile.read(reinterpret_cast<char*>(&numberOfEntries), sizeof(uint16_t));
 		Utils::SwapByteOrder(numberOfEntries);
 		zipfile.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
@@ -448,7 +446,7 @@ bool ZIPFilesystem::ReadCentralDirectoryEntry(std::istream & zipfile, std::vecto
 	zipfile.read(reinterpret_cast<char*>(&magic), sizeof(magic));
 	Utils::SwapByteOrder(magic); //Take care of big endian systems
 	if (magic != centralDirectoryEntry) return false;
-	zipfile.seekg(20, std::ios::ios_base::cur); // Jump over currently not needed entries
+	zipfile.seekg(20, std::ios_base::cur); // Jump over currently not needed entries
 	zipfile.read(reinterpret_cast<char*>(&uncompressed_size), sizeof(uint32_t));
 	Utils::SwapByteOrder(uncompressed_size);
 	zipfile.read(reinterpret_cast<char*>(&filepath_length), sizeof(uint16_t));
@@ -457,7 +455,7 @@ bool ZIPFilesystem::ReadCentralDirectoryEntry(std::istream & zipfile, std::vecto
 	Utils::SwapByteOrder(extra_field_length);
 	zipfile.read(reinterpret_cast<char*>(&comment_length), sizeof(uint16_t));
 	Utils::SwapByteOrder(comment_length);
-	zipfile.seekg(8, std::ios::ios_base::cur); // Jump over currently not needed entries
+	zipfile.seekg(8, std::ios_base::cur); // Jump over currently not needed entries
 	zipfile.read(reinterpret_cast<char*>(&offset), sizeof(uint32_t));
 	Utils::SwapByteOrder(offset);
 	if (filename.capacity() < filepath_length+1) {
@@ -465,7 +463,7 @@ bool ZIPFilesystem::ReadCentralDirectoryEntry(std::istream & zipfile, std::vecto
 	}
 	filename.data()[filepath_length] = '\0';
 	zipfile.read(reinterpret_cast<char*>(filename.data()),filepath_length);
-	zipfile.seekg(comment_length+ extra_field_length, std::ios::ios_base::cur); // Jump over currently not needed entries
+	zipfile.seekg(comment_length+ extra_field_length, std::ios_base::cur); // Jump over currently not needed entries
 	return true;
 }
 
@@ -479,15 +477,15 @@ bool ZIPFilesystem::ReadLocalHeader(std::istream & zipfile, uint32_t & offset, S
 	zipfile.read(reinterpret_cast<char*>(&magic), sizeof(magic));
 	Utils::SwapByteOrder(magic); //Take care of big endian systems
 	if (magic != localHeader) return false;
-	zipfile.seekg(2, std::ios::ios_base::cur); // Jump over currently not needed entries
+	zipfile.seekg(2, std::ios_base::cur); // Jump over currently not needed entries
 	zipfile.read(reinterpret_cast<char*>(&flags), sizeof(uint16_t));
 	Utils::SwapByteOrder(flags);
 	zipfile.read(reinterpret_cast<char*>(&compression), sizeof(uint16_t));
 	Utils::SwapByteOrder(compression);
-	zipfile.seekg(8, std::ios::ios_base::cur); // Jump over currently not needed entries
+	zipfile.seekg(8, std::ios_base::cur); // Jump over currently not needed entries
 	zipfile.read(reinterpret_cast<char*>(&compressedSize), sizeof(uint32_t));
 	Utils::SwapByteOrder(compressedSize);
-	zipfile.seekg(4, std::ios::ios_base::cur); // Jump over currently not needed entries
+	zipfile.seekg(4, std::ios_base::cur); // Jump over currently not needed entries
 	zipfile.read(reinterpret_cast<char*>(&filepath_length), sizeof(uint16_t));
 	Utils::SwapByteOrder(filepath_length);
 	zipfile.read(reinterpret_cast<char*>(&extra_field_length), sizeof(uint16_t));

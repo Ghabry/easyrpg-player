@@ -218,7 +218,8 @@ void FileFinder::SetDirectoryTree(std::shared_ptr<DirectoryTree> directory_tree)
 std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateDirectoryTree(const std::string& p, bool recursive) {
 	// XXX FIXME Currently hardcoded
 	//rootFilesystem.reset(new ZIPFilesystem("C:\\Spiele\\RPG Maker\\Standstill Girl.zip", "Standstill Girl", "windows-1252"));
-	rootFilesystem.reset(new OSFilesystem(""));
+	//rootFilesystem.reset(new OSFilesystem(""));
+	rootFilesystem.reset(new ZIPFilesystem("/home/gabriel/Spiele/RPG Maker/vd.zip", "VD1", "windows-1252"));
 
 	if(! (Exists(p) && IsDirectory(p))) { return std::shared_ptr<DirectoryTree>(); }
 	std::shared_ptr<DirectoryTree> tree = std::make_shared<DirectoryTree>();
