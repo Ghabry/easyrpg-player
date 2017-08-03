@@ -1,3 +1,20 @@
+/*
+ * This file is part of EasyRPG Player.
+ *
+ * EasyRPG Player is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * EasyRPG Player is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "filesystem_zip.h"
 #include <zlib.h>
 #include "utils.h"
@@ -34,7 +51,7 @@ class ZIPFilesystem::StorageIStreambuf : public std::streambuf {
 		}
 		StorageIStreambuf(StorageIStreambuf const& other) = delete;
 		StorageIStreambuf const& operator=(StorageIStreambuf const& other) = delete;
-	
+
 protected:
 
 	virtual std::streambuf::int_type  underflow() override {
@@ -238,12 +255,12 @@ protected:
 			}
 		}
 
-		//now underflow till the position we want to reach is inside the outbuffer	
+		//now underflow till the position we want to reach is inside the outbuffer
 		while ((new_offset  ) >= (m_filelength - m_remaining) && !(m_remaining==0&& new_offset== m_filelength) ) {
 			underflow();
 		}
 		first_buffer_entry = (m_filelength - (m_remaining + (egptr() - eback())));
-		
+
 
 		//Now set the current pointer to that position
 		setg(&m_outbuffer[0], &m_outbuffer[0] + (new_offset - first_buffer_entry), egptr());
@@ -280,7 +297,7 @@ private:
 
 
 static std::string normalize_path(std::string const & path) {
-	
+
 	if (path == "." || path == "/" || path=="") return "";
 	std::string inner_path = Utils::LowerCase(path);
 	std::replace(inner_path.begin(), inner_path.end(), '\\', '/');
@@ -331,7 +348,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 	initialEntry->filebuffer = new std::filebuf();
 	initialEntry->used = true;
 	initialEntry->filebuffer->open(os_path, std::ios::ios_base::in | std::ios::ios_base::binary);
-	
+
 	uint16_t centralDirectoryEntries = 0;
 	uint32_t centralDirectorySize = 0;
 	uint32_t centralDirectoryOffset = 0;
@@ -375,7 +392,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 		entry.fileoffset = 0;
 		entry.filesize = 0;
 		m_zipContent.insert(std::pair<std::string, ZipEntry>("", entry));
-		
+
 		zipfile.seekg(0);
 		initialEntry->used = false;
 		m_InputPool.push_back(initialEntry);
@@ -403,7 +420,7 @@ bool ZIPFilesystem::FindCentralDirectory(std::istream & zipfile, uint32_t & offs
 		}
 		else {
 			//if not yet found the magic number step one byte back in the file
-			zipfile.seekg(-(sizeof(magic) + 1), std::ios::ios_base::cur); 
+			zipfile.seekg(-(sizeof(magic) + 1), std::ios::ios_base::cur);
 		}
 	}
 
@@ -540,7 +557,7 @@ uint32_t ZIPFilesystem::GetFilesize(std::string const & path) const {
 	}
 }
 
-std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path,int mode) {
+std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
 	if (!m_isValid) return nullptr;
 
 	std::string path_lower = normalize_path(path);
@@ -548,7 +565,7 @@ std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path
 	auto it = m_zipContent.find(path_lower);
 	if (it != m_zipContent.end() && !it->second.isDirectory) {
 		StreamPoolEntry * inputStream = nullptr;
-		//search for an unused stream in our streampool 
+		//search for an unused stream in our streampool
 		for (int i = 0; i < m_InputPool.size(); i++) {
 			if (!m_InputPool[i]->used) {
 				inputStream = m_InputPool[i];
@@ -586,13 +603,13 @@ std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path
 	return nullptr;
 }
 
-std::streambuf * ZIPFilesystem::CreateOutputStreambuffer(std::string const & path,int mode) {
+std::streambuf * ZIPFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
 	std::filebuf *buf = new std::filebuf();
 	return buf->open(
 #ifdef _MSC_VER
 		Utils::ToWideString(path).c_str(),
 #else
-		MakeAbsolutePath(path).c_str(),
+		path.c_str(),
 #endif
 		mode);
 }
