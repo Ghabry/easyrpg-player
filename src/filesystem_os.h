@@ -1,19 +1,19 @@
 /*
-* This file is part of EasyRPG Player.
-*
-* EasyRPG Player is free software: you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* EasyRPG Player is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of EasyRPG Player.
+ *
+ * EasyRPG Player is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * EasyRPG Player is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef _EASYRPG_PLAYER_FILESYSTEM_OS_H_
 #define _EASYRPG_PLAYER_FILESYSTEM_OS_H_
@@ -25,7 +25,7 @@ class OSFilesystem : public Filesystem {
 public:
 
 	/**
-	 * Initializes a  OS Filesystem on the given os path 
+	 * Initializes a  OS Filesystem on the given os path
 	 */
 	OSFilesystem(std::string const & rootPath);
 
@@ -63,19 +63,18 @@ public:
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	std::streambuf * CreateInputStreambuffer(std::string const & path, int mode)override;
+	std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) override;
 
 	/**
 	* Allocates a streambuffer with output capabilities on the given path.
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	std::streambuf * CreateOutputStreambuffer(std::string const & path, int mode) override;
+	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) override;
 
-	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const;
+	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const override;
 
 private:
-
 	std::string MakeAbsolutePath(std::string const & path) const;
 
 	std::string m_rootPath;

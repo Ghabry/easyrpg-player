@@ -1,6 +1,25 @@
+/*
+ * This file is part of EasyRPG Player.
+ *
+ * EasyRPG Player is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * EasyRPG Player is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "filesystem_os.h"
+#include <cstring>
 #include <fstream>
 #include <cassert>
+
 #ifdef _WIN32
 #  include <windows.h>
 #  include <shlobj.h>
@@ -89,7 +108,7 @@ bool OSFilesystem::IsDirectory(std::string const & path) const {
 }
 
 bool OSFilesystem::Exists(std::string const & path) const {
-	std::string filename = MakeAbsolutePath( path);
+	std::string filename = MakeAbsolutePath(path);
 #ifdef _WIN32
 	return ::GetFileAttributesW(Utils::ToWideString(filename).c_str()) != (DWORD)-1;
 #elif (defined(GEKKO) || defined(_3DS) || defined(SWITCH))
@@ -109,7 +128,7 @@ uint32_t OSFilesystem::GetFilesize(std::string const & path) const {
 	return (result == 0) ? sb.st_size : -1;
 }
 
-std::streambuf * OSFilesystem::CreateInputStreambuffer(std::string const & path,int mode) {
+std::streambuf * OSFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
 	std::filebuf *buf = new std::filebuf();
 
 	return buf->open(
@@ -121,7 +140,7 @@ std::streambuf * OSFilesystem::CreateInputStreambuffer(std::string const & path,
 		mode);
 }
 
-std::streambuf * OSFilesystem::CreateOutputStreambuffer(std::string const & path,int mode) {
+std::streambuf * OSFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
 	std::filebuf *buf = new std::filebuf();
 	return buf->open(
 #ifdef _MSC_VER

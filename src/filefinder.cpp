@@ -544,20 +544,19 @@ std::shared_ptr<FileFinder::istream> FileFinder::openUTF8Input(const std::string
 	std::ios_base::openmode m)
 {
 	std::streamsize size = rootFilesystem->GetFilesize(name);
-	std::streambuf * buf = rootFilesystem->CreateInputStreambuffer(name, m);
+	std::streambuf* buf = rootFilesystem->CreateInputStreambuffer(name, m);
 
 	std::shared_ptr<FileFinder::istream> ret(new FileFinder::istream(buf, size));
 
 	return (*ret) ? ret : std::shared_ptr<FileFinder::istream>();
 }
 
-std::shared_ptr<std::ostream> FileFinder::openUTF8Output(const std::string& name,
-	std::ios_base::openmode m)
+std::shared_ptr<std::ostream> FileFinder::openUTF8Output(const std::string& name, std::ios_base::openmode m)
 {
 	std::streamsize size = rootFilesystem->GetFilesize(name);
-	std::streambuf * buf = rootFilesystem->CreateOutputStreambuffer(name, m);
+	std::streambuf* buf = rootFilesystem->CreateOutputStreambuffer(name, m);
 
-	std::shared_ptr<std::ostream> ret(new std::ostream(buf, size));
+	std::shared_ptr<std::ostream> ret(new std::ostream(buf));
 
 	return (*ret) ? ret : std::shared_ptr<std::ofstream>();
 }
@@ -672,7 +671,7 @@ bool FileFinder::IsDirectory(const std::string& dir) {
 	return rootFilesystem->IsDirectory(dir);
 }
 
-//This namespace contains global variables which are needed for the recursive mode of 
+//This namespace contains global variables which are needed for the recursive mode of
 //GetDirectoryMembers - as well as the callback used to receive the parsed directory entries
 namespace GetDirectoryMembersHelper {
 	FileFinder::Directory temporary_directory;
@@ -695,7 +694,7 @@ namespace GetDirectoryMembersHelper {
 		case FileFinder::Mode::ALL:
 			break;
 		case FileFinder::Mode::RECURSIVE:
-			
+
 			if (entry.isDirectory) {
 				//this is tricky, let's comment
 				//first store the current parent value in a temporary variable on stack - we want to restore it after the following calls
@@ -719,7 +718,7 @@ namespace GetDirectoryMembersHelper {
 			temporary_directory.files[Utils::LowerCase(combinedWithParent)] = combinedWithParent;
 			return;
 		}
-		if (entry.isDirectory) { 
+		if (entry.isDirectory) {
 			//The entry is a directory in non recursive mode, store name
 			temporary_directory.directories[Utils::LowerCase(entry.name)] = entry.name;
 		}
