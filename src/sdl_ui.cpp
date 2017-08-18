@@ -1327,4 +1327,8 @@ void GekkoResetCallback() {
 }
 #endif
 
+SDL_Window* SdlUi::GetSdlWindow() {
+	return sdl_window;
+}
+
 #endif // USE_SDL
