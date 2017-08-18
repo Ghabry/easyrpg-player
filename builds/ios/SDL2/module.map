@@ -1,0 +1,5 @@
+module SDL2 [system][extern_c] {
+    header "SDL.h"
+    header "SDL_uikitappdelegate.h"
+    export *
+}

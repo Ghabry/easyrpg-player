@@ -1,0 +1,493 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CE7CFB6E1F446D3D0079F007 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CE7CFB6D1F446D3D0079F007 /* Assets.xcassets */; };
+		CE7CFB7C1F446FED0079F007 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB7B1F446FED0079F007 /* libSDL2.a */; };
+		CE7CFB801F4473A70079F007 /* SDL2 in Resources */ = {isa = PBXBuildFile; fileRef = CE7CFB7F1F4473A70079F007 /* SDL2 */; };
+		CE7CFB861F447A530079F007 /* CoreMotion.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB851F447A530079F007 /* CoreMotion.framework */; };
+		CE7CFB881F447A620079F007 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB871F447A620079F007 /* GameController.framework */; };
+		CE7CFB8A1F447AA20079F007 /* CoreAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB891F447AA20079F007 /* CoreAudio.framework */; };
+		CE7CFB8C1F447AA70079F007 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB8B1F447AA70079F007 /* AudioToolbox.framework */; };
+		CE7CFB8E1F447AB50079F007 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB8D1F447AB50079F007 /* CoreGraphics.framework */; };
+		CE7CFB901F447AC10079F007 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB8F1F447AC10079F007 /* AVFoundation.framework */; };
+		CE7CFB921F447B070079F007 /* libSDL2main.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFB911F447B070079F007 /* libSDL2main.a */; };
+		CE7CFB951F447B930079F007 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = CE7CFB941F447B930079F007 /* main.mm */; };
+		CE7CFB991F4482420079F007 /* Storyboard.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CE7CFB981F4482420079F007 /* Storyboard.storyboard */; };
+		CE7CFB9F1F4493F70079F007 /* GameBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CFB9E1F4493F70079F007 /* GameBrowserViewController.swift */; };
+		CE7CFBA21F44AF140079F007 /* appdelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CE7CFBA11F44AF140079F007 /* appdelegate.m */; };
+		CE7CFBA41F44B8D10079F007 /* EasyRpgPlayer.xib in Resources */ = {isa = PBXBuildFile; fileRef = CE7CFBA31F44B8D10079F007 /* EasyRpgPlayer.xib */; };
+		CE7CFBA81F450A470079F007 /* EditLayoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE7CFBA71F450A470079F007 /* EditLayoutView.swift */; };
+		CE7CFBCD1F45AC3C0079F007 /* libexpat.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBA91F45AC3C0079F007 /* libexpat.a */; };
+		CE7CFBCF1F45AC3C0079F007 /* libfreetype.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBAB1F45AC3C0079F007 /* libfreetype.a */; };
+		CE7CFBD11F45AC3C0079F007 /* libharfbuzz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBAD1F45AC3C0079F007 /* libharfbuzz.a */; };
+		CE7CFBD31F45AC3C0079F007 /* libicudata.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBAF1F45AC3C0079F007 /* libicudata.a */; };
+		CE7CFBD41F45AC3C0079F007 /* libicui18n.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBB01F45AC3C0079F007 /* libicui18n.a */; };
+		CE7CFBD51F45AC3C0079F007 /* libicuuc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBB11F45AC3C0079F007 /* libicuuc.a */; };
+		CE7CFBD61F45AC3C0079F007 /* libmpg123.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBB21F45AC3C0079F007 /* libmpg123.a */; };
+		CE7CFBD81F45AC3C0079F007 /* libogg.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBB41F45AC3C0079F007 /* libogg.a */; };
+		CE7CFBDA1F45AC3C0079F007 /* libout123.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBB61F45AC3C0079F007 /* libout123.a */; };
+		CE7CFBDC1F45AC3C0079F007 /* libpixman-1.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBB81F45AC3C0079F007 /* libpixman-1.a */; };
+		CE7CFBE01F45AC3C0079F007 /* libpng16.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBBC1F45AC3C0079F007 /* libpng16.a */; };
+		CE7CFBE41F45AC3C0079F007 /* libsndfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBC01F45AC3C0079F007 /* libsndfile.a */; };
+		CE7CFBE61F45AC3C0079F007 /* libspeexdsp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBC21F45AC3C0079F007 /* libspeexdsp.a */; };
+		CE7CFBE81F45AC3C0079F007 /* libvorbis.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBC41F45AC3C0079F007 /* libvorbis.a */; };
+		CE7CFBEA1F45AC3C0079F007 /* libvorbisenc.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBC61F45AC3C0079F007 /* libvorbisenc.a */; };
+		CE7CFBEC1F45AC3C0079F007 /* libvorbisfile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBC81F45AC3C0079F007 /* libvorbisfile.a */; };
+		CE7CFBEE1F45AC3C0079F007 /* libWildMidi.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBCA1F45AC3C0079F007 /* libWildMidi.a */; };
+		CE7CFBEF1F45AC3C0079F007 /* libxmp-lite.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBCB1F45AC3C0079F007 /* libxmp-lite.a */; };
+		CE7CFBF01F45AC3C0079F007 /* libz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBCC1F45AC3C0079F007 /* libz.a */; };
+		CE7CFBF21F45AD260079F007 /* liblcf.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE7CFBF11F45AD260079F007 /* liblcf.a */; };
+		CECCF7DA1F45B0BC0019480F /* libeasyrpg-player.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CECCF7D91F45B0BC0019480F /* libeasyrpg-player.a */; };
+		CECCF7DF1F45B8E20019480F /* TestGame-2000 in Resources */ = {isa = PBXBuildFile; fileRef = CECCF7DE1F45B8E20019480F /* TestGame-2000 */; };
+		CECCF7E21F45BDDC0019480F /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = CECCF7E11F45BDDC0019480F /* main.c */; };
+		CECCF7E61F45D10E0019480F /* EasyRpgPlayerUiView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CECCF7E51F45D10E0019480F /* EasyRpgPlayerUiView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		CE7CFB631F446D3D0079F007 /* EasyRpgPlayerIosUi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EasyRpgPlayerIosUi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE7CFB6D1F446D3D0079F007 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		CE7CFB721F446D3D0079F007 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CE7CFB791F446DB60079F007 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2.a; path = ../buildscripts/ios/lib/libSDL2.a; sourceTree = "<group>"; };
+		CE7CFB7B1F446FED0079F007 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2.a; path = "../buildscripts/ios-simulator/lib/libSDL2.a"; sourceTree = "<group>"; };
+		CE7CFB7F1F4473A70079F007 /* SDL2 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = SDL2; sourceTree = "<group>"; };
+		CE7CFB851F447A530079F007 /* CoreMotion.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMotion.framework; path = System/Library/Frameworks/CoreMotion.framework; sourceTree = SDKROOT; };
+		CE7CFB871F447A620079F007 /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
+		CE7CFB891F447AA20079F007 /* CoreAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreAudio.framework; path = System/Library/Frameworks/CoreAudio.framework; sourceTree = SDKROOT; };
+		CE7CFB8B1F447AA70079F007 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		CE7CFB8D1F447AB50079F007 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		CE7CFB8F1F447AC10079F007 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		CE7CFB911F447B070079F007 /* libSDL2main.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2main.a; path = "../buildscripts/ios-simulator/lib/libSDL2main.a"; sourceTree = "<group>"; };
+		CE7CFB931F447B930079F007 /* EasyRpgPlayerIosUi-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "EasyRpgPlayerIosUi-Bridging-Header.h"; sourceTree = "<group>"; };
+		CE7CFB941F447B930079F007 /* main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		CE7CFB981F4482420079F007 /* Storyboard.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Storyboard.storyboard; sourceTree = "<group>"; };
+		CE7CFB9E1F4493F70079F007 /* GameBrowserViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameBrowserViewController.swift; sourceTree = "<group>"; };
+		CE7CFBA01F44A5930079F007 /* appdelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = appdelegate.h; sourceTree = "<group>"; };
+		CE7CFBA11F44AF140079F007 /* appdelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = appdelegate.m; sourceTree = "<group>"; };
+		CE7CFBA31F44B8D10079F007 /* EasyRpgPlayer.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = EasyRpgPlayer.xib; sourceTree = "<group>"; };
+		CE7CFBA71F450A470079F007 /* EditLayoutView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EditLayoutView.swift; sourceTree = "<group>"; };
+		CE7CFBA91F45AC3C0079F007 /* libexpat.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libexpat.a; path = "../buildscripts/ios-simulator/lib/libexpat.a"; sourceTree = "<group>"; };
+		CE7CFBAB1F45AC3C0079F007 /* libfreetype.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libfreetype.a; path = "../buildscripts/ios-simulator/lib/libfreetype.a"; sourceTree = "<group>"; };
+		CE7CFBAD1F45AC3C0079F007 /* libharfbuzz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libharfbuzz.a; path = "../buildscripts/ios-simulator/lib/libharfbuzz.a"; sourceTree = "<group>"; };
+		CE7CFBAF1F45AC3C0079F007 /* libicudata.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libicudata.a; path = "../buildscripts/ios-simulator/lib/libicudata.a"; sourceTree = "<group>"; };
+		CE7CFBB01F45AC3C0079F007 /* libicui18n.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libicui18n.a; path = "../buildscripts/ios-simulator/lib/libicui18n.a"; sourceTree = "<group>"; };
+		CE7CFBB11F45AC3C0079F007 /* libicuuc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libicuuc.a; path = "../buildscripts/ios-simulator/lib/libicuuc.a"; sourceTree = "<group>"; };
+		CE7CFBB21F45AC3C0079F007 /* libmpg123.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libmpg123.a; path = "../buildscripts/ios-simulator/lib/libmpg123.a"; sourceTree = "<group>"; };
+		CE7CFBB41F45AC3C0079F007 /* libogg.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libogg.a; path = "../buildscripts/ios-simulator/lib/libogg.a"; sourceTree = "<group>"; };
+		CE7CFBB61F45AC3C0079F007 /* libout123.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libout123.a; path = "../buildscripts/ios-simulator/lib/libout123.a"; sourceTree = "<group>"; };
+		CE7CFBB81F45AC3C0079F007 /* libpixman-1.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libpixman-1.a"; path = "../buildscripts/ios-simulator/lib/libpixman-1.a"; sourceTree = "<group>"; };
+		CE7CFBBA1F45AC3C0079F007 /* libpng16.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng16.a; path = "../buildscripts/ios-simulator/lib/libpng16.a"; sourceTree = "<group>"; };
+		CE7CFBBC1F45AC3C0079F007 /* libpng16.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpng16.a; path = "../buildscripts/ios-simulator/lib/libpng16.a"; sourceTree = "<group>"; };
+		CE7CFBBE1F45AC3C0079F007 /* libSDL2_test.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2_test.a; path = "../buildscripts/ios-simulator/lib/libSDL2_test.a"; sourceTree = "<group>"; };
+		CE7CFBC01F45AC3C0079F007 /* libsndfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsndfile.a; path = "../buildscripts/ios-simulator/lib/libsndfile.a"; sourceTree = "<group>"; };
+		CE7CFBC21F45AC3C0079F007 /* libspeexdsp.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libspeexdsp.a; path = "../buildscripts/ios-simulator/lib/libspeexdsp.a"; sourceTree = "<group>"; };
+		CE7CFBC41F45AC3C0079F007 /* libvorbis.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvorbis.a; path = "../buildscripts/ios-simulator/lib/libvorbis.a"; sourceTree = "<group>"; };
+		CE7CFBC61F45AC3C0079F007 /* libvorbisenc.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvorbisenc.a; path = "../buildscripts/ios-simulator/lib/libvorbisenc.a"; sourceTree = "<group>"; };
+		CE7CFBC81F45AC3C0079F007 /* libvorbisfile.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libvorbisfile.a; path = "../buildscripts/ios-simulator/lib/libvorbisfile.a"; sourceTree = "<group>"; };
+		CE7CFBCA1F45AC3C0079F007 /* libWildMidi.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libWildMidi.a; path = "../buildscripts/ios-simulator/lib/libWildMidi.a"; sourceTree = "<group>"; };
+		CE7CFBCB1F45AC3C0079F007 /* libxmp-lite.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libxmp-lite.a"; path = "../buildscripts/ios-simulator/lib/libxmp-lite.a"; sourceTree = "<group>"; };
+		CE7CFBCC1F45AC3C0079F007 /* libz.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libz.a; path = "../buildscripts/ios-simulator/lib/libz.a"; sourceTree = "<group>"; };
+		CE7CFBF11F45AD260079F007 /* liblcf.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblcf.a; path = "../buildscripts/ios-extra/liblcf/lib/liblcf.a"; sourceTree = "<group>"; };
+		CECCF7D91F45B0BC0019480F /* libeasyrpg-player.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libeasyrpg-player.a"; path = "../buildscripts/ios-extra/Player/.libs/libeasyrpg-player.a"; sourceTree = "<group>"; };
+		CECCF7DD1F45B29E0019480F /* main.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
+		CECCF7DE1F45B8E20019480F /* TestGame-2000 */ = {isa = PBXFileReference; lastKnownFileType = folder; path = "TestGame-2000"; sourceTree = "<group>"; };
+		CECCF7E01F45BCAB0019480F /* main_wrap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = main_wrap.h; sourceTree = "<group>"; };
+		CECCF7E11F45BDDC0019480F /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
+		CECCF7E51F45D10E0019480F /* EasyRpgPlayerUiView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EasyRpgPlayerUiView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CE7CFB601F446D3D0079F007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CECCF7DA1F45B0BC0019480F /* libeasyrpg-player.a in Frameworks */,
+				CE7CFBF21F45AD260079F007 /* liblcf.a in Frameworks */,
+				CE7CFBCD1F45AC3C0079F007 /* libexpat.a in Frameworks */,
+				CE7CFBCF1F45AC3C0079F007 /* libfreetype.a in Frameworks */,
+				CE7CFBD11F45AC3C0079F007 /* libharfbuzz.a in Frameworks */,
+				CE7CFBD31F45AC3C0079F007 /* libicudata.a in Frameworks */,
+				CE7CFBD41F45AC3C0079F007 /* libicui18n.a in Frameworks */,
+				CE7CFBD51F45AC3C0079F007 /* libicuuc.a in Frameworks */,
+				CE7CFBD61F45AC3C0079F007 /* libmpg123.a in Frameworks */,
+				CE7CFBD81F45AC3C0079F007 /* libogg.a in Frameworks */,
+				CE7CFBDA1F45AC3C0079F007 /* libout123.a in Frameworks */,
+				CE7CFBDC1F45AC3C0079F007 /* libpixman-1.a in Frameworks */,
+				CE7CFBE01F45AC3C0079F007 /* libpng16.a in Frameworks */,
+				CE7CFBE41F45AC3C0079F007 /* libsndfile.a in Frameworks */,
+				CE7CFBE61F45AC3C0079F007 /* libspeexdsp.a in Frameworks */,
+				CE7CFBE81F45AC3C0079F007 /* libvorbis.a in Frameworks */,
+				CE7CFBEA1F45AC3C0079F007 /* libvorbisenc.a in Frameworks */,
+				CE7CFBEC1F45AC3C0079F007 /* libvorbisfile.a in Frameworks */,
+				CE7CFBEE1F45AC3C0079F007 /* libWildMidi.a in Frameworks */,
+				CE7CFBEF1F45AC3C0079F007 /* libxmp-lite.a in Frameworks */,
+				CE7CFBF01F45AC3C0079F007 /* libz.a in Frameworks */,
+				CE7CFB7C1F446FED0079F007 /* libSDL2.a in Frameworks */,
+				CE7CFB921F447B070079F007 /* libSDL2main.a in Frameworks */,
+				CE7CFB901F447AC10079F007 /* AVFoundation.framework in Frameworks */,
+				CE7CFB8E1F447AB50079F007 /* CoreGraphics.framework in Frameworks */,
+				CE7CFB8C1F447AA70079F007 /* AudioToolbox.framework in Frameworks */,
+				CE7CFB8A1F447AA20079F007 /* CoreAudio.framework in Frameworks */,
+				CE7CFB881F447A620079F007 /* GameController.framework in Frameworks */,
+				CE7CFB861F447A530079F007 /* CoreMotion.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CE7CFB5A1F446D3D0079F007 = {
+			isa = PBXGroup;
+			children = (
+				CECCF7DE1F45B8E20019480F /* TestGame-2000 */,
+				CE7CFB7F1F4473A70079F007 /* SDL2 */,
+				CE7CFB651F446D3D0079F007 /* EasyRpgPlayerIosUi */,
+				CE7CFB641F446D3D0079F007 /* Products */,
+				CE7CFB781F446DB60079F007 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		CE7CFB641F446D3D0079F007 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CE7CFB631F446D3D0079F007 /* EasyRpgPlayerIosUi.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CE7CFB651F446D3D0079F007 /* EasyRpgPlayerIosUi */ = {
+			isa = PBXGroup;
+			children = (
+				CE7CFB6D1F446D3D0079F007 /* Assets.xcassets */,
+				CE7CFB721F446D3D0079F007 /* Info.plist */,
+				CE7CFB941F447B930079F007 /* main.mm */,
+				CE7CFB931F447B930079F007 /* EasyRpgPlayerIosUi-Bridging-Header.h */,
+				CE7CFB981F4482420079F007 /* Storyboard.storyboard */,
+				CE7CFB9E1F4493F70079F007 /* GameBrowserViewController.swift */,
+				CE7CFBA71F450A470079F007 /* EditLayoutView.swift */,
+				CE7CFBA01F44A5930079F007 /* appdelegate.h */,
+				CE7CFBA11F44AF140079F007 /* appdelegate.m */,
+				CE7CFBA31F44B8D10079F007 /* EasyRpgPlayer.xib */,
+				CECCF7DD1F45B29E0019480F /* main.h */,
+				CECCF7E01F45BCAB0019480F /* main_wrap.h */,
+				CECCF7E11F45BDDC0019480F /* main.c */,
+				CECCF7E51F45D10E0019480F /* EasyRpgPlayerUiView.swift */,
+			);
+			path = EasyRpgPlayerIosUi;
+			sourceTree = "<group>";
+		};
+		CE7CFB781F446DB60079F007 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CECCF7D91F45B0BC0019480F /* libeasyrpg-player.a */,
+				CE7CFBF11F45AD260079F007 /* liblcf.a */,
+				CE7CFBA91F45AC3C0079F007 /* libexpat.a */,
+				CE7CFBAB1F45AC3C0079F007 /* libfreetype.a */,
+				CE7CFBAD1F45AC3C0079F007 /* libharfbuzz.a */,
+				CE7CFBAF1F45AC3C0079F007 /* libicudata.a */,
+				CE7CFBB01F45AC3C0079F007 /* libicui18n.a */,
+				CE7CFBB11F45AC3C0079F007 /* libicuuc.a */,
+				CE7CFBB21F45AC3C0079F007 /* libmpg123.a */,
+				CE7CFBB41F45AC3C0079F007 /* libogg.a */,
+				CE7CFBB61F45AC3C0079F007 /* libout123.a */,
+				CE7CFBB81F45AC3C0079F007 /* libpixman-1.a */,
+				CE7CFBBA1F45AC3C0079F007 /* libpng16.a */,
+				CE7CFBBC1F45AC3C0079F007 /* libpng16.a */,
+				CE7CFBBE1F45AC3C0079F007 /* libSDL2_test.a */,
+				CE7CFBC01F45AC3C0079F007 /* libsndfile.a */,
+				CE7CFBC21F45AC3C0079F007 /* libspeexdsp.a */,
+				CE7CFBC41F45AC3C0079F007 /* libvorbis.a */,
+				CE7CFBC61F45AC3C0079F007 /* libvorbisenc.a */,
+				CE7CFBC81F45AC3C0079F007 /* libvorbisfile.a */,
+				CE7CFBCA1F45AC3C0079F007 /* libWildMidi.a */,
+				CE7CFBCB1F45AC3C0079F007 /* libxmp-lite.a */,
+				CE7CFBCC1F45AC3C0079F007 /* libz.a */,
+				CE7CFB911F447B070079F007 /* libSDL2main.a */,
+				CE7CFB8F1F447AC10079F007 /* AVFoundation.framework */,
+				CE7CFB8D1F447AB50079F007 /* CoreGraphics.framework */,
+				CE7CFB8B1F447AA70079F007 /* AudioToolbox.framework */,
+				CE7CFB891F447AA20079F007 /* CoreAudio.framework */,
+				CE7CFB871F447A620079F007 /* GameController.framework */,
+				CE7CFB851F447A530079F007 /* CoreMotion.framework */,
+				CE7CFB7B1F446FED0079F007 /* libSDL2.a */,
+				CE7CFB791F446DB60079F007 /* libSDL2.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CE7CFB621F446D3D0079F007 /* EasyRpgPlayerIosUi */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CE7CFB751F446D3D0079F007 /* Build configuration list for PBXNativeTarget "EasyRpgPlayerIosUi" */;
+			buildPhases = (
+				CE7CFB5F1F446D3D0079F007 /* Sources */,
+				CE7CFB601F446D3D0079F007 /* Frameworks */,
+				CE7CFB611F446D3D0079F007 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EasyRpgPlayerIosUi;
+			productName = EasyRpgPlayerIosUi;
+			productReference = CE7CFB631F446D3D0079F007 /* EasyRpgPlayerIosUi.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CE7CFB5B1F446D3D0079F007 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0830;
+				LastUpgradeCheck = 0830;
+				ORGANIZATIONNAME = EasyRPG;
+				TargetAttributes = {
+					CE7CFB621F446D3D0079F007 = {
+						CreatedOnToolsVersion = 8.3.3;
+						DevelopmentTeam = WQ84FVAJ5B;
+						LastSwiftMigration = 0830;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = CE7CFB5E1F446D3D0079F007 /* Build configuration list for PBXProject "EasyRpgPlayerIosUi" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = CE7CFB5A1F446D3D0079F007;
+			productRefGroup = CE7CFB641F446D3D0079F007 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CE7CFB621F446D3D0079F007 /* EasyRpgPlayerIosUi */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		CE7CFB611F446D3D0079F007 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CE7CFB801F4473A70079F007 /* SDL2 in Resources */,
+				CE7CFB6E1F446D3D0079F007 /* Assets.xcassets in Resources */,
+				CECCF7DF1F45B8E20019480F /* TestGame-2000 in Resources */,
+				CE7CFB991F4482420079F007 /* Storyboard.storyboard in Resources */,
+				CE7CFBA41F44B8D10079F007 /* EasyRpgPlayer.xib in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CE7CFB5F1F446D3D0079F007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CE7CFB951F447B930079F007 /* main.mm in Sources */,
+				CECCF7E21F45BDDC0019480F /* main.c in Sources */,
+				CE7CFBA81F450A470079F007 /* EditLayoutView.swift in Sources */,
+				CECCF7E61F45D10E0019480F /* EasyRpgPlayerUiView.swift in Sources */,
+				CE7CFBA21F44AF140079F007 /* appdelegate.m in Sources */,
+				CE7CFB9F1F4493F70079F007 /* GameBrowserViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CE7CFB731F446D3D0079F007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CE7CFB741F446D3D0079F007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CE7CFB761F446D3D0079F007 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = WQ84FVAJ5B;
+				HEADER_SEARCH_PATHS = (
+					"$(EASYDEV_IOS)/include",
+					"${EASYDEV_IOS}/include/SDL2",
+					"${EASYDEV_IOS}/include/liblcf",
+					"${EASYDEV_LIBLCF_IOS}/include/liblcf",
+					"${SRCROOT}/../../src",
+				);
+				INFOPLIST_FILE = EasyRpgPlayerIosUi/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"${EASYDEV_IOS}/lib",
+					"${EASYDEV_LIBLCF_IOS}/lib",
+					"${SRCROOT}/../../.libs",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = EasyRpg.EasyRpgPlayerIosUi;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_INCLUDE_PATHS = "${SRCROOT}/SDL2";
+				SWIFT_OBJC_BRIDGING_HEADER = "EasyRpgPlayerIosUi/EasyRpgPlayerIosUi-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 3.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		CE7CFB771F446D3D0079F007 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				DEFINES_MODULE = YES;
+				DEVELOPMENT_TEAM = WQ84FVAJ5B;
+				HEADER_SEARCH_PATHS = (
+					"$(EASYDEV_IOS)/include",
+					"${EASYDEV_IOS}/include/SDL2",
+					"${EASYDEV_IOS}/include/liblcf",
+					"${EASYDEV_LIBLCF_IOS}/include/liblcf",
+					"${SRCROOT}/../../src",
+				);
+				INFOPLIST_FILE = EasyRpgPlayerIosUi/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LIBRARY_SEARCH_PATHS = (
+					"${EASYDEV_IOS}/lib",
+					"${EASYDEV_LIBLCF_IOS}/lib",
+					"${SRCROOT}/../../.libs",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = EasyRpg.EasyRpgPlayerIosUi;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_INCLUDE_PATHS = "${SRCROOT}/SDL2";
+				SWIFT_OBJC_BRIDGING_HEADER = "EasyRpgPlayerIosUi/EasyRpgPlayerIosUi-Bridging-Header.h";
+				SWIFT_VERSION = 3.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CE7CFB5E1F446D3D0079F007 /* Build configuration list for PBXProject "EasyRpgPlayerIosUi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CE7CFB731F446D3D0079F007 /* Debug */,
+				CE7CFB741F446D3D0079F007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CE7CFB751F446D3D0079F007 /* Build configuration list for PBXNativeTarget "EasyRpgPlayerIosUi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CE7CFB761F446D3D0079F007 /* Debug */,
+				CE7CFB771F446D3D0079F007 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CE7CFB5B1F446D3D0079F007 /* Project object */;
+}
