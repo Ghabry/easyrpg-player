@@ -34,6 +34,7 @@ set(PLAYER_SRCS
 	src/decoder_xmp.cpp
 	src/filefinder.cpp
 	src/filesystem.cpp
+	src/filesystem_physfs.cpp
 	src/filesystem_os.cpp
 	src/filesystem_zip.cpp
 	src/font.cpp
@@ -270,6 +271,10 @@ endif()
 # Sound system to use
 set(PLAYER_AUDIO_BACKEND "Auto" CACHE STRING "Audio system to use. Options: Auto SDL2_mixer SDL2 OpenAL OFF")
 set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS Auto SDL2 SDL2_mixer OpenAL OFF)
+
+find_package(PhysFS REQUIRED)
+include_directories(${PHYSFS_INCLUDE_DIRS})
+set(EASYRPG_PLAYER_LIBRARIES ${EASYRPG_PLAYER_LIBRARIES} ${PHYSFS_LIBRARY})
 
 # Configure Audio backends
 if(${PLAYER_AUDIO_BACKEND} MATCHES "Auto")

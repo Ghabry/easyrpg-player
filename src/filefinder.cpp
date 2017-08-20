@@ -42,6 +42,7 @@
 #include "registry.h"
 #include "rtp_table.h"
 #include "main_data.h"
+#include "filesystem_physfs.h"
 #include "filesystem_os.h"
 #include "filesystem_zip.h"
 
@@ -213,8 +214,8 @@ void FileFinder::SetDirectoryTree(std::shared_ptr<FileFinder::DirectoryTree> dir
 std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateDirectoryTree(const std::string& p, bool recursive) {
 	// XXX FIXME Currently hardcoded
 	//rootFilesystem.reset(new ZIPFilesystem("C:\\Spiele\\RPG Maker\\Standstill Girl.zip", "Standstill Girl", "windows-1252"));
-	//rootFilesystem.reset(new OSFilesystem(""));
-	rootFilesystem.reset(new ZIPFilesystem("/home/gabriel/Spiele/RPG Maker/vd.zip", "VD1", "windows-1252"));
+	//rootFilesystem.reset(new OSFilesystem(p))
+	rootFilesystem.reset(new PhysFsFilesystem("/home/gabriel/Spiele/RPG Maker/Wadanohara.7z", "windows-1252"));
 
 	if(! (Exists(p) && IsDirectory(p))) { return std::shared_ptr<DirectoryTree>(); }
 	std::shared_ptr<DirectoryTree> tree = std::make_shared<DirectoryTree>();
@@ -222,9 +223,11 @@ std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateDirectoryTree(const
 
 	Directory mem = GetDirectoryMembers(tree->directory_path, Mode::ALL);
 	for (auto& i : mem.files) {
+		printf("EnumFile %s -> %s\n", i.first.c_str(), i.second.c_str());
 		tree->files[i.first] = i.second;
 	}
 	for (auto& i : mem.directories) {
+		printf("EnumDir %s -> %s\n", i.first.c_str(), i.second.c_str());
 		tree->directories[i.first] = i.second;
 	}
 
