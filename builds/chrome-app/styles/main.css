@@ -1,0 +1,23 @@
+html, body {
+  height: 100%;
+}
+
+body {
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-image: url("../logo1.svg");
+  margin: 0;
+  padding: 0;
+  background-size: 50% 50%;
+}
+
+h1 {
+  position: absolute;
+  bottom: 20px;
+  text-align: center;
+  width: 100%;
+  line-height: 120%;
+  font-family: Arial, sans-serif;
+  color: rgb(66,66,66);
+  letter-spacing: -0.05em;
+}

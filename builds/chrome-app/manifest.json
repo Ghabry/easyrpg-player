@@ -1,0 +1,22 @@
+{
+  "manifest_version": 2,
+  "name": "EasyRPG Player",
+  "version": "0.5.3",
+  "minimum_chrome_version": "31",
+  "icons": {
+    "16": "assets/icon_16.png",
+    "128": "assets/icon_128.png"
+  },
+  "app": {
+    "background": {
+      "scripts": ["js/main.js"]
+    }
+  },
+  "permissions": [{
+    "fileSystem": [
+      "write",
+      "retainEntries",
+      "directory"
+    ]}
+  ]
+}
