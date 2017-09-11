@@ -18,6 +18,7 @@
       "retainEntries",
       "directory"
     ]},
-    "storage"
+    "storage",
+    "browser"
   ]
 }

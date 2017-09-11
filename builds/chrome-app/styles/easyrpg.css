@@ -1,0 +1,225 @@
+@media handheld, projection, screen, tv {
+  /* Main */
+  body {
+    background-color: #202020;
+    font-family: Ubuntu, "Droid Sans", "Trebuchet MS", sans-serif;
+    font-size: 0.875em;
+    /* 14px */
+    line-height: 1.4286em;
+    /* 20px */
+    margin: 0; }
+
+  h1 {
+    font-size: 2.2858em;
+    /* 32px */
+    line-height: 1.25em;
+    /* 40px */ }
+
+  a {
+    color: green; }
+    a img {
+      border-width: 0; }
+
+  iframe {
+    border: 0; }
+
+  /* Header */
+  #header {
+    background-color: #202020;
+    color: #CCFFCC;
+    min-height: 50px;
+    position: relative;
+    z-index: 1;
+    text-align: right; }
+    #header h1 {
+      float: left;
+      margin: 0;
+      text-align: left; }
+      #header h1 a {
+        display: block;
+        padding: 6px;
+        background-image: url(/images/easyrpg-logo.png);
+        background-repeat: no-repeat;
+        background-position: center;
+        text-indent: -200em;
+        overflow: hidden;
+        width: 140px;
+        height: 38px; }
+    #header ul {
+      display: inline-block;
+      margin: 0;
+      padding: 0;
+      white-space: nowrap; }
+      #header ul li {
+        display: inline;
+        line-height: 50px;
+        vertical-align: middle; }
+        #header ul li a {
+          color: #F5F5F5;
+          text-decoration: none;
+          font-size: 1.1429em;
+          padding: 0.98em 0.39em; }
+        #header ul li:hover {
+          color: #66A352; }
+
+  /* Spotlight */
+  #spotlight {
+    background-color: #3C8025;
+    color: white;
+    text-align: center;
+    padding: 1.5em 0; }
+    #spotlight img {
+      vertical-align: middle; }
+    #spotlight #description {
+      display: inline-block;
+      padding: 0 1.2em;
+      max-width: 383px;
+      vertical-align: middle; }
+      #spotlight #description h1 {
+        text-align: center; }
+      #spotlight #description p {
+        font-size: 1.1429em;
+        line-height: 1.5em;
+        text-align: justify; }
+        #spotlight #description p#learn-more {
+          text-align: center; }
+          #spotlight #description p#learn-more a {
+            display: inline-block;
+            padding: 0.5em 1.5em;
+            background-color: #303030;
+            color: #F5F5F5;
+            text-decoration: none;
+            border-bottom: 0.2em solid #202020; }
+            #spotlight #description p#learn-more a:hover {
+              background-color: #202020; }
+    #spotlight #section-title h1 {
+      text-align: left;
+      margin-left: 0.5em;
+      margin-right: 0.5em; }
+
+  /* Content */
+  #content {
+    background-color: #F5F5F5;
+    padding: 1px 0; }
+    #content ul {
+      margin-top: -0.5em;
+      padding-left: 2em; }
+      #content ul ul {
+        margin-top: 0;
+        padding-left: 1.5em; }
+      #content ul.menu {
+        background-color: #202020;
+        margin-top: -1px;
+        margin-bottom: 0;
+        padding: 0 0.5em;
+        display: inline-block;
+        text-align: center; }
+        #content ul.menu li {
+          display: inline;
+          line-height: 40px;
+          vertical-align: middle;
+          white-space: nowrap; }
+          #content ul.menu li a {
+            display: inline-block;
+            height: 40px;
+            padding: 0 1em;
+            color: #F5F5F5;
+            text-decoration: none; }
+            #content ul.menu li a:hover {
+              color: #66A352; }
+          #content ul.menu li span {
+            display: inline-block;
+            height: 40px;
+            padding: 0 1em;
+            color: #66A352;
+            text-decoration: none; }
+
+  .features {
+    text-align: center; }
+    .features .feature {
+      display: inline-block;
+      max-width: 317px;
+      margin: 1em 0;
+      text-align: left;
+      vertical-align: top; }
+      .features .feature h2 {
+        text-align: center; }
+      .features .feature h2, .features .feature p {
+        padding: 0 1em; }
+      .features .feature#cross-platform h2 {
+        padding-bottom: 165px;
+        background: url(/images/cross-platform.png) center bottom no-repeat; }
+      .features .feature#rpgmaker-compatible h2 {
+        padding-bottom: 165px;
+        background: url(/images/rpgmaker-compatible.png) center 75% no-repeat; }
+      .features .feature#get-involved h2 {
+        padding-bottom: 165px;
+        background: url(/images/get-involved.png) center 75% no-repeat; }
+
+  .info {
+    margin: 2em 1em; }
+    .info h2 {
+      margin-top: 0; }
+    .info h3 {
+      margin-bottom: 0em; }
+    .info #introduction, .info #goals, .info #contribute {
+      display: block;
+      width: 128px;
+      height: 128px;
+      float: right; }
+    .info #introduction {
+      background: url(/images/easyrpg-logo-128.png) right top no-repeat; }
+    .info #goals {
+      background: url(/images/goals.png) right top no-repeat; }
+    .info #contribute {
+      background: url(/images/contribute.png) right top no-repeat; }
+
+  .maxwidth img, .maxwidth iframe, .maxwidth video {
+    max-width: 100%; }
+
+  /* Misc */
+  .maxwidth {
+    max-width: 980px;
+    margin: 0 auto; }
+
+  .clear {
+    clear: both; }
+
+  /* Download page tabs */
+  .tab-container .panel-container {
+    background: #fff;
+    border: solid #666 1px;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px; }
+  .tab-container ul.tabbar {
+    margin: 0;
+    padding: 0; }
+    .tab-container ul.tabbar li.tab {
+      display: inline-block;
+      background: #D1D1D1 linear-gradient(to bottom, #ECECEC 50%, #D1D1D1 100%);
+      margin: 0 -5px;
+      border: solid 1px #999;
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      padding: 0 10px; }
+      .tab-container ul.tabbar li.tab.active {
+        background: #fff;
+        padding-top: 6px;
+        position: relative;
+        top: 1px;
+        border-color: #666; }
+      .tab-container ul.tabbar li.tab a {
+        font-size: 14px;
+        line-height: 2em;
+        display: block;
+        padding: 0 10px;
+        outline: none;
+        text-decoration: none;
+        color: #333; }
+        .tab-container ul.tabbar li.tab a:hover {
+          text-decoration: underline; }
+        .tab-container ul.tabbar li.tab a.active {
+          font-weight: bold;
+          color: #000; } }
+

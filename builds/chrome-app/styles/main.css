@@ -1,23 +1,24 @@
 html, body {
-  height: 100%;
+	overflow-y: visible;
 }
 
-body {
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-image: url("../logo1.svg");
-  margin: 0;
-  padding: 0;
-  background-size: 50% 50%;
+#header h1 {
+	margin-left: 6px;
 }
 
-h1 {
-  position: absolute;
-  bottom: 20px;
-  text-align: center;
-  width: 100%;
-  line-height: 120%;
-  font-family: Arial, sans-serif;
-  color: rgb(66,66,66);
-  letter-spacing: -0.05em;
+#header h1 a {
+	background-image: url(/assets/logo_with_text_white_website.svg);
+	background-size: 100%;
+}
+
+#spotlight {
+	padding: 0.1em 0;
+}
+
+.tab-pane {
+	display: none;
+}
+
+.tab-pane.active {
+	display: block;
 }

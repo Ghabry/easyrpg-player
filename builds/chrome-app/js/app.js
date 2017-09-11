@@ -11,13 +11,15 @@ var standaloneMode = false;
 var chooseDirButton = document.querySelector('#choose_dir');
 // Play button
 var playButton = document.querySelector('#play');
-// GameBrowser <div>
-var gameBrowser = document.querySelector('#game_browser');
+// Frontend <div>
+var frontend = document.querySelector('#frontend');
 // Player <div>
 var player = document.querySelector('#player');
+// Website icon
+var website = document.querySelector('#website');
 
 // Hide both divs on startup
-gameBrowser.style.visibility = "hidden";
+frontend.style.visibility = "hidden";
 player.style.visibility = "hidden";
 
 // standard error handler
@@ -91,7 +93,7 @@ function startGame() {
 
     // Show the Player
     player.style.visibility = "visible";
-    gameBrowser.style.visibility = "hidden";
+    frontend.style.visibility = "hidden";
 }
 
 playButton.addEventListener('click', function(e) {
@@ -99,6 +101,12 @@ playButton.addEventListener('click', function(e) {
     currentFolderName = gameBrowserEntry.fullPath;
 
     startGame();
+});
+
+website.addEventListener('click', function(e) {
+	// Needs Chrome 42
+    chrome.browser.openTab({"url": "https://easyrpg.org"});
+	e.preventDefault();
 });
 
 // Test for standalone mode
@@ -121,7 +129,7 @@ xhr.onreadystatechange = function () {
             });
 
             // Show game browser
-            gameBrowser.style.visibility = "visible";
+            frontend.style.visibility = "visible";
         }
     }
 };

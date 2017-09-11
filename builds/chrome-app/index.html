@@ -5,9 +5,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EasyRPG Player</title>
+    <link href="styles/easyrpg.css" rel="stylesheet">
     <link href="styles/main.css" rel="stylesheet">
     <style>
-      body { font-family: sans-serif; margin: 0; padding: none; color: white; background: black; }
       canvas.emscripten { border: 0px none; width: 320px; height: 240px; max-width: 100%; max-height: 100%; position: absolute; top: 50%; left: 50%; -webkit-transform: translate(-50%, -50%); -ms-transform: translate(-50%, -50%); transform: translate(-50%, -50%); }
       #status { font-weight: bold; color: #888888; text-align: center; margin: auto; }
       #controls { text-align: right; } #controls input { border: 1px solid gray; background: black; color: gray; }
@@ -22,15 +22,59 @@
       @media all and (max-width: 639px) { canvas.emscripten { width: 100%; height: 100%; } }
     </style>
 </head>
+
 <body>
-<div id="game_browser">
-    <h1>EasyRPG Player</h1>
+<div id="frontend">
+<div id="header">
+    <div class="maxwidth">
+        <h1><a href="/" id="website" title="Website">EasyRPG</a></h1>
+    </div>
+</div>
 
-    <nav>
-        <button id="choose_dir">Choose game directory</button>
-    </nav>
+<div id="spotlight">
+    <div class="maxwidth">
+        <div id="section-title">
+            <h1>EasyRPG Player for Chrome</h1>
+    </div>
+    <div class="clear"></div>
+    </div>
+</div>
 
-    <button id="play">Play!</a>
+<div id="content">
+    <div class="maxwidth">
+        <div class="info">
+            <div class="tab-container">
+                <section class="row">
+                    <ul class="tabbar">
+                        <li class="tab active"><a href="#tab-1">Game Browser</a></li>
+                        <li class="tab"><a href="#tab-2">Settings</a></li>
+                        <li class="tab"><a href="#tab-3">About</a></li>
+                    </ul>
+                    <div class="panel-container">
+                        <div id="tab-1" class="tab-pane active">
+                            <h4>Game Browser</h4>
+                            <p>
+                                <button id="play">Play!</a>
+                            </p>
+                        </div>
+                        <div id="tab-2" class="tab-pane">
+                            <h4>Settings</h4>
+                            <p>
+                                <button id="choose_dir">Choose game directory</button>
+                            </p>
+                        </div>
+                        <div id="tab-3" class="tab-pane">
+                            <h4>About</h4>
+                            <p>
+                                Lorem ipsum
+                            </p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 
 <div id="player">
@@ -40,6 +84,7 @@
 </div>
 
 <script src="js/app.js"></script>
+<script src="js/tabs.js"></script>
 <script src="js/emscripten.js"></script>
 <script src="js/emscripten-extra.js"></script>
 
