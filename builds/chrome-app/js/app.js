@@ -4,6 +4,8 @@ var gameBrowserEntry = null;
 var fsEntries = {};
 // Contains the name of the folder of current game
 var currentFolderName = "";
+// true when standalone mode is enabled (game running from "game" folder)
+var standaloneMode = false;
 
 // Choose game button
 var chooseDirButton = document.querySelector('#choose_dir');
@@ -14,7 +16,8 @@ var gameBrowser = document.querySelector('#game_browser');
 // Player <div>
 var player = document.querySelector('#player');
 
-// Hide Player div on startup
+// Hide both divs on startup
+gameBrowser.style.visibility = "hidden";
 player.style.visibility = "hidden";
 
 // standard error handler
@@ -80,6 +83,17 @@ function replaceAll(str, find, replace) {
     return str.replace(new RegExp(find, 'g'), replace);
 }
 
+function startGame() {
+    // Launch the Player
+    var script = document.createElement('script');
+    script.src = "player/index.js";
+    document.body.appendChild(script);
+
+    // Show the Player
+    player.style.visibility = "visible";
+    gameBrowser.style.visibility = "hidden";
+}
+
 playButton.addEventListener('click', function(e) {
     // Game subfolder name
     currentFolderName = gameBrowserEntry.fullPath;
@@ -98,12 +112,21 @@ playButton.addEventListener('click', function(e) {
     }
     index_json=new TextEncoder("utf-8").encode(replaceAll(JSON.stringify(dict), "/", "\\/"));
 
-    // Launch the Player
-    var script = document.createElement('script');
-    script.src = "player/index.js";
-    document.body.appendChild(script);
-
-    // Show the Player
-    player.style.visibility = "visible";
-    gameBrowser.style.visibility = "hidden";
+    startGame();
 });
+
+// Test for standalone mode
+var xhr = new XMLHttpRequest();
+xhr.open('GET', 'game/index.json');
+xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+            standaloneMode = true;
+            startGame();
+        } else {
+            // No standalone mode, show game browser
+            gameBrowser.style.visibility = "visible";
+        }
+    }
+};
+xhr.send(null)

@@ -92,6 +92,27 @@ Module.EASYRPG_WGET = function(url, file, userdata, onload, onerror) {
     if (_url[0] == "." && _url[1] == "/") {
         _url = _url.substring(2);
     }
+
+    if (standaloneMode) {
+        _url = "game/" + _url;
+
+        // Forward to emscripten ajax
+        var stack = Runtime.stackSave();
+        var handle = Module._emscripten_async_wget2(
+            allocate(intArrayFromString(_url), 'i8', ALLOC_STACK),
+            file,
+            allocate(intArrayFromString("GET"), 'i8', ALLOC_STACK),
+            0,
+            userdata,
+            onload,
+            onerror,
+            0
+        );
+        Runtime.stackRestore(stack);
+
+        return handle;
+    }
+
     _url = currentFolderName + "/" + _url;
 
     var _file = Pointer_stringify(file);
@@ -145,7 +166,7 @@ Module.EASYRPG_WGET = function(url, file, userdata, onload, onerror) {
             Runtime.stackRestore(stack);
         }
 
-      delete wgetRequests[handle];
+        delete wgetRequests[handle];
     };
 
     reader.onerror = function em_onerror(e) {
