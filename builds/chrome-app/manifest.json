@@ -17,6 +17,7 @@
       "write",
       "retainEntries",
       "directory"
-    ]}
+    ]},
+    "storage"
   ]
 }

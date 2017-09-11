@@ -25,14 +25,14 @@ function errorHandler(e) {
     console.error(e);
 }
 
-function loadDirEntry(gameBrowserEntry, depth) {
-    if (depth > 1) {
+function loadDirEntry(entry, depth) {
+    if (depth > 2) {
         // Prevent deep recursion
         return;
     }
 
-    if (gameBrowserEntry.isDirectory) {
-        var dirReader = gameBrowserEntry.createReader();
+    if (entry.isDirectory) {
+        var dirReader = entry.createReader();
 
         // Call the reader.readEntries() until no more results are returned.
         // Callback Api is really ugly...
@@ -67,8 +67,10 @@ chooseDirButton.addEventListener('click', function(e) {
 
         gameBrowserEntry = theEntry;
 
-        // TODO: use local storage to retain access to this file
-        //chrome.storage.local.set({'chosenFile': chrome.fileSystem.retainEntry(theEntry)});
+        // use local storage to retain access to this file
+        chrome.storage.local.set(
+            {'gameBrowserDir': chrome.fileSystem.retainEntry(theEntry)}
+        );
 
         loadDirEntry(theEntry, 0);
     });
@@ -124,7 +126,17 @@ xhr.onreadystatechange = function () {
             standaloneMode = true;
             startGame();
         } else {
-            // No standalone mode, show game browser
+            // No standalone mode, use game browser
+
+            // Restore previous folder from local storage
+            chrome.storage.local.get('gameBrowserDir', function (result) {
+                chrome.fileSystem.restoreEntry(result.gameBrowserDir, function (theEntry) {
+                    gameBrowserEntry = theEntry;
+                    loadDirEntry(theEntry, 0);
+                });
+            });
+
+            // Show game browser
             gameBrowser.style.visibility = "visible";
         }
     }
