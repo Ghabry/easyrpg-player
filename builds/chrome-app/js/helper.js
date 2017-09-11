@@ -1,6 +1,6 @@
-// Removes the first folder in the path
-function removeFolderName(s) {
-    return s.substring(s.indexOf("/", 1) + 1)
+// Removes the non-game folders
+function removeFolderPrefix(s) {
+    return s.substring(currentFolderName.length + 1)
 }
 
 function replaceAll(str, find, replace) {
@@ -17,16 +17,16 @@ function uint8ArrayToBase64(array) {
 }
 
 function readFileToArrayBuffer(fileEntry, callback) {
-	fileEntry.file(function(file) {
-		var reader = new FileReader();
+    fileEntry.file(function(file) {
+        var reader = new FileReader();
 
-		reader.onerror = errorHandler;
-		reader.onload = function(e) {
-			callback(e.target.result);
-		};
+        reader.onerror = errorHandler;
+        reader.onload = function(e) {
+            callback(e.target.result);
+        };
 
-		reader.readAsArrayBuffer(file);
-	});
+        reader.readAsArrayBuffer(file);
+    });
 }
 
 function startGame() {

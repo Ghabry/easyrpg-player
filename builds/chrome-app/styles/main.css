@@ -30,7 +30,7 @@ html, body {
 
 #game-grid div {
 	width: 160px;
-	height: 120px;
+	padding-right: 5px;
 }
 
 #game-grid div img {

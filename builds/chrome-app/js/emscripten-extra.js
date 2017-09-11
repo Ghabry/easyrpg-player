@@ -1,5 +1,22 @@
-/* Chrome App code */
+/* Init xyz2png */
+Module.xyz2png = xyz2png();
+Module.xyz2png.argv = Module.xyz2png._malloc(8);
+Module.xyz2png.FS.cwd("/tmp");
 
+Module.xyz2png.invoke = function(file) {
+    var x = Module.xyz2png;
+    var stack = x.Runtime.stackSave();
+
+    // Allocate a string and put the pointer to it in argv
+    var arg2 = x.allocate(x.intArrayFromString(file), 'i8', x.ALLOC_STACK);
+    x.HEAP32.set(new Uint32Array([0, arg2]), x.argv / 4);
+    var retn = x.__Z5startiPPc(2, x.argv);
+    x.Runtime.stackRestore(stack);
+
+    return retn;
+}
+
+/* Chrome App code */
 var index_dict = {};
 
 Module.EASYRPG_STARTUP = function(url_prefix, game_name, userdata, onload, onerror) {
@@ -24,7 +41,7 @@ Module.EASYRPG_STARTUP = function(url_prefix, game_name, userdata, onload, onerr
     // Key must be lower case
     for (var key in fsEntries) {
         if (fsEntries.hasOwnProperty(key)) {
-            var k = removeFolderName(key);
+            var k = removeFolderPrefix(key);
             if (k.indexOf("/") != -1) {
                 // subfolder, remove extension
                 k = k.substring(0, k.lastIndexOf("."));
@@ -32,7 +49,7 @@ Module.EASYRPG_STARTUP = function(url_prefix, game_name, userdata, onload, onerr
                 // prefix ./
                 k = "./" + k;
             }
-            index_dict[k.toLowerCase()] = removeFolderName(key);
+            index_dict[k.toLowerCase()] = removeFolderPrefix(key);
         }
     }
 
@@ -133,7 +150,7 @@ var EASYRPG_CHROME_APP_FS = {
             // Populate the virtual filesystem with them
             for (var key in fsEntries) {
                 if (fsEntries.hasOwnProperty(key)) {
-                    var k = removeFolderName(key);
+                    var k = removeFolderPrefix(key);
                     if (k.indexOf("/") == -1) {
                         // root directory, check for savegame
                         if (k.toLowerCase().endsWith(".lsd")) {
