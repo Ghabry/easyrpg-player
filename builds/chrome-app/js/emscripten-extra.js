@@ -102,3 +102,65 @@ Module.EASYRPG_WGET = function(url_prefix, game_name, file, userdata, onload, on
         reader.readAsArrayBuffer(file);
     });
 };
+
+var EASYRPG_CHROME_APP_FS = {
+    mount: function(mount) {
+        // reuse all of the core MEMFS functionality
+        return MEMFS.mount.apply(null, arguments);
+    },
+    read_as_arraybuffer: function(fileEntry, callback) {
+        fileEntry.file(function(file) {
+            var reader = new FileReader();
+
+            reader.onerror = errorHandler;
+            reader.onload = function(e) {
+                callback(fileEntry, e.target.result);
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+    },
+    write_from_arraybuffer: function(fileEntry, buffer) {
+    },
+    syncfs: function(mount, populate, callback) {
+        if (populate) {
+            // Read game main folder and parse all SaveXX.lsd
+            // Populate the virtual filesystem with them
+            for (var key in fsEntries) {
+                if (fsEntries.hasOwnProperty(key)) {
+                    var k = removeFolderName(key);
+                    if (k.indexOf("/") == -1) {
+                        // root directory, check for savegame
+                        if (k.toLowerCase().endsWith(".lsd")) {
+                            EASYRPG_CHROME_APP_FS.read_as_arraybuffer(fsEntries[key], function(entry, res) {
+                                var stream = FS.open(mount.mountpoint + "/" + entry.name, "w");
+                                FS.write(stream, new Uint8Array(res), 0, res.byteLength, 0);
+                                FS.close(stream);
+                            });
+                        }
+                    }
+                }
+            }
+        } else {
+            var obj = {}
+            FS.readdir(mount.mountpoint).forEach(function(x) {
+                var num = parseInt(x.substr(4,2));
+                if (!isNaN(num) && num >= 1 && num <= 15) {
+                    gameBrowserEntry.getFile("Save" + (num <= 9 ? "0" : "") + num + ".lsd", {create:true}, function(file) {
+                        file.createWriter(function(writer) {
+                            this.onwriteend = function() {
+                                this.onwriteend = null;
+                                this.truncate(this.position);
+                            };
+                            writer.write(new Blob([FS.readFile(mount.mountpoint + "/" + x)], { type: 'application/octet-stream' }));
+                        });
+                    });
+                }
+            });
+        }
+
+        callback(null);
+    }
+};
+
+Module.EASYRPG_FS = EASYRPG_CHROME_APP_FS;
