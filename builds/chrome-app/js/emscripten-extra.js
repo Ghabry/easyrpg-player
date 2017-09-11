@@ -1,83 +1,83 @@
 /* Chrome App code */
 
-// Taken from emscripten Browser library
-var nextWgetRequestHandle = 0;
-var getNextWgetRequestHandle = function() {
-    var handle = nextWgetRequestHandle;
-    nextWgetRequestHandle++;
-    return handle;
-};
-var wgetRequests = {};
+var index_dict = {};
 
-// Based on emscripten_async_wget2
-Module.EASYRPG_WGET = function(url, file, userdata, onload, onerror) {
-    var _url = Pointer_stringify(url);
-
-    // TODO make this nicer
-    _url = _url.substring(20); // Remove /player/games/default
-    if (_url[0] == "." && _url[1] == "/") {
-        _url = _url.substring(2);
-    }
+Module.EASYRPG_STARTUP = function(url_prefix, game_name, userdata, onload, onerror) {
+    // prefix and game_name not relevant for the app
 
     if (standaloneMode) {
-        _url = "game/" + _url;
-
-        // Forward to emscripten ajax
+        // Forward to default handler with path /game
         var stack = Runtime.stackSave();
-        var handle = Module._emscripten_async_wget2(
-            allocate(intArrayFromString(_url), 'i8', ALLOC_STACK),
-            file,
-            allocate(intArrayFromString("GET"), 'i8', ALLOC_STACK),
-            0,
+        default_startup_handler(
+            allocate(intArrayFromString("/"), 'i8', ALLOC_STACK),
+            allocate(intArrayFromString("game"), 'i8', ALLOC_STACK),
             userdata,
             onload,
-            onerror,
-            0
-        );
+            onerror);
         Runtime.stackRestore(stack);
+        return;
+    }
+    // Generate an index on the fly
 
-        return handle;
+    // Files in the root folder must be prefixed with "./" and
+    // files in subfolders without extension
+    // Key must be lower case
+    for (var key in fsEntries) {
+        if (fsEntries.hasOwnProperty(key)) {
+            var k = removeFolderName(key);
+            if (k.indexOf("/") != -1) {
+                // subfolder, remove extension
+                k = k.substring(0, k.lastIndexOf("."));
+            } else {
+                // prefix ./
+                k = "./" + k;
+            }
+            index_dict[k.toLowerCase()] = removeFolderName(key);
+        }
     }
 
-    _url = currentFolderName + "/" + _url;
+    var stack = Runtime.stackSave();
+    Runtime.dynCall('viii', onload, [0, userdata, allocate(intArrayFromString(""), 'i8', ALLOC_STACK)]);
+    Runtime.stackRestore(stack);
+}
+
+// Based on emscripten_async_wget2
+Module.EASYRPG_WGET = function(url_prefix, game_name, file, userdata, onload, onerror) {
+    // prefix and game_name not relevant for the app
+
+    if (standaloneMode) {
+        // Forward to default handler with path /game
+        var stack = Runtime.stackSave();
+        default_wget_handler(
+            allocate(intArrayFromString("/"), 'i8', ALLOC_STACK),
+            allocate(intArrayFromString("game"), 'i8', ALLOC_STACK),
+            file,
+            userdata,
+            onload,
+            onerror);
+        Runtime.stackRestore(stack);
+        return;
+    }
 
     var _file = Pointer_stringify(file);
-    _file = PATH.resolve(FS.cwd(), _file);
 
-    var _request = "GET";
-    var index = _file.lastIndexOf('/');
+    // The dict layout matches the index.json layout,
+    // simply forward to the default resolver
+    var target_file = Module.EASYRPG_NAME_RESOLVER(_file, index_dict);
 
-    var handle = getNextWgetRequestHandle();
-
-    var destinationDirectory = PATH.dirname(_file);
-
-    // Return our custom index.json
-    if (_url == currentFolderName + "/index.json") {
-        // FIXME: Lots of code-dupe with onload
-        try {
-            FS.unlink(_file);
-        } catch (e) {}
-        // if the destination directory does not yet exist, create it
-        FS.mkdirTree(destinationDirectory);
-
-        FS.createDataFile( _file.substr(0, index), _file.substr(index + 1), index_json, true, true, false);
-
-        var stack = Runtime.stackSave();
-        Runtime.dynCall('viii', onload, [handle, userdata, allocate(intArrayFromString(_file), 'i8', ALLOC_STACK)]);
-        Runtime.stackRestore(stack);
-        delete wgetRequests[handle];
+    if (target_file === undefined) {
+        Runtime.dynCall('viii', onerror, [0, userdata, 404]);
         return;
     }
 
-    if (!fsEntries.hasOwnProperty(_url)) {
-        if (onerror) Runtime.dynCall('viii', onerror, [handle, userdata, 400]);
-        delete wgetRequests[handle];
-        return;
-    }
-
+    var url = currentFolderName + "/" + target_file;
     var reader = new FileReader();
 
-    reader.onload = function em_onload(e) {
+    _file = PATH.resolve(FS.cwd(), _file);
+    var index = _file.lastIndexOf('/');
+    var destinationDirectory = PATH.dirname(_file);
+
+    reader.onload = function(e) {
         // if a file exists there, we overwrite it
         try {
           FS.unlink(_file);
@@ -86,26 +86,19 @@ Module.EASYRPG_WGET = function(url, file, userdata, onload, onerror) {
         FS.mkdirTree(destinationDirectory);
 
         FS.createDataFile( _file.substr(0, index), _file.substr(index + 1), new Uint8Array(e.target.result), true, true, false);
-        if (onload) {
-            var stack = Runtime.stackSave();
-            Runtime.dynCall('viii', onload, [handle, userdata, allocate(intArrayFromString(_file), 'i8', ALLOC_STACK)]);
-            Runtime.stackRestore(stack);
-        }
 
-        delete wgetRequests[handle];
+        var stack = Runtime.stackSave();
+        Runtime.dynCall('viii', onload, [0, userdata, allocate(intArrayFromString(_file), 'i8', ALLOC_STACK)]);
+        Runtime.stackRestore(stack);
+
     };
 
-    reader.onerror = function em_onerror(e) {
-        if (onerror) Runtime.dynCall('viii', onerror, [handle, userdata, 400]);
-        delete wgetRequests[handle];
+    reader.onerror = function(e) {
+        Runtime.dynCall('viii', onerror, [0, userdata, 400]);
     };
-
-    wgetRequests[handle] = reader;
 
     // Start async request
-    fsEntries[_url].file(function(file) {
+    fsEntries[url].file(function(file) {
         reader.readAsArrayBuffer(file);
     });
-
-    return handle;
 };

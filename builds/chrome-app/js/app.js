@@ -56,8 +56,6 @@ function loadDirEntry(entry, depth) {
     }
 }
 
-var index_json;
-
 chooseDirButton.addEventListener('click', function(e) {
     chrome.fileSystem.chooseEntry({type: 'openDirectory'}, function(theEntry) {
         if (!theEntry) {
@@ -99,20 +97,6 @@ function startGame() {
 playButton.addEventListener('click', function(e) {
     // Game subfolder name
     currentFolderName = gameBrowserEntry.fullPath;
-
-    // Generate an index.json on the fly
-    var dict = {};
-    for (var key in fsEntries) {
-        if (fsEntries.hasOwnProperty(key)) {
-            var k = removeFolderName(key);
-            if (k.lastIndexOf(".") != 0 && k.indexOf("/") != 1) {
-                // subfolder, remove extension
-                k = k.substring(0, k.lastIndexOf("."));
-            }
-            dict[k.toLowerCase()] = removeFolderName(key);
-        }
-    }
-    index_json=new TextEncoder("utf-8").encode(replaceAll(JSON.stringify(dict), "/", "\\/"));
 
     startGame();
 });

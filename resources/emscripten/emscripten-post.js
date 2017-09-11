@@ -81,14 +81,14 @@ var default_startup_handler = function(url_prefix, game_name, userdata, onload, 
     req.send(null);
 }
 
-var default_name_resolver = function(filename) {
+var default_name_resolver = function(filename, database) {
     var lf = filename.toLowerCase();
 
-    console.log("RESOLVE " + filename + " to " + lf[filename]);
+    console.log("RESOLVE " + filename + " to " + database[lf]);
 
     // Looks in the index.json and returns the value
-    if (file_index.hasOwnProperty(lf)) {
-        return file_index[lf];
+    if (database.hasOwnProperty(lf)) {
+        return database[lf];
     }
 
     return undefined;
@@ -105,7 +105,7 @@ var default_wget_handler = function(url_prefix, game_name, file, userdata, onloa
 
     var request_url = _url_prefix + _game_name + "/";
 
-    var target_file = Module.EASYRPG_NAME_RESOLVER(_file);
+    var target_file = Module.EASYRPG_NAME_RESOLVER(_file, file_index);
 
     if (target_file === undefined) {
         Runtime.dynCall('viii', onerror, [0, userdata, 404]);
