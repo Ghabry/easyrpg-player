@@ -120,7 +120,12 @@ var EASYRPG_CHROME_APP_FS = {
             reader.readAsArrayBuffer(file);
         });
     },
-    write_from_arraybuffer: function(fileEntry, buffer) {
+    array_equal: function(arr1, arr2) {
+        if (arr1.length != arr2.byteLength) return false;
+        for (var i = 0; i != arr1.length; ++i) {
+            if (arr1[i] != arr2[i]) return false;
+        }
+        return true;
     },
     syncfs: function(mount, populate, callback) {
         if (populate) {
@@ -147,12 +152,18 @@ var EASYRPG_CHROME_APP_FS = {
                 var num = parseInt(x.substr(4,2));
                 if (!isNaN(num) && num >= 1 && num <= 15) {
                     gameBrowserEntry.getFile("Save" + (num <= 9 ? "0" : "") + num + ".lsd", {create:true}, function(file) {
-                        file.createWriter(function(writer) {
-                            this.onwriteend = function() {
-                                this.onwriteend = null;
-                                this.truncate(this.position);
-                            };
-                            writer.write(new Blob([FS.readFile(mount.mountpoint + "/" + x)], { type: 'application/octet-stream' }));
+                        EASYRPG_CHROME_APP_FS.read_as_arraybuffer(file, function(entry, res) {
+                            // Load all savegames and only write the modified savegame
+                            // Bit complecated because emscripten sync doesn't tell which file changed
+                            if (!EASYRPG_CHROME_APP_FS.array_equal(new Uint8Array(res), FS.readFile(mount.mountpoint + "/" + entry.name))) {
+                                entry.createWriter(function(writer) {
+                                    this.onwriteend = function() {
+                                        this.onwriteend = null;
+                                        this.truncate(this.position);
+                                    };
+                                    writer.write(new Blob([FS.readFile(mount.mountpoint + "/" + entry.name)], { type: 'application/octet-stream' }));
+                                });
+                            }
                         });
                     });
                 }
