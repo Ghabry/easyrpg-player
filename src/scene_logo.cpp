@@ -48,7 +48,7 @@ void Scene_Logo::Update() {
 #ifdef EMSCRIPTEN
 		static bool once = true;
 		if (once) {
-			FileRequestAsync* index = AsyncHandler::RequestFile("index.json");
+			FileRequestAsync* index = AsyncHandler::RequestStartup();
 			index->SetImportantFile(true);
 			request_id = index->Bind(&Scene_Logo::OnIndexReady, this);
 			once = false;
@@ -102,15 +102,13 @@ void Scene_Logo::Update() {
 	}
 }
 
-void Scene_Logo::OnIndexReady(FileRequestResult*) {
+void Scene_Logo::OnIndexReady(FileRequestResult* result) {
 	async_ready = true;
 
-	if (!FileFinder::Exists("index.json")) {
-		Output::Debug("index.json not found. The game does not exist or was not correctly deployed.");
+	if (!result->success) {
+		Output::Debug("Startup failed. When you use the default startup handler (Module.EASYRPG_STARTUP not overwritten) index.json was not found.");
 		return;
 	}
-
-	AsyncHandler::CreateRequestMapping("index.json");
 
 	FileRequestAsync* db = AsyncHandler::RequestFile(DATABASE_NAME);
 	db->SetImportantFile(true);

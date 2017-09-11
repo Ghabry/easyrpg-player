@@ -32,10 +32,14 @@ struct FileRequestResult;
  */
 namespace AsyncHandler {
 	/**
-	 * Parses the specified JSON file. The file mapping read from this file
-	 * will be used for further ajax requests.
+	 * This function is called at the beginning and invokes the startup handler
+	 * in the emscripten shell file.
+	 * By default this downloads an index.json file which is used to resolve
+	 * files later.
+	 *
+	 * @return The async request that notifies the startup progress.
 	 */
-	void CreateRequestMapping(const std::string& file);
+	FileRequestAsync* RequestStartup();
 
 	/**
 	 * Creates a request to a file.
@@ -118,7 +122,7 @@ public:
 	 * the request is finished.
 	 *
 	 * @param important value of important flag.
-	 * @return 
+	 * @return
 	 */
 	void SetImportantFile(bool important);
 

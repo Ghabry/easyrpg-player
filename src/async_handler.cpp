@@ -29,14 +29,13 @@
 #include "output.h"
 #include "player.h"
 #include "main_data.h"
-#include "picojson.h"
 #include <fstream>
 #include "utils.h"
 
 namespace {
 	std::map<std::string, FileRequestAsync> async_requests;
-	std::map<std::string, std::string> file_mapping;
 	int next_id = 0;
+	FileRequestAsync* startup_request = nullptr;
 
 	FileRequestAsync* GetRequest(const std::string& path) {
 		std::map<std::string, FileRequestAsync>::iterator it = async_requests.find(path);
@@ -67,17 +66,36 @@ namespace {
 		Output::Debug("DL Failure: %s", req->GetPath().c_str());
 		req->DownloadDone(false);
 	}
+
+	//
+	using request_file_func = void (*)(const char*, const char*, const char*, void*, em_async_wget2_onload_func, em_async_wget2_onstatus_func);
+	using request_startup_func = void (*)(const char*, const char*, void*, em_async_wget2_onload_func, em_async_wget2_onstatus_func);
+
+	// Emscripten shell configures these pointers
+	request_file_func request_func;
+	request_startup_func startup_func;
+
 #endif
 }
 
-void AsyncHandler::CreateRequestMapping(const std::string& file) {
-	std::shared_ptr<std::fstream> f = FileFinder::openUTF8(file, std::ios_base::in | std::ios_base::binary);
-	picojson::value v;
-	picojson::parse(v, *f);
+#ifdef EMSCRIPTEN
+extern "C" {
 
-	for (const auto& value : v.get<picojson::object>()) {
-		file_mapping[value.first] = value.second.to_str();
-	}
+void EMSCRIPTEN_KEEPALIVE set_request_handler(request_file_func func) {
+	request_func = func;
+}
+
+void EMSCRIPTEN_KEEPALIVE set_startup_handler(request_startup_func func) {
+	startup_func = func;
+}
+
+}
+#endif
+
+FileRequestAsync* AsyncHandler::RequestStartup() {
+	startup_request = RequestFile("Startup", "Handler");
+
+	return startup_request;
 }
 
 FileRequestAsync* AsyncHandler::RequestFile(const std::string& folder_name, const std::string& file_name) {
@@ -155,40 +173,39 @@ void FileRequestAsync::Start() {
 	state = State_Pending;
 
 #ifdef EMSCRIPTEN
-	std::string request_path;
+	std::string game_url;
 #  ifdef EM_GAME_URL
-	request_path = EM_GAME_URL;
+	game_url = EM_GAME_URL;
 #  else
-	request_path = "games/";
+	game_url = "games/";
 #  endif
 
-	if (!Player::emscripten_game_name.empty()) {
-		request_path += Player::emscripten_game_name + "/";
-	} else {
-		request_path += "default/";
+	if (this == startup_request) {
+		Output::Debug("STARTUP");
+		startup_func(
+			game_url.c_str(),
+			Player::emscripten_game_name.c_str(),
+			this,
+			download_success,
+			download_failure
+		);
+		return;
 	}
-
-	auto it = file_mapping.find(Utils::LowerCase(path));
-	if (it != file_mapping.end()) {
-		request_path += it->second;
-	} else {
-		// Fall through if not found, will fail in the ajax request
-		request_path += path;
-	}
-
-	// URL encode % and #
-	request_path = std::regex_replace(request_path, std::regex("%"), "%25");
-	request_path = std::regex_replace(request_path, std::regex("#"), "%23");
-
-	emscripten_async_wget2(
-		request_path.c_str(),
+	Output::Debug("DOWNLOAD");
+	request_func(
+		game_url.c_str(),
+		Player::emscripten_game_name.c_str(),
 		path.c_str(),
-		"GET",
-		NULL,
 		this,
 		download_success,
-		download_failure,
-		NULL);
+		download_failure
+	);
+
+	if (path == "\x0") {
+		// Always false, just needed because otherwise the
+		// function name can't be exported to emscripten.
+		emscripten_async_wget2("", "", "", NULL, NULL, NULL, NULL, NULL);
+	}
 #else
 #  ifdef EM_GAME_URL
 #    warning EM_GAME_URL set and not an Emscripten build!
