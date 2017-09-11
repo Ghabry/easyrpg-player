@@ -17,6 +17,8 @@ var frontend = document.querySelector('#frontend');
 var player = document.querySelector('#player');
 // Website icon
 var website = document.querySelector('#website');
+// Game list <div>
+var gamelist = document.querySelector('#game-grid');
 
 // Hide both divs on startup
 frontend.style.visibility = "hidden";
@@ -27,27 +29,30 @@ function errorHandler(e) {
     console.error(e);
 }
 
-function loadDirEntry(entry, depth) {
-    if (depth > 2) {
+function loadDirEntry(dirEntry, max_depth, callback) {
+    if (max_depth < 0) {
         // Prevent deep recursion
         return;
     }
 
-    if (entry.isDirectory) {
-        var dirReader = entry.createReader();
+    if (dirEntry.isDirectory) {
+        var dirReader = dirEntry.createReader();
 
         // Call the reader.readEntries() until no more results are returned.
         // Callback Api is really ugly...
         var readEntries = function() {
             dirReader.readEntries (function(results) {
                 if (results.length) {
-                    results.forEach(function(item) {
+                    for (var i = 0; i < results.length; ++i) {
+                        var item = results[i];
                         if (item.isDirectory) {
-                            loadDirEntry(item, depth + 1);
+                            loadDirEntry(item, max_depth - 1, callback);
                         } else {
-                            fsEntries[item.fullPath] = item;
+                            if (!callback(item, dirEntry)) {
+                                break;
+                            }
                         }
-                    });
+                    }
                     readEntries();
                 }
             }, errorHandler);
@@ -58,6 +63,28 @@ function loadDirEntry(entry, depth) {
     }
 }
 
+function addGame(dirEntry) {
+    var elem = document.createElement("div");
+    //elem.innerHTML = dirEntry.name;
+    gamelist.appendChild(elem);
+
+    dirEntry.getDirectory('Title', {}, function(systemEntry) {
+        loadDirEntry(systemEntry, 0, function(item) {
+            if (!item.isDirectory) {
+                readFileToArrayBuffer(item, function(res) {
+                    var arr = new Uint8Array(res);
+                    var img = document.createElement("img");
+                    img.src = 'data:image/png;base64,' + uint8ArrayToBase64(arr);
+                    elem.appendChild(img);
+                });
+                return false;
+            }
+            return true;
+        });
+    });
+}
+
+/* Event handlers */
 chooseDirButton.addEventListener('click', function(e) {
     chrome.fileSystem.chooseEntry({type: 'openDirectory'}, function(theEntry) {
         if (!theEntry) {
@@ -72,29 +99,16 @@ chooseDirButton.addEventListener('click', function(e) {
             {'gameBrowserDir': chrome.fileSystem.retainEntry(theEntry)}
         );
 
-        loadDirEntry(theEntry, 0);
+        loadDirEntry(theEntry, 3, function(item, dirEntry) {
+            //console.log("XGAME " + dirEntry.name);
+            if (item.name.toLowerCase() == "rpg_rt.ldb") {
+                addGame(dirEntry);
+                return false;
+            }
+            return true;
+        });
     });
 });
-
-// Removes the first folder in the path
-function removeFolderName(s) {
-    return s.substring(s.indexOf("/", 1) + 1)
-}
-
-function replaceAll(str, find, replace) {
-    return str.replace(new RegExp(find, 'g'), replace);
-}
-
-function startGame() {
-    // Launch the Player
-    var script = document.createElement('script');
-    script.src = "player/index.js";
-    document.body.appendChild(script);
-
-    // Show the Player
-    player.style.visibility = "visible";
-    frontend.style.visibility = "hidden";
-}
 
 playButton.addEventListener('click', function(e) {
     // Game subfolder name
@@ -104,12 +118,12 @@ playButton.addEventListener('click', function(e) {
 });
 
 website.addEventListener('click', function(e) {
-	// Needs Chrome 42
+    // Needs Chrome 42
     chrome.browser.openTab({"url": "https://easyrpg.org"});
-	e.preventDefault();
+    e.preventDefault();
 });
 
-// Test for standalone mode
+/* Test for standalone mode */
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'game/index.json');
 xhr.onreadystatechange = function () {
@@ -124,7 +138,17 @@ xhr.onreadystatechange = function () {
             chrome.storage.local.get('gameBrowserDir', function (result) {
                 chrome.fileSystem.restoreEntry(result.gameBrowserDir, function (theEntry) {
                     gameBrowserEntry = theEntry;
-                    loadDirEntry(theEntry, 0);
+                    loadDirEntry(theEntry, 3, function(item, dirEntry) {
+                        //console.log("XGAME " + dirEntry.name);
+                        if (item.name.toLowerCase() == "rpg_rt.ldb") {
+                            addGame(dirEntry);
+                            return false;
+                        }
+                        return true;
+                    });
+                    /*loadDirEntry(theEntry, 1, function(item) {
+                        fsEntries[item.fullPath] = item;
+                    });*/
                 });
             });
 

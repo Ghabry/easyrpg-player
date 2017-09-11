@@ -26,56 +26,51 @@
 <body>
 <div id="frontend">
 <div id="header">
-    <div class="maxwidth">
-        <h1><a href="/" id="website" title="Website">EasyRPG</a></h1>
-    </div>
+    <h1><a href="/" id="website" title="Website">EasyRPG</a></h1>
 </div>
 
 <div id="spotlight">
-    <div class="maxwidth">
-        <div id="section-title">
-            <h1>EasyRPG Player for Chrome</h1>
+    <div id="section-title">
+        <h1>EasyRPG Player for Chrome</h1>
     </div>
     <div class="clear"></div>
-    </div>
 </div>
 
 <div id="content">
-    <div class="maxwidth">
-        <div class="info">
-            <div class="tab-container">
-                <section class="row">
-                    <ul class="tabbar">
-                        <li class="tab active"><a href="#tab-1">Game Browser</a></li>
-                        <li class="tab"><a href="#tab-2">Settings</a></li>
-                        <li class="tab"><a href="#tab-3">About</a></li>
-                    </ul>
-                    <div class="panel-container">
-                        <div id="tab-1" class="tab-pane active">
-                            <h4>Game Browser</h4>
-                            <p>
-                                <button id="play">Play!</a>
-                            </p>
-                        </div>
-                        <div id="tab-2" class="tab-pane">
-                            <h4>Settings</h4>
-                            <p>
-                                <button id="choose_dir">Choose game directory</button>
-                            </p>
-                        </div>
-                        <div id="tab-3" class="tab-pane">
-                            <h4>About</h4>
-                            <p>
-                                Lorem ipsum
-                            </p>
-                        </div>
+    <div class="info">
+        <div class="tab-container">
+            <section class="row">
+                <ul class="tabbar">
+                    <li class="tab active"><a href="#tab-1">Game Browser</a></li>
+                    <li class="tab"><a href="#tab-2">Settings</a></li>
+                    <li class="tab"><a href="#tab-3">About</a></li>
+                </ul>
+                <div class="panel-container">
+                    <div id="tab-1" class="tab-pane active">
+                        <h4>Game Browser</h4>
+                        <p>
+                            <div id="game-grid"></div>
+                            <button id="play">Play!</a>
+                        </p>
                     </div>
-                </section>
-            </div>
+                    <div id="tab-2" class="tab-pane">
+                        <h4>Settings</h4>
+                        <p>
+                            <button id="choose_dir">Choose game directory</button>
+                        </p>
+                    </div>
+                    <div id="tab-3" class="tab-pane">
+                        <h4>About</h4>
+                        <p>
+                            Lorem ipsum
+                        </p>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
 </div>
-</div>
+</div> <!-- frontend -->
 
 <div id="player">
     <div id="status">Downloading...</div>
@@ -83,6 +78,7 @@
     <canvas class="emscripten" id="canvas"></canvas>
 </div>
 
+<script src="js/helper.js"></script>
 <script src="js/app.js"></script>
 <script src="js/tabs.js"></script>
 <script src="js/emscripten.js"></script>

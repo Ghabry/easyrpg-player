@@ -22,3 +22,30 @@ html, body {
 .tab-pane.active {
 	display: block;
 }
+
+#game-grid {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+#game-grid div {
+	width: 160px;
+	height: 120px;
+}
+
+#game-grid div img {
+	max-width: 160px;
+	max-height: 120px;
+}
+
+@media all and (max-height: 460px) {
+	#spotlight {
+		display: none;
+	}
+}
+
+@media all and (max-width: 544px) {
+	#spotlight {
+		display: none;
+	}
+}
