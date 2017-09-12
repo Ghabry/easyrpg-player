@@ -23,6 +23,11 @@ function parseargs() {
                 FS.chdir(tmp[1]);
             }
         }
+
+        if (tmp[0].length == 0) {
+           continue;
+        }
+
         ret.push("--" + tmp[0]);
         if (tmp.length > 1) {
             arg = decodeURI(tmp[1]);
@@ -164,4 +169,9 @@ Module.onRuntimeInitialized = function () {
     if (typeof(Module.EASYRPG_NAME_RESOLVER) === "undefined") {
         Module.EASYRPG_NAME_RESOLVER = default_name_resolver;
     }
+}
+
+// Don't place in onRuntimeInit because is too late for arguments
+if (typeof(Module.EASYRPG_EXTRA_ARGS) !== "undefined") {
+    Module.arguments = Module.arguments.concat(Module.EASYRPG_EXTRA_ARGS());
 }
