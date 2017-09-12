@@ -84,7 +84,7 @@ var default_startup_handler = function(url_prefix, game_name, userdata, onload, 
 var default_name_resolver = function(filename, database) {
     var lf = filename.toLowerCase();
 
-    console.log("RESOLVE " + filename + " to " + database[lf]);
+    console.log("RESOLVE " + filename + " to " + database[filename]);
 
     // Looks in the index.json and returns the value
     if (database.hasOwnProperty(lf)) {
@@ -138,28 +138,30 @@ var default_wget_handler = function(url_prefix, game_name, file, userdata, onloa
     Runtime.stackRestore(stack);
 }
 
-// Use IDBFS for Save storage when the filesystem was not
-// overwritten by a custom emscripten shell file
-if (typeof(Module.EASYRPG_FS) === "undefined") {
-    Module.EASYRPG_FS = IDBFS;
-}
+Module.onRuntimeInitialized = function () {
+	// Use IDBFS for Save storage when the filesystem was not
+    // overwritten by a custom emscripten shell file
+    if (typeof(Module.EASYRPG_FS) === "undefined") {
+        Module.EASYRPG_FS = IDBFS;
+    }
 
-// Use default startup handler when not overwritten
-if (typeof(Module.EASYRPG_STARTUP) === "undefined") {
-    Module.EASYRPG_STARTUP = default_startup_handler;
-}
-var ptr = Runtime.addFunction(Module.EASYRPG_STARTUP);
-Module._set_startup_handler(ptr);
+    // Use default startup handler when not overwritten
+    if (typeof(Module.EASYRPG_STARTUP) === "undefined") {
+        Module.EASYRPG_STARTUP = default_startup_handler;
+    }
+    var ptr = Runtime.addFunction(Module.EASYRPG_STARTUP);
+    Module._set_startup_handler(ptr);
 
-// Use default file download handler when not overwritten
-if (typeof(Module.EASYRPG_WGET) === "undefined") {
-    Module.EASYRPG_WGET = default_wget_handler;
-}
-ptr = Runtime.addFunction(Module.EASYRPG_WGET);
-Module._set_request_handler(ptr);
+    // Use default file download handler when not overwritten
+    if (typeof(Module.EASYRPG_WGET) === "undefined") {
+        Module.EASYRPG_WGET = default_wget_handler;
+    }
+    ptr = Runtime.addFunction(Module.EASYRPG_WGET);
+    Module._set_request_handler(ptr);
 
-// Use default name resolver when not overwritten
-// not called from C code, no pointer indirection needed
-if (typeof(Module.EASYRPG_NAME_RESOLVER) === "undefined") {
-    Module.EASYRPG_NAME_RESOLVER = default_name_resolver;
+    // Use default name resolver when not overwritten
+    // not called from C code, no pointer indirection needed
+    if (typeof(Module.EASYRPG_NAME_RESOLVER) === "undefined") {
+        Module.EASYRPG_NAME_RESOLVER = default_name_resolver;
+    }
 }
