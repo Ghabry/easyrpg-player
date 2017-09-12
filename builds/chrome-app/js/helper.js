@@ -43,5 +43,4 @@ function startGame() {
 
     // Show the Player
     player.style.visibility = "visible";
-    frontend.remove();//frontend.style.visibility = "hidden";
 }

@@ -192,3 +192,7 @@ var EASYRPG_CHROME_APP_FS = {
 };
 
 Module.EASYRPG_FS = EASYRPG_CHROME_APP_FS;
+
+Module.EASYRPG_EXTRA_ARGS = function() {
+    return ["--encoding", selected_game_encoding];
+}

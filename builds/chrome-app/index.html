@@ -71,6 +71,25 @@
     <canvas class="emscripten" id="canvas"></canvas>
 </div>
 
+<div class="overlay hidden" id="encoding">
+    <div class="centered">
+        Select Region:
+        <label><input type="radio" name="encoding" data-encoding="auto"> Autodetect Region (Recommended)</label>
+        <label><input type="radio" name="encoding" data-encoding="1252"> Western European</label>
+        <label><input type="radio" name="encoding" data-encoding="1250"> Central/Eastern European</label>
+        <label><input type="radio" name="encoding" data-encoding="1251"> Cyrillic</label>
+        <label><input type="radio" name="encoding" data-encoding="932"> Japanese</label>
+        <label><input type="radio" name="encoding" data-encoding="949"> Korean</label>
+        <label><input type="radio" name="encoding" data-encoding="936"> Chinese (Simplified)</label>
+        <label><input type="radio" name="encoding" data-encoding="950"> Chinese (Traditional)</label>
+        <label><input type="radio" name="encoding" data-encoding="1253"> Greek</label>
+        <label><input type="radio" name="encoding" data-encoding="1254"> Turkish</label>
+        <label><input type="radio" name="encoding" data-encoding="1257"> Baltic</label>
+
+        <button id="encoding-ok" type="button">OK</button>
+    </div>
+</div>
+
 <script src="js/helper.js"></script>
 <script src="js/app.js"></script>
 <script src="js/tabs.js"></script>

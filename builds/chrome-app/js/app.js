@@ -19,6 +19,10 @@ var player = document.querySelector('#player');
 var website = document.querySelector('#website');
 // Game list <div>
 var gamelist = document.querySelector('#game-grid');
+// Contains the game that was selected in the game browser
+var selected_game = undefined;
+// Contains the encoding of the running game
+var selected_game_encoding = undefined;
 
 // Hide both divs on startup
 frontend.style.visibility = "hidden";
@@ -71,35 +75,48 @@ function loadDirEntry(dirEntry, max_depth, callback, finished) {
     }
 }
 
-function startGameHandler(element) {
-    item = element.target.getAttribute("data-name");
-    currentFolderName = gameEntries[item].fullPath;
+function startGameHandler(evt) {
+    frontend.remove(); //frontend.style.visibility = "hidden";
 
-    loadDirEntry(gameEntries[item], 2, function(i) {
-        fsEntries[i.fullPath] = i;
-        return true;
+    selected_game = evt.target.getAttribute("data-name");
+    currentFolderName = gameEntries[selected_game].fullPath;
+
+    getEncodingFor(selected_game, function(e) {
+        selected_game_encoding = e;
+        loadDirEntry(gameEntries[selected_game], 2, function(i) {
+            fsEntries[i.fullPath] = i;
+            return true;
+        }, function() {
+            startGame();
+        });
     });
-
-    startGame();
 }
 
 function addGame(dirEntry) {
     gameEntries[dirEntry.fullPath] = dirEntry;
 
     var elem = document.createElement("div");
+    elem.classList.add("clickable");
     gamelist.appendChild(elem);
     elem.setAttribute("data-name", dirEntry.fullPath);
 
     var img = document.createElement("img");
     img.src = '/assets/notitle.png';
     img.setAttribute("data-name", dirEntry.fullPath);
+    img.onclick = startGameHandler;
     elem.appendChild(img);
-    elem.onclick = startGameHandler;
 
     var txt = document.createElement("div");
     txt.setAttribute("data-name", dirEntry.fullPath);
     txt.innerHTML = dirEntry.name;
+    txt.onclick = startGameHandler;
     elem.appendChild(txt);
+
+    var settings = document.createElement("div");
+    settings.setAttribute("data-name", dirEntry.fullPath);
+    settings.innerHTML = "Settings"
+    settings.onclick = openEncodingSettings;
+    elem.appendChild(settings);
 
     dirEntry.getDirectory('Title', {}, function(titleEntry) {
         loadDirEntry(titleEntry, 0, function(item) {
@@ -184,6 +201,62 @@ website.addEventListener('click', function(e) {
 document.querySelector('#fs_button').addEventListener("click", function() {
     // Fullscreen handling
     Browser.requestFullScreen();
+});
+
+/* Encoding handling */
+var overlay = document.getElementById("encoding");
+
+function showModal() {
+    overlay.classList.remove("hidden");
+}
+
+function hideModal() {
+    overlay.classList.add("hidden");
+}
+
+overlay.addEventListener('click', function(e) {
+    if (e.target == overlay) {
+        hideModal();
+    }
+});
+
+function getEncodingFor(name, callback) {
+    var key = "encoding/" + name;
+
+    // Retrieve current encoding setting
+    chrome.storage.local.get(key, function (result) {
+        if (result[key] == undefined) {
+            callback("auto");
+        } else {
+            callback(result[key]);
+        }
+    });
+}
+
+function openEncodingSettings(evt) {
+    selected_game = evt.target.getAttribute("data-name");
+
+    // Retrieve current encoding setting
+    getEncodingFor(selected_game, function (result) {
+        document.querySelectorAll('[data-encoding="' + result + '"]')[0].checked = true;
+
+        showModal();
+    });
+}
+
+document.getElementById("encoding-ok").addEventListener("click", function(e) {
+    var res = document.querySelectorAll('[name=encoding]');
+    for (var i = 0; i < res.length; ++i) {
+        if (res[i].checked) {
+            var key = "encoding/" + selected_game;
+            var obj = {}
+            obj[key] = res[i].getAttribute("data-encoding");
+            chrome.storage.local.set(obj);
+            break;
+        }
+    }
+
+    hideModal();
 });
 
 /* Test for standalone mode */
