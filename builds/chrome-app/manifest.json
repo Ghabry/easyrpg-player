@@ -19,6 +19,7 @@
       "directory"
     ]},
     "storage",
-    "browser"
+    "browser",
+    "app.window.fullscreen"
   ]
 }

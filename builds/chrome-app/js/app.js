@@ -29,7 +29,9 @@ function errorHandler(e) {
     console.error(e);
 }
 
-function loadDirEntry(dirEntry, max_depth, callback) {
+var remaining_dir_entries = 0;
+
+function loadDirEntry(dirEntry, max_depth, callback, finished) {
     if (max_depth < 0) {
         // Prevent deep recursion
         return;
@@ -46,7 +48,7 @@ function loadDirEntry(dirEntry, max_depth, callback) {
                     for (var i = 0; i < results.length; ++i) {
                         var item = results[i];
                         if (item.isDirectory) {
-                            loadDirEntry(item, max_depth - 1, callback);
+                            loadDirEntry(item, max_depth - 1, callback, finished);
                         } else {
                             if (!callback(item, dirEntry)) {
                                 break;
@@ -54,11 +56,17 @@ function loadDirEntry(dirEntry, max_depth, callback) {
                         }
                     }
                     readEntries();
+                } else {
+                    --remaining_dir_entries;
+                    if (remaining_dir_entries == 0 && finished) {
+                        finished(dirEntry);
+                    }
                 }
             }, errorHandler);
         };
 
         // Start reading dirs
+        ++remaining_dir_entries;
         readEntries();
     }
 }
@@ -129,6 +137,24 @@ function addGame(dirEntry) {
     });
 }
 
+function searchForGames(theEntry) {
+    var entries = [];
+    loadDirEntry(theEntry, 3, function(item, dirEntry) {
+        if (item.name.toLowerCase() == "rpg_rt.ldb") {
+            entries.push(dirEntry);
+            return false;
+        }
+        return true;
+    }, function() {
+        entries.sort(function(a, b) {
+            return a.fullPath.localeCompare(b.fullPath);
+        });
+        entries.forEach(function(x) {
+            addGame(x);
+        });
+    });
+}
+
 /* Event handlers */
 chooseDirButton.addEventListener('click', function(e) {
     chrome.fileSystem.chooseEntry({type: 'openDirectory'}, function(theEntry) {
@@ -144,14 +170,8 @@ chooseDirButton.addEventListener('click', function(e) {
             {'gameBrowserDir': chrome.fileSystem.retainEntry(theEntry)}
         );
 
-        loadDirEntry(theEntry, 3, function(item, dirEntry) {
-            //console.log("XGAME " + dirEntry.name);
-            if (item.name.toLowerCase() == "rpg_rt.ldb") {
-                addGame(dirEntry);
-                return false;
-            }
-            return true;
-        });
+        removeChildren(gamelist);
+        searchForGames(gameBrowserEntry);
     });
 });
 
@@ -159,6 +179,11 @@ website.addEventListener('click', function(e) {
     // Needs Chrome 42
     chrome.browser.openTab({"url": "https://easyrpg.org"});
     e.preventDefault();
+});
+
+document.querySelector('#fs_button').addEventListener("click", function() {
+    // Fullscreen handling
+    Browser.requestFullScreen();
 });
 
 /* Test for standalone mode */
@@ -176,14 +201,7 @@ xhr.onreadystatechange = function () {
             chrome.storage.local.get('gameBrowserDir', function (result) {
                 chrome.fileSystem.restoreEntry(result.gameBrowserDir, function (theEntry) {
                     gameBrowserEntry = theEntry;
-                    loadDirEntry(theEntry, 3, function(item, dirEntry) {
-                        //console.log("XGAME " + dirEntry.name);
-                        if (item.name.toLowerCase() == "rpg_rt.ldb") {
-                            addGame(dirEntry);
-                            return false;
-                        }
-                        return true;
-                    });
+                    searchForGames(gameBrowserEntry);
                 });
             });
 

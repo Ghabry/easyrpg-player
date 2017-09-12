@@ -2,6 +2,15 @@
 var myTabs = document.querySelectorAll("ul.tabbar > li");
 
 function myTabClicks(tabClickEvent) {
+	tabClickEvent.preventDefault();
+
+	var anchorReference = tabClickEvent.target;
+	var activePaneId = anchorReference.getAttribute("href");
+	var activePane = document.querySelector(activePaneId);
+
+	if (activePane == undefined) {
+		return;
+	}
 
 	for (var i = 0; i < myTabs.length; i++) {
 		myTabs[i].classList.remove("active");
@@ -11,20 +20,13 @@ function myTabClicks(tabClickEvent) {
 
 	clickedTab.classList.add("active");
 
-	tabClickEvent.preventDefault();
-
 	var myContentPanes = document.querySelectorAll(".tab-pane");
 
 	for (i = 0; i < myContentPanes.length; i++) {
 		myContentPanes[i].classList.remove("active");
 	}
 
-	var anchorReference = tabClickEvent.target;
-	var activePaneId = anchorReference.getAttribute("href");
-	var activePane = document.querySelector(activePaneId);
-
 	activePane.classList.add("active");
-
 }
 
 for (i = 0; i < myTabs.length; i++) {

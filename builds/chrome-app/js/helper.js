@@ -29,6 +29,12 @@ function readFileToArrayBuffer(fileEntry, callback) {
     });
 }
 
+function removeChildren(node) {
+    while (node.firstChild) {
+        node.removeChild(node.firstChild);
+    }
+}
+
 function startGame() {
     // Launch the Player
     var script = document.createElement('script');
@@ -37,5 +43,5 @@ function startGame() {
 
     // Show the Player
     player.style.visibility = "visible";
-    frontend.style.visibility = "hidden";
+    frontend.remove();//frontend.style.visibility = "hidden";
 }
