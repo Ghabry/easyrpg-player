@@ -35,6 +35,34 @@ function removeChildren(node) {
     }
 }
 
+function showDialog(message) {
+    var root = document.createElement("div");
+    root.classList.add("overlay");
+    root.addEventListener('click', function(e) {
+        if (e.target == root) {
+            root.remove();
+        }
+    });
+
+    var child = document.createElement("div");
+    child.classList.add("centered");
+    child.innerHTML = message;
+
+    var button = document.createElement("button");
+    button.addEventListener("click", function() {
+        root.remove();
+    });
+    button.setAttribute("type", "button");
+    button.innerHTML = "OK";
+
+    root.appendChild(child);
+    child.appendChild(button);
+
+    document.getElementsByTagName("body")[0].appendChild(root);
+
+    showModal(root);
+}
+
 function startGame() {
     // Launch the Player
     var script = document.createElement('script');

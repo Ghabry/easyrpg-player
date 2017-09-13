@@ -11,6 +11,8 @@ var standaloneMode = false;
 
 // Choose game button
 var chooseDirButton = document.querySelector('#choose_dir');
+// Element that contains path selected by choose game button
+var chooseDirButtonText = document.querySelector('#choose_dir_path');
 // Frontend <div>
 var frontend = document.querySelector('#frontend');
 // Player <div>
@@ -100,6 +102,8 @@ function startGameHandler(evt) {
         loadDirEntry(gameEntries[selected_game], 2, function(i) {
             fsEntries[i.fullPath] = i;
             return true;
+        }, function() {
+            startGame();
         });
     });
 }
@@ -174,10 +178,9 @@ function toggleGameBrowserState(new_state) {
     };
 
     game_browser.children[new_state].classList.remove("hidden");
-    console.log(new_state);
 }
 
-function searchForGames(theEntry) {
+function searchForGames(theEntry, finish) {
     toggleGameBrowserState(gb_state.Search);
 
     var entries = [];
@@ -202,6 +205,10 @@ function searchForGames(theEntry) {
         entries.forEach(function(x) {
             addGame(x);
         });
+
+        if (finish) {
+            finish(entries);
+        }
     });
 }
 
@@ -214,6 +221,7 @@ chooseDirButton.addEventListener('click', function(e) {
         }
 
         gameBrowserEntry = theEntry;
+        chooseDirButtonText.innerHTML = gameBrowserEntry.fullPath;
 
         // use local storage to retain access to this file
         chrome.storage.local.set(
@@ -221,7 +229,13 @@ chooseDirButton.addEventListener('click', function(e) {
         );
 
         removeChildren(gamelist);
-        searchForGames(gameBrowserEntry);
+        searchForGames(gameBrowserEntry, function(entries) {
+            if (entries.length == 1 && entries[0].fullPath == gameBrowserEntry.fullPath) {
+                showDialog("You selected a directory that directly contains a game.<br>Please select the parent directory to include all games.");
+            } else if (entries.length == 0) {
+                showDialog("You selected a directory that doesn't contain any games.<br>See the help page for further information.");
+            }
+        });
     });
 });
 
@@ -237,18 +251,18 @@ document.querySelector('#fs_button').addEventListener("click", function() {
 });
 
 /* Encoding handling */
-var overlay = document.getElementById("encoding");
+var enc_overlay = document.getElementById("encoding");
 
 function showModal() {
-    overlay.classList.remove("hidden");
+    enc_overlay.remove("hidden");
 }
 
 function hideModal() {
-    overlay.classList.add("hidden");
+    enc_overlay.add("hidden");
 }
 
-overlay.addEventListener('click', function(e) {
-    if (e.target == overlay) {
+enc_overlay.addEventListener('click', function(e) {
+    if (e.target == enc_overlay) {
         hideModal();
     }
 });
@@ -307,6 +321,8 @@ xhr.onreadystatechange = function () {
             chrome.storage.local.get('gameBrowserDir', function (result) {
                 chrome.fileSystem.restoreEntry(result.gameBrowserDir, function (theEntry) {
                     gameBrowserEntry = theEntry;
+                    chooseDirButtonText.innerHTML = gameBrowserEntry.fullPath;
+
                     searchForGames(gameBrowserEntry);
                 });
             });
