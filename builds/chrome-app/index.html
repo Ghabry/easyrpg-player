@@ -34,17 +34,24 @@
                 </ul>
                 <div class="panel-container">
                     <div id="tab-1" class="tab-pane active">
-                        <p>
-                            <div id="game-grid"></div>
-                        </p>
+                        <div id="game-browser">
+                            <div class="hidden">No games available. Please configure the game directory in the settings.</div>
+                            <div class="hidden">Searching games...</div>
+                            <div id="game-grid" class="hidden"></div>
+                        </div>
                     </div>
                     <div id="tab-2" class="tab-pane">
-                        <p>
+                        <div>
                             <button id="choose_dir">Choose game directory</button>
-<!--                        Select RTP2k
+<!--
+Show "You selected a game dir, pls select one level above"
+
+How to handle RTP2k and 2k3
+
+Select RTP2k
 
                             Select RTP2k3-->
-                        </p>
+                        </div>
                     </div>
                     <div id="tab-3" class="tab-pane">
                         <p>

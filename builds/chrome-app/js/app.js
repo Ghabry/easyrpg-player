@@ -24,6 +24,12 @@ var selected_game = undefined;
 // Contains the encoding of the running game
 var selected_game_encoding = undefined;
 
+var gb_state = {
+    "NoGames": 0,
+    "Search": 1,
+    "Games": 2
+};
+
 // Hide both divs on startup
 frontend.style.visibility = "hidden";
 player.style.visibility = "hidden";
@@ -36,6 +42,14 @@ function errorHandler(e) {
 var remaining_dir_entries = 0;
 
 function loadDirEntry(dirEntry, max_depth, callback, finished) {
+    if (dirEntry == undefined) {
+        if (remaining_dir_entries == 0 && finished) {
+            finished(dirEntry);
+        }
+
+        return;
+    }
+
     if (max_depth < 0) {
         // Prevent deep recursion
         return;
@@ -86,8 +100,6 @@ function startGameHandler(evt) {
         loadDirEntry(gameEntries[selected_game], 2, function(i) {
             fsEntries[i.fullPath] = i;
             return true;
-        }, function() {
-            startGame();
         });
     });
 }
@@ -154,8 +166,22 @@ function addGame(dirEntry) {
     });
 }
 
+function toggleGameBrowserState(new_state) {
+    var game_browser = document.getElementById("game-browser");
+
+    for (var i = 0; i < game_browser.children.length; ++i) {
+        game_browser.children[i].classList.add("hidden");
+    };
+
+    game_browser.children[new_state].classList.remove("hidden");
+    console.log(new_state);
+}
+
 function searchForGames(theEntry) {
+    toggleGameBrowserState(gb_state.Search);
+
     var entries = [];
+
     loadDirEntry(theEntry, 3, function(item, dirEntry) {
         if (item.name.toLowerCase() == "rpg_rt.ldb") {
             entries.push(dirEntry);
@@ -166,6 +192,13 @@ function searchForGames(theEntry) {
         entries.sort(function(a, b) {
             return a.fullPath.localeCompare(b.fullPath);
         });
+
+        if (entries.length == 0) {
+            toggleGameBrowserState(gb_state.NoGames);
+        } else {
+            toggleGameBrowserState(gb_state.Games);
+        }
+
         entries.forEach(function(x) {
             addGame(x);
         });
