@@ -62,8 +62,6 @@ var default_startup_handler = function(url_prefix, game_name, userdata, onload, 
 
     var request_url = _url_prefix + _game_name + "/";
 
-    console.log("STARTUP " + request_url);
-
     var req = new XMLHttpRequest();
     req.open("GET", request_url + "index.json", true);
 
@@ -88,8 +86,6 @@ var default_startup_handler = function(url_prefix, game_name, userdata, onload, 
 
 var default_name_resolver = function(filename, database) {
     var lf = filename.toLowerCase();
-
-    console.log("RESOLVE " + filename + " to " + database[filename]);
 
     // Looks in the index.json and returns the value
     if (database.hasOwnProperty(lf)) {
@@ -118,8 +114,6 @@ var default_wget_handler = function(url_prefix, game_name, file, userdata, onloa
     }
 
     request_url += target_file;
-
-    console.log("WGET " + request_url);
 
     var replaceAll = function(target, search, replacement) {
         return target.replace(new RegExp(search, 'g'), replacement);

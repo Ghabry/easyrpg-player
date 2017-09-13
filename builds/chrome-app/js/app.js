@@ -254,11 +254,11 @@ document.querySelector('#fs_button').addEventListener("click", function() {
 var enc_overlay = document.getElementById("encoding");
 
 function showModal() {
-    enc_overlay.remove("hidden");
+    enc_overlay.classList.remove("hidden");
 }
 
 function hideModal() {
-    enc_overlay.add("hidden");
+    enc_overlay.classList.add("hidden");
 }
 
 enc_overlay.addEventListener('click', function(e) {
