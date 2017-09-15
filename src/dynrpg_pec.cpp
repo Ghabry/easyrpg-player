@@ -36,6 +36,8 @@ struct PecAttribute {
 	int frame_width = 0;
 	int frame_height = 0;
 	int current_frame = 0;
+	BitmapRef original_bitmap = nullptr;
+	BitmapRef frame_bitmap = nullptr;
 };
 
 static bool SetColor(const dyn_arg_list& args) {
@@ -370,9 +372,10 @@ void set_frame(Sprite* sprite, const PecAttribute& attrib) {
 		sx = attrib.current_frame % attrib.frame_cols * attrib.frame_width;
 		sy = attrib.current_frame / attrib.frame_cols * attrib.frame_height;
 	}
-	Rect r;
-	r.Set(sx, sy, attrib.frame_width, attrib.frame_height);
-	sprite->SetSrcRect(r);
+	Rect r(sx, sy, attrib.frame_width, attrib.frame_height);
+	attrib.frame_bitmap->Clear();
+	attrib.frame_bitmap->Blit(0, 0, *attrib.original_bitmap, r, Opacity::opaque);
+	sprite->SetBitmap(attrib.frame_bitmap);
 }
 
 static bool CreateSpritesheet(const dyn_arg_list& args) {
@@ -399,6 +402,8 @@ static bool CreateSpritesheet(const dyn_arg_list& args) {
 	a.frame_height = height;
 	a.frame_cols = sprite->GetBitmap()->GetWidth() / width;
 	a.frame_rows = sprite->GetBitmap()->GetHeight() / height;
+	a.original_bitmap = sprite->GetBitmap();
+	a.frame_bitmap = Bitmap::Create(a.frame_width, a.frame_height);
 	attrib[picture_id] = a;
 
 	set_frame(sprite, a);
