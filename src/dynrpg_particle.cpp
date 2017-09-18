@@ -22,6 +22,7 @@
 #include <cmath>
 #include <map>
 
+#include "async_handler.h"
 #include "drawable.h"
 #include "dynrpg_particle.h"
 #include "baseui.h"
@@ -46,6 +47,7 @@ void linear_fade_texture(uint32_t color0, uint32_t color1, int fade, int delay, 
 class ParticleEffect : Drawable {
 public:
 	ParticleEffect();
+	virtual ~ParticleEffect();
 	virtual void Draw() {}
 	virtual void clear() {}
 	virtual void setSimul(int newSimul) {}
@@ -131,6 +133,9 @@ protected:
 	const static int default_priority = Priority_Timer + layer_mask;
 
 	int z = default_priority;
+
+
+
 };
 
 
@@ -220,10 +225,18 @@ alpha(0), theta(0), fade(30), delay(0), amount(50) {
 
 }
 
+ParticleEffect::~ParticleEffect() {
+	Graphics::RemoveDrawable(this);
+}
+
 void ParticleEffect::setTexture(std::string filename) {
+	// When the name ends with .png, remove it
+	if (Utils::EndsWith(filename, ".png")) {
+		filename = filename.substr(0, filename.length() - 4);
+	}
 	FileRequestAsync* req = AsyncHandler::RequestFile("Picture", filename);
 	req->Start();
-	Cache::Picture(filename, true);
+	image = Cache::Picture(filename, true);
 	linear_fade_texture(color0, color1, fade, delay, r, g, b);
 }
 
@@ -953,6 +966,13 @@ void Burst::draw_texture(int cam_x, int cam_y) {
 }
 
 void Burst::setTexture(std::string filename) {
+	// When the name ends with .png, remove it
+	if (Utils::EndsWith(filename, ".png")) {
+		filename = filename.substr(0, filename.length() - 4);
+	}
+	FileRequestAsync* req = AsyncHandler::RequestFile("Picture", filename);
+	req->Start();
+
 	alloc_rgb();
 	image = Cache::Picture(filename, true);
 	draw_function = &Burst::draw_texture;
@@ -1381,8 +1401,8 @@ static bool set_angle(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_angle")
 
 	DYNRPG_CHECK_ARG_LENGTH(3)
-	DYNRPG_GET_STR_ARG(0, tag)
 
+	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_INT_ARG(1, val)
 	DYNRPG_GET_INT_ARG(2, val2)
 
@@ -1395,10 +1415,9 @@ static bool set_angle(const dyn_arg_list& args) {
 
 static bool set_secondary_angle(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_set_secondary_angle")
-
 	DYNRPG_CHECK_ARG_LENGTH(2)
-	DYNRPG_GET_STR_ARG(0, tag)
 
+	DYNRPG_GET_STR_ARG(0, tag)
 	DYNRPG_GET_INT_ARG(1, val)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
@@ -1443,6 +1462,7 @@ static bool unload_texture(const dyn_arg_list& args) {
 	DYNRPG_FUNCTION("pfx_unload_texture")
 
 	DYNRPG_CHECK_ARG_LENGTH(1)
+
 	DYNRPG_GET_STR_ARG(0, tag)
 
 	ptag_t::iterator itr = pfx_list.find(tag);
