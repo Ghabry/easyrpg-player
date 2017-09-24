@@ -114,6 +114,7 @@ protected:
 	uint8_t* g;
 	uint8_t* b;
 	BitmapRef image;
+	BitmapRef tone_image;
 
 	float beta;
 	float alpha;
@@ -133,14 +134,9 @@ protected:
 	const static int default_priority = Priority_Timer + layer_mask;
 
 	int z = default_priority;
-
-
-
 };
 
-
 void linear_fade(ParticleEffect* effect, uint32_t color0, uint32_t color1, int fade, int delay) {
-
 	std::array<Color, 256> palette;
 	float r = (color0 >> 16) & 0xff;
 	float g = (color0 >> 8) & 0xff;
@@ -220,9 +216,9 @@ alpha(0), theta(0), fade(30), delay(0), amount(50) {
 	isScreenRelative = false;
 
 	image = Bitmap::Create(1, 1, true);
+	tone_image = Bitmap::Create(image->GetWidth(), image->GetHeight(), true);
 
 	Graphics::RegisterDrawable(this);
-
 }
 
 ParticleEffect::~ParticleEffect() {
@@ -237,6 +233,7 @@ void ParticleEffect::setTexture(std::string filename) {
 	FileRequestAsync* req = AsyncHandler::RequestFile("Picture", filename);
 	req->Start();
 	image = Cache::Picture(filename, true);
+	tone_image = Bitmap::Create(image->GetWidth(), image->GetHeight(), true);
 	linear_fade_texture(color0, color1, fade, delay, r, g, b);
 }
 
@@ -563,6 +560,11 @@ void Stream::draw_block_texture(int ref, uint8_t n, uint8_t z, uint8_t c0, int16
 	float w = image->width();
 	float h = image->height();
 	for (uint8_t i = 0; i < n; i++) {
+		// FIXME: Order is bgr instead of rgb
+		Tone tone(b[i + c0], g[i + c0], r[i + c0], 128);
+		int alpha = ( 255 - da * ( i + c0 ) );
+		tone_image->ToneBlit(0, 0, *image, image->GetRect(), tone, Opacity::opaque);
+
 		int idx = ref + z * amount;
 		float tx, ty, tsqr;
 		for (int j = 0; j < amount; j++) {
@@ -575,7 +577,7 @@ void Stream::draw_block_texture(int ref, uint8_t n, uint8_t z, uint8_t c0, int16
 			dy[idx] += gy + afc * ty / tsqr;
 			s[idx] += ds;
 			Rect dst_rect(x[idx] - cam_x - s[idx] / 2, y[idx] - cam_y - s[idx] / 2, w*s[idx], h*s[idx]);
-			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *image, image->GetRect(), Opacity::opaque);
+			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *tone_image, tone_image->GetRect(), Opacity::opaque);
 			idx++;
 		}
 		z = (z + 1) % fade;
@@ -596,6 +598,7 @@ void Stream::setTexture(std::string filename) {
 	req->Start();
 	alloc_rgb();
 	image = Cache::Picture(filename, true);
+	tone_image = Bitmap::Create(image->GetWidth(), image->GetHeight(), true);
 	draw_block = &Stream::draw_block_texture;
 	col_mode = LINEAR_TEXTURE;
 	update_color();
@@ -947,6 +950,13 @@ void Burst::draw_texture(int cam_x, int cam_y) {
 	float h = image->height();
 	for (int i = 0; i < simulCnt; i++) {
 		uint8_t idx = itr[i];
+
+		// FIXME: Order is bgr instead of rgb
+		Tone tone(b[idx], g[idx], r[idx], 128);
+		int alpha = ( 255 - da * idx );
+		tone_image->Clear();
+		tone_image->ToneBlit(0, 0, *image, image->GetRect(), tone, Opacity::opaque);
+
 		itr[i]++;
 		float tx, ty, tsqr;
 		for (int j = i * amount; j < (i + 1) * amount; j++) {
@@ -959,10 +969,9 @@ void Burst::draw_texture(int cam_x, int cam_y) {
 			dy[j] += gy + afc * ty / tsqr;
 			s[j] += ds;
 			Rect dst_rect(x[j] - cam_x - s[j] / 2, y[j] - cam_y - s[j] / 2, w*s[j], h*s[j]);
-			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *image, image->GetRect(), Opacity::opaque);
+			DisplayUi->GetDisplaySurface()->StretchBlit(dst_rect, *tone_image, tone_image->GetRect(), alpha);
 		}
 	}
-
 }
 
 void Burst::setTexture(std::string filename) {
@@ -975,6 +984,7 @@ void Burst::setTexture(std::string filename) {
 
 	alloc_rgb();
 	image = Cache::Picture(filename, true);
+	tone_image = Bitmap::Create(image->GetWidth(), image->GetHeight(), true);
 	draw_function = &Burst::draw_texture;
 	col_mode = LINEAR_TEXTURE;
 	update_color();
