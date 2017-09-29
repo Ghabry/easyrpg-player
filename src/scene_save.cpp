@@ -49,6 +49,10 @@ void Scene_Save::Start() {
 }
 
 void Scene_Save::Action(int index) {
+	if (!filesystem) {
+		return;
+	}
+
 	std::stringstream ss;
 	ss << "Save" << (index <= 8 ? "0" : "") << (index + 1) << ".lsd";
 
@@ -91,10 +95,10 @@ void Scene_Save::Action(int index) {
 	Game_Map::PrepareSave();
 
 	std::string save_file = ss.str();
-	std::string filename = FileFinder::FindDefault(*tree, ss.str());
+	std::string filename = filesystem->FindDefault(ss.str());
 
 	if (filename.empty()) {
-		filename = FileFinder::MakePath((*tree).directory_path, save_file);
+		filename = save_file; // FIXME? Is this correct
 	}
 
 

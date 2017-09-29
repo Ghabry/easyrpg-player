@@ -76,15 +76,19 @@ protected:
 	virtual std::streambuf::pos_type seekoff(std::streambuf::off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) override{
 		std::streambuf::off_type position = 0;
 		switch (way) {
-		case std::ios_base::cur:
-			position = (m_filelength - (m_remaining + (egptr() - gptr()))) + offset;
-			break;
-		case std::ios_base::beg:
-			position = offset;
-			break;
-		case std::ios_base::end:
-			position = m_filelength + offset;
-			break;
+			case std::ios_base::cur:
+				position = (m_filelength - (m_remaining + (egptr() - gptr()))) + offset;
+				break;
+			case std::ios_base::beg:
+				position = offset;
+				break;
+			case std::ios_base::end:
+				position = m_filelength + offset;
+				break;
+			default:
+				// Fixes clang warning "enumeration value '_S_ios_seekdir_end' not handled in switch"
+				assert(false);
+				break;
 		}
 		if (position < 0) {
 			position = 0;
@@ -201,21 +205,27 @@ protected:
 	}
 
 	std::streambuf::int_type pbackfail(int_type ch) override {
+		printf("%p %p %p\n", eback(), gptr(), egptr());
+
 			return traits_type::eof();
 	}
 
 	virtual std::streambuf::pos_type seekoff(std::streambuf::off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) override {
 		std::streambuf::off_type position = 0;
 		switch (way) {
-		case std::ios_base::cur:
-			position = ( m_filelength - (m_remaining+(egptr()-gptr()))) + offset;
-			break;
-		case std::ios_base::beg:
-			position = offset;
-			break;
-		case std::ios_base::end:
-			position = m_filelength + offset;
-			break;
+			case std::ios_base::cur:
+				position = ( m_filelength - (m_remaining+(egptr()-gptr()))) + offset;
+				break;
+			case std::ios_base::beg:
+				position = offset;
+				break;
+			case std::ios_base::end:
+				position = m_filelength + offset;
+				break;
+			default:
+				// Fixes clang warning "enumeration value '_S_ios_seekdir_end' not handled in switch"
+				assert(false);
+				break;
 		}
 		if (position < 0) {
 			position = 0;
@@ -258,7 +268,6 @@ protected:
 			underflow();
 		}
 		first_buffer_entry = (m_filelength - (m_remaining + (egptr() - eback())));
-
 
 		//Now set the current pointer to that position
 		setg(&m_outbuffer[0], &m_outbuffer[0] + (new_offset - first_buffer_entry), egptr());

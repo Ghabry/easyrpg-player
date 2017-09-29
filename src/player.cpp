@@ -352,8 +352,8 @@ void Player::Exit() {
 	Player::ResetGameObjects();
 	Font::Dispose();
 	Graphics::Quit();
-	FileFinder::Quit();
 	Output::Quit();
+	FileFinder::Quit();
 	DisplayUi.reset();
 
 #ifdef PSP2
@@ -620,8 +620,7 @@ void Player::CreateGameObjects() {
 
 	LoadDatabase();
 
-	{ //Scope lifetime of variables for ini parsing
-
+	{ // Scope lifetime of variables for ini parsing
 		std::string ini_file = FileFinder::FindDefault(INI_NAME);
 		auto ini_stream = FileFinder::openUTF8Input(ini_file, std::ios_base::in);
 		INIReader ini(*ini_stream);
@@ -725,8 +724,8 @@ void Player::LoadDatabase() {
 	// Load Database
 	Data::Clear();
 
-	if (!FileFinder::IsRPG2kProject(*FileFinder::GetDirectoryTree()) &&
-		!FileFinder::IsEasyRpgProject(*FileFinder::GetDirectoryTree())) {
+	if (!FileFinder::IsRPG2kProject(*FileFinder::GetGameFilesystem()) &&
+		!FileFinder::IsEasyRpgProject(*FileFinder::GetGameFilesystem())) {
 		// Unlikely to happen because of the game browser only launches valid games
 
 		Output::Debug("%s is not a supported project", Main_Data::GetProjectPath().c_str());
@@ -857,6 +856,7 @@ std::string Player::GetEncoding() {
 
 	// command line > ini > detection > current locale
 	if (encoding.empty()) {
+		// FIXME: broken
 		std::string ini = FileFinder::FindDefault(INI_NAME);
 		auto ini_stream = FileFinder::openUTF8Input(ini, std::ios_base::in );
 		encoding = ReaderUtil::GetEncoding(*ini_stream);

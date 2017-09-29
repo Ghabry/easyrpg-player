@@ -76,7 +76,11 @@ OSFilesystem::~OSFilesystem() {
 }
 
 std::string OSFilesystem::MakeAbsolutePath(std::string const & path) const {
-	return m_rootPath + path;
+	if (path != ".") {
+		return m_rootPath + "/" + path;
+	} else {
+		return m_rootPath;
+	}
 }
 
 bool OSFilesystem::IsFile(std::string const & path) const {

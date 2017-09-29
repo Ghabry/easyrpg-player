@@ -64,7 +64,13 @@ namespace FileFinder {
 		std::string directory_path;
 		string_map files, directories;
 		sub_members_type sub_members;
+		std::unique_ptr<Filesystem> filesystem;
 	}; // struct DirectoryTree
+
+	std::string FindFile(FileFinder::DirectoryTree const& tree,
+						 const std::string& dir,
+						 const std::string& name,
+						 char const* exts[]);
 
 	/**
 	 * Finds an image file.
@@ -96,25 +102,6 @@ namespace FileFinder {
 	std::string FindDefault(const std::string& name);
 
 	/**
-	 * Finds a file in a subdirectory of a custom directory tree.
-	 *
-	 * @param tree Project tree to search
-	 * @param dir directory to check
-	 * @param name the path and name
-	 * @return path to file.
-	 */
-	std::string FindDefault(const DirectoryTree& tree, const std::string& dir, const std::string& name);
-
-	/**
-	 * Finds a file from the root of a custom project tree.
-	 *
-	 * @param tree Project tree to search
-	 * @param name the path and name
-	 * @return path to file.
-	 */
-	std::string FindDefault(const DirectoryTree& tree, const std::string& name);
-
-	/**
 	 * Finds a music file.
 	 * Searches through the Music folder of the current RPG Maker game and
 	 * the RTP directories.
@@ -144,30 +131,12 @@ namespace FileFinder {
 	std::string FindFont(const std::string& name);
 
 	/**
-	 * Opens a file specified by a UTF-8 string.
-	 *
-	 * @param name_utf8 filename in UTF-8.
-	 * @param mode ("r", "w", etc).
-	 * @return FILE*.
+	 * An input stream annotated with the size of the connected file
 	 */
-	/*FILE* fopenUTF8(const std::string& name_utf8, char const* mode);*/
-
-	/**
-	 * Creates stream from UTF-8 file name.
-	 *
-	 * @param name UTF-8 string file name.
-	 * @param m stream mode.
-	 * @return NULL if open failed.
-	 */
-	std::shared_ptr<std::iostream> openUTF8(const std::string& name, std::ios_base::openmode m);
-
-	/**
-	* A input stream anotated with the size of the connected file
-	*/
 	class istream : public std::istream {
 	public:
 		inline istream(std::streambuf * buf, std::streamsize size) :
-			std::istream(buf), size(size), buffer(buf) {}
+				std::istream(buf), size(size), buffer(buf) {}
 		~istream() { delete buffer; }
 		inline std::streamsize get_size() { return size; }
 	private:
@@ -176,21 +145,21 @@ namespace FileFinder {
 	};
 
 	/**
-	* Creates stream from UTF-8 file name.
-	*
-	* @param name UTF-8 string file name.
-	* @param m stream mode.
-	* @return NULL if open failed.
-	*/
-	std::shared_ptr<istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
+	 * Creates stream from UTF-8 file name for reading.
+	 *
+	 * @param name UTF-8 string file name.
+	 * @param m stream mode.
+	 * @return NULL if open failed.
+	 */
+	std::shared_ptr<FileFinder::istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
 
 	/**
-	* Creates stream from UTF-8 file name.
-	*
-	* @param name UTF-8 string file name.
-	* @param m stream mode.
-	* @return NULL if open failed.
-	*/
+	 * Creates stream from UTF-8 file name for writing.
+	 *
+	 * @param name UTF-8 string file name.
+	 * @param m stream mode.
+	 * @return NULL if open failed.
+	 */
 	std::shared_ptr<std::ostream> openUTF8Output(const std::string& name, std::ios_base::openmode m);
 
 	struct Directory {
@@ -282,28 +251,37 @@ namespace FileFinder {
 	 * @param max_depth max recursion depth if m is RECURSIVE (the max stack depth will be 2 times as high, because two functions are involved)
 	 * @return member list.
 	 */
-	Directory GetDirectoryMembers(const std::string& dir, Mode m = Mode::ALL, uint32_t max_depth = 10);
+	Directory GetDirectoryMembers(const Filesystem& filesystem, const std::string& dir, Mode m = Mode::ALL, uint32_t max_depth = 10);
 
 	/**
-	 * Sets the directory tree that is used for executing the current RPG Maker
+	 * Sets the virtual filesystem used for executing the current RPG Maker
 	 * game.
 	 *
 	 * @param directory_tree Directory tree to use.
 	 */
-	void SetDirectoryTree(std::shared_ptr<DirectoryTree> directory_tree);
+	void SetGameFilesystem(std::shared_ptr<Filesystem> filesystem);
 
 	/**
-	 * Gets the directory tree that is used by the current game.
+	 * Gets the virtual filesystem tree that is used by the current game.
 	 *
 	 * @return directory tree
 	 */
-	const std::shared_ptr<DirectoryTree> GetDirectoryTree();
-	const std::shared_ptr<DirectoryTree> CreateSaveDirectoryTree();
-	std::shared_ptr<DirectoryTree> CreateDirectoryTree(std::string const& p, bool recursive = true);
+	const std::shared_ptr<Filesystem> GetGameFilesystem();
+	const std::shared_ptr<Filesystem> CreateSaveFilesystem();
 
-	bool IsValidProject(DirectoryTree const& dir);
-	bool IsRPG2kProject(DirectoryTree const& dir);
-	bool IsEasyRpgProject(DirectoryTree const& dir);
+	/**
+	 * Creates a new directory tree from the specified path.
+	 * The path is processed to initialize the proper virtual filesystem handler.
+	 *
+	 * @param p Virtual path to use
+	 * @param recursive Whether the parsing is recursive
+	 * @return DirectoryTree when the parsing was successful, otherwise nullptr
+	 */
+	std::shared_ptr<Filesystem> CreateFilesystem(std::string const& p, bool recursive = true);
+
+	bool IsValidProject(const Filesystem& fs);
+	bool IsRPG2kProject(const Filesystem& fs);
+	bool IsEasyRpgProject(const Filesystem& fs);
 
 	/**
 	 * Checks whether the save directory contains any savegame with name
@@ -313,7 +291,8 @@ namespace FileFinder {
 	 */
 	bool HasSavegame();
 
-	/** Get the size of a file
+	/**
+	 * Get the size of a file
 	 *
 	 * @param file the path to a file
 	 * @return the filesize, or -1 on error

@@ -23,6 +23,7 @@
 #include "window_help.h"
 #include "window_selectable.h"
 #include "filefinder.h"
+#include "filesystem.h"
 
 /**
  * Window_GameList class.
@@ -60,7 +61,7 @@ public:
 	std::string GetGamePath();
 
 private:
-	std::shared_ptr<FileFinder::DirectoryTree> tree;
+	std::shared_ptr<Filesystem> filesystem;
 	std::vector<std::string> game_directories;
 };
 

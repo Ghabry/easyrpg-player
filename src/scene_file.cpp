@@ -58,7 +58,7 @@ void Scene_File::Start() {
 	border_top = makeBorderSprite(32);
 
 	// Refresh File Finder Save Folder
-	tree = FileFinder::CreateSaveDirectoryTree();
+	filesystem = FileFinder::CreateSaveFilesystem();
 
 	for (int i = 0; i < 15; i++) {
 		std::shared_ptr<Window_SaveFile>
@@ -70,7 +70,10 @@ void Scene_File::Start() {
 		std::stringstream ss;
 		ss << "Save" << (i <= 8 ? "0" : "") << (i+1) << ".lsd";
 
-		std::string file = FileFinder::FindDefault(*tree, ss.str());
+		std::string file;
+		if (filesystem) {
+			file = filesystem->FindDefault(ss.str());
+		}
 
 		if (!file.empty()) {
 			// File found

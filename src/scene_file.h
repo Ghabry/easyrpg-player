@@ -22,6 +22,7 @@
 #include <vector>
 #include "scene.h"
 #include "filefinder.h"
+#include "filesystem.h"
 #include "window_help.h"
 #include "window_savefile.h"
 
@@ -59,7 +60,7 @@ protected:
 	std::unique_ptr<Sprite> border_bottom;
 	std::string message;
 
-	std::shared_ptr<FileFinder::DirectoryTree> tree;
+	std::shared_ptr<Filesystem> filesystem;
 
 	double latest_time;
 	int latest_slot;

@@ -58,9 +58,8 @@ namespace {
 	const char* const MOVIE_TYPES[] = { ".avi", ".mpg" };
 #endif
 
-	typedef std::vector<std::shared_ptr<FileFinder::DirectoryTree>> search_path_list;
-	std::shared_ptr<FileFinder::DirectoryTree> game_directory_tree;
-	std::unique_ptr<Filesystem> rootFilesystem;
+	typedef std::vector<std::shared_ptr<Filesystem>> search_path_list;
+	std::shared_ptr<Filesystem> game_filesystem;
 	search_path_list search_paths;
 	std::string fonts_path;
 
@@ -93,13 +92,13 @@ namespace {
 				// Prevent "path adjusted" debug log when searching for ExFont
 				Output::Debug("Path adjusted: %s -> %s", combined_path.c_str(), canon.c_str());
 			}
-			for (char const** c = exts; *c != NULL; ++c) {
+			/*FIXME for (char const** c = exts; *c != NULL; ++c) {
 				std::string res = FileFinder::FindDefault(tree, canon + *c);
 				if (!res.empty()) {
 					return res;
 				}
 			}
-			return "";
+			return "";*/
 		}
 
 #ifdef _WIN32
@@ -161,7 +160,7 @@ namespace {
 		}
 		return file_it->second;
 	}
-
+/*
 	std::string FindFile(const std::string &dir, const std::string& name, const char* exts[]) {
 		const std::shared_ptr<FileFinder::DirectoryTree> tree = FileFinder::GetDirectoryTree();
 		std::string const ret = FindFile(*tree, dir, name, exts);
@@ -183,62 +182,99 @@ namespace {
 						name == rtp_name ? "!" : rtp_name.c_str());
 
 		return std::string();
-	}
+	}*/
 } // anonymous namespace
 
-
-const std::shared_ptr<FileFinder::DirectoryTree> FileFinder::GetDirectoryTree() {
-	return game_directory_tree;
+const std::shared_ptr<Filesystem> FileFinder::GetGameFilesystem() {
+	return game_filesystem;
 }
 
-const std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateSaveDirectoryTree() {
+const std::shared_ptr<Filesystem> FileFinder::CreateSaveFilesystem() {
 	std::string save_path = Main_Data::GetSavePath();
 
-	if (!(Exists(save_path) && IsDirectory(save_path))) { return std::shared_ptr<DirectoryTree>(); }
+	/*if (!(Exists(save_path) && IsDirectory(save_path))) {
+		Output::Warning("Save game directory %s is invalid. Saving will not work.", save_path.c_str());
+		return std::shared_ptr<DirectoryTree>();
+	}*/
 
-	std::shared_ptr<DirectoryTree> tree = std::make_shared<DirectoryTree>();
-	tree->directory_path = save_path;
-
-	Directory mem = GetDirectoryMembers(tree->directory_path, Mode::FILES);
-
-	for (auto& i : mem.files) {
-		tree->files[i.first] = i.second;
-	}
-	for (auto& i : mem.directories) {
-		tree->directories[i.first] = i.second;
+	std::shared_ptr<Filesystem> tree = CreateFilesystem(save_path, false);
+	if (!tree) {
+		Output::Warning("Save game directory %s is invalid. Saving will not work.", save_path.c_str());
+		return std::shared_ptr<Filesystem>();
 	}
 
 	return tree;
 }
 
-void FileFinder::SetDirectoryTree(std::shared_ptr<DirectoryTree> directory_tree) {
-	game_directory_tree = directory_tree;
+void FileFinder::SetGameFilesystem(std::shared_ptr<Filesystem> filesystem) {
+	game_filesystem = filesystem;
 }
 
-std::shared_ptr<FileFinder::DirectoryTree> FileFinder::CreateDirectoryTree(const std::string& p, bool recursive) {
-	// XXX FIXME Currently hardcoded
-	//rootFilesystem.reset(new ZIPFilesystem("C:\\Spiele\\RPG Maker\\Standstill Girl.zip", "Standstill Girl", "windows-1252"));
-	//rootFilesystem.reset(new OSFilesystem(""));
-	rootFilesystem.reset(new ZIPFilesystem("/home/gabriel/Spiele/RPG Maker/vd.zip", "VD1", "windows-1252"));
+std::shared_ptr<Filesystem> FileFinder::CreateFilesystem(std::string const& p, bool recursive) {
+	// Determine the proper file system to use
+	std::shared_ptr<Filesystem> filesystem;
+	filesystem.reset(new OSFilesystem(p));
 
-	if(! (Exists(p) && IsDirectory(p))) { return std::shared_ptr<DirectoryTree>(); }
-	std::shared_ptr<DirectoryTree> tree = std::make_shared<DirectoryTree>();
-	tree->directory_path = p;
+	// The path "mounted" by the virtual filesystem
+	std::string path_prefix;
 
-	Directory mem = GetDirectoryMembers(tree->directory_path, Mode::ALL);
+	// When the path doesn't exist check if the path contains a file that can
+	// be handled by another filesystem
+	if (!filesystem->IsValid()) {
+		std::vector<std::string> path = FileFinder::SplitPath(p);
+
+		// TODO this should probably move to a static function in the FS classes
+
+		// search until ".zip", "do magic"
+		std::string internal_path;
+
+		bool handle_internal = false;
+		for (std::string comp : path) {
+			if (handle_internal) {
+				internal_path += comp + "/";
+			} else {
+				path_prefix += comp + "/";
+			}
+			// TODO check for directory but no rootFilesystem mounted yet
+			if (Utils::EndsWith(comp, ".zip")) {
+				path_prefix.pop_back();
+				handle_internal = true;
+			}
+		}
+
+		if (!internal_path.empty()) {
+			internal_path.pop_back();
+		}
+
+		filesystem.reset(new ZIPFilesystem(path_prefix, internal_path, "windows-1252"));
+		if (!filesystem->IsValid()) {
+			return std::shared_ptr<Filesystem>();
+		}
+
+		path_prefix = "";
+	} else {
+		// Handle as a normal path in the local filesystem
+		path_prefix = p;
+	}
+
+	if(! (filesystem->Exists("") && filesystem->IsDirectory(""))) { return std::shared_ptr<Filesystem>(); }
+
+	filesystem->directory_tree = std::make_shared<DirectoryTree>();
+
+	Directory mem = GetDirectoryMembers(*filesystem, "", Mode::ALL);
 	for (auto& i : mem.files) {
-		tree->files[i.first] = i.second;
+		filesystem->directory_tree->files[i.first] = i.second;
 	}
 	for (auto& i : mem.directories) {
-		tree->directories[i.first] = i.second;
+		filesystem->directory_tree->directories[i.first] = i.second;
 	}
 
 	if (recursive) {
 		for (auto& i : mem.directories) {
-			GetDirectoryMembers(Filesystem::CombinePath(tree->directory_path, i.second), Mode::RECURSIVE).files.swap(tree->sub_members[i.first]);
+			filesystem->directory_tree->sub_members[i.first] = GetDirectoryMembers(*filesystem, i.second, Mode::RECURSIVE).files;
 		}
 	}
-	return tree;
+	return filesystem;
 }
 
 std::string FileFinder::MakePath(std::string const& dir, std::string const& name) {
@@ -301,7 +337,8 @@ std::string FileFinder::GetPathInsidePath(const std::string& path_to, const std:
 }
 
 std::string FileFinder::GetPathInsideGamePath(const std::string& path_in) {
-	return FileFinder::GetPathInsidePath(GetDirectoryTree()->directory_path, path_in);
+	// FIXME return FileFinder::GetPathInsidePath(GetDirectoryTree()->directory_path, path_in);
+	return path_in;
 }
 
 #if defined(_WIN32) && !defined(_ARM_)
@@ -353,7 +390,7 @@ std::string GetFontFilename(const std::string& name) {
 std::string FileFinder::FindFont(const std::string& name) {
 	static const char* FONTS_TYPES[] = {
 		".ttf", ".ttc", ".otf", ".fon", NULL, };
-	std::string path = FindFile("Font", name, FONTS_TYPES);
+	std::string path = game_filesystem->FindFile("Font", name, FONTS_TYPES);
 
 #if defined(_WIN32) && !defined(_ARM_)
 	if (!path.empty()) {
@@ -386,10 +423,10 @@ std::string FileFinder::FindFont(const std::string& name) {
 
 static void add_rtp_path(const std::string& p) {
 	using namespace FileFinder;
-	std::shared_ptr<DirectoryTree> tree(CreateDirectoryTree(p));
-	if(tree) {
+	std::shared_ptr<Filesystem> fs(CreateFilesystem(p));
+	if (fs) {
 		Output::Debug("Adding %s to RTP path", p.c_str());
-		search_paths.push_back(tree);
+		search_paths.push_back(fs);
 	}
 }
 
@@ -516,50 +553,39 @@ void FileFinder::InitRtpPaths(bool warn_no_rtp_found) {
 
 void FileFinder::Quit() {
 	search_paths.clear();
-	game_directory_tree.reset();
+	game_filesystem.reset();
 }
 
-/*FILE* FileFinder::fopenUTF8(const std::string& name_utf8, char const* mode) {
-#ifdef _WIN32
-	return _wfopen(Utils::ToWideString(name_utf8).c_str(),
-				   Utils::ToWideString(mode).c_str());
-#else
-	return fopen(name_utf8.c_str(), mode);
-#endif
-}*/
-
-std::shared_ptr<std::iostream> FileFinder::openUTF8(const std::string& name,
-													  std::ios_base::openmode m)
-{
-	std::shared_ptr<std::fstream> ret(new std::fstream(
-#ifdef _MSC_VER
-		Utils::ToWideString(name).c_str(),
-#else
-		name.c_str(),
-#endif
-		m));
-	return (*ret)? ret : std::shared_ptr<std::fstream>();
-}
-
+// FIXME: ignores filesystem
 std::shared_ptr<FileFinder::istream> FileFinder::openUTF8Input(const std::string& name,
 	std::ios_base::openmode m)
 {
-	std::streamsize size = rootFilesystem->GetFilesize(name);
-	std::streambuf* buf = rootFilesystem->CreateInputStreambuffer(name, m);
+	FileFinder::FindDefault(name);
+
+	std::streamsize size = game_filesystem->GetFilesize(name);
+	std::streambuf* buf = game_filesystem->CreateInputStreambuffer(name, m);
 
 	std::shared_ptr<FileFinder::istream> ret(new FileFinder::istream(buf, size));
 
 	return (*ret) ? ret : std::shared_ptr<FileFinder::istream>();
 }
 
+// FIXME: ignores filesystem
 std::shared_ptr<std::ostream> FileFinder::openUTF8Output(const std::string& name, std::ios_base::openmode m)
 {
-	std::streamsize size = rootFilesystem->GetFilesize(name);
-	std::streambuf* buf = rootFilesystem->CreateOutputStreambuffer(name, m);
+	std::streamsize size = game_filesystem->GetFilesize(name);
+	std::streambuf* buf = game_filesystem->CreateOutputStreambuffer(name, m);
 
 	std::shared_ptr<std::ostream> ret(new std::ostream(buf));
 
 	return (*ret) ? ret : std::shared_ptr<std::ofstream>();
+}
+
+std::string FileFinder::FindFile(FileFinder::DirectoryTree const& tree,
+					 const std::string& dir,
+					 const std::string& name,
+					 char const* exts[]) {
+	return ::FindFile(tree, dir, name, exts);
 }
 
 std::string FileFinder::FindImage(const std::string& dir, const std::string& name) {
@@ -568,52 +594,26 @@ std::string FileFinder::FindImage(const std::string& dir, const std::string& nam
 #endif
 
 	static const char* IMG_TYPES[] = { ".bmp",  ".png", ".xyz", NULL };
-	return FindFile(dir, name, IMG_TYPES);
+	return game_filesystem->FindFile(dir, name, IMG_TYPES);
 }
 
 std::string FileFinder::FindDefault(const std::string& dir, const std::string& name) {
 	static const char* no_exts[] = {"", NULL};
-	return FindFile(dir, name, no_exts);
+	return game_filesystem->FindFile(dir, name, no_exts);
 }
 
 std::string FileFinder::FindDefault(const std::string& name) {
-	return FindDefault(*GetDirectoryTree(), name);
+	return game_filesystem->FindDefault(name);
 }
 
-std::string FileFinder::FindDefault(const DirectoryTree& tree, const std::string& dir, const std::string& name) {
-	static const char* no_exts[] = { "", NULL };
-
-	return FindFile(tree, dir, name, no_exts);
+bool FileFinder::IsValidProject(const Filesystem& fs) {
+	return IsRPG2kProject(fs) || IsEasyRpgProject(fs);
 }
 
-std::string FileFinder::FindDefault(const DirectoryTree& tree, const std::string& name) {
-	DirectoryTree const& p = tree;
+bool FileFinder::IsRPG2kProject(const Filesystem& fs) {
+	// FIXME? Getter
+	const DirectoryTree& dir = *(fs.directory_tree);
 
-	std::vector<std::string> path_comps = SplitPath(name);
-	if (path_comps.size() > 1) {
-		// When the searched name contains a directory search in this directory
-		// instead of the root
-
-		std::string f;
-		for (auto it = path_comps.begin() + 1; it != path_comps.end(); ++it) {
-			f = Filesystem::CombinePath(f, *it);
-		}
-
-		return FindDefault(path_comps[0], f);
-	}
-
-	string_map const& files = p.files;
-
-	string_map::const_iterator const it = files.find(Utils::LowerCase(name));
-
-	return(it != files.end()) ? Filesystem::CombinePath(p.directory_path, it->second) : "";
-}
-
-bool FileFinder::IsValidProject(DirectoryTree const & dir) {
-	return IsRPG2kProject(dir) || IsEasyRpgProject(dir);
-}
-
-bool FileFinder::IsRPG2kProject(DirectoryTree const& dir) {
 	string_map::const_iterator const
 		ldb_it = dir.files.find(Utils::LowerCase(DATABASE_NAME)),
 		lmt_it = dir.files.find(Utils::LowerCase(TREEMAP_NAME));
@@ -621,7 +621,10 @@ bool FileFinder::IsRPG2kProject(DirectoryTree const& dir) {
 	return(ldb_it != dir.files.end() && lmt_it != dir.files.end());
 }
 
-bool FileFinder::IsEasyRpgProject(DirectoryTree const& dir){
+bool FileFinder::IsEasyRpgProject(const Filesystem& fs){
+	// FIXME? Getter
+	const DirectoryTree& dir = *(fs.directory_tree);
+
 	string_map::const_iterator const
 		ldb_it = dir.files.find(Utils::LowerCase(DATABASE_NAME_EASYRPG)),
 		lmt_it = dir.files.find(Utils::LowerCase(TREEMAP_NAME_EASYRPG));
@@ -630,12 +633,15 @@ bool FileFinder::IsEasyRpgProject(DirectoryTree const& dir){
 }
 
 bool FileFinder::HasSavegame() {
-	std::shared_ptr<FileFinder::DirectoryTree> tree = FileFinder::CreateSaveDirectoryTree();
+	std::shared_ptr<Filesystem> fs = FileFinder::CreateSaveFilesystem();
+	if (!fs) {
+		return false;
+	}
 
 	for (int i = 1; i <= 15; i++) {
 		std::stringstream ss;
 		ss << "Save" << (i <= 9 ? "0" : "") << i << ".lsd";
-		std::string filename = FileFinder::FindDefault(*tree, ss.str());
+		std::string filename = fs->FindDefault(ss.str());
 
 		if (!filename.empty()) {
 			return true;
@@ -651,7 +657,7 @@ std::string FileFinder::FindMusic(const std::string& name) {
 
 	static const char* MUSIC_TYPES[] = {
 		".opus", ".oga", ".ogg", ".wav", ".mid", ".midi", ".mp3", ".wma", nullptr };
-	return FindFile("Music", name, MUSIC_TYPES);
+	return game_filesystem->FindFile("Music", name, MUSIC_TYPES);
 }
 
 std::string FileFinder::FindSound(const std::string& name) {
@@ -661,15 +667,15 @@ std::string FileFinder::FindSound(const std::string& name) {
 
 	static const char* SOUND_TYPES[] = {
 		".opus", ".oga", ".ogg", ".wav", ".mp3", ".wma", nullptr };
-	return FindFile("Sound", name, SOUND_TYPES);
+	return game_filesystem->FindFile("Sound", name, SOUND_TYPES);
 }
 
 bool FileFinder::Exists(const std::string& filename) {
-	return rootFilesystem->Exists(filename);
+	return game_filesystem->Exists(filename);
 }
 
 bool FileFinder::IsDirectory(const std::string& dir) {
-	return rootFilesystem->IsDirectory(dir);
+	return game_filesystem->IsDirectory(dir);
 }
 
 //This namespace contains global variables which are needed for the recursive mode of
@@ -731,12 +737,9 @@ namespace GetDirectoryMembersHelper {
 
 }
 
-FileFinder::Directory FileFinder::GetDirectoryMembers(std::string const& dir, Mode m ,uint32_t max_depth){
-	assert(Exists(dir));
-	assert(IsDirectory(dir));
-
-	//Aquire the mounted filesystem
-	Filesystem* filesystem = rootFilesystem.get();
+FileFinder::Directory FileFinder::GetDirectoryMembers(const Filesystem& filesystem, std::string const& dir, Mode m, uint32_t max_depth){
+	assert(filesystem.Exists(dir));
+	assert(filesystem.IsDirectory(dir));
 
 	//Initialize helpers
 	GetDirectoryMembersHelper::temporary_directory.base = dir;
@@ -747,19 +750,20 @@ FileFinder::Directory FileFinder::GetDirectoryMembers(std::string const& dir, Mo
 	GetDirectoryMembersHelper::root_path = dir;
 	GetDirectoryMembersHelper::max_depth = max_depth;
 
-	filesystem->ListDirectoryEntries(dir, GetDirectoryMembersHelper::ListDirectoryEntriesCallback);
+	filesystem.ListDirectoryEntries(dir, GetDirectoryMembersHelper::ListDirectoryEntriesCallback);
 
 	return GetDirectoryMembersHelper::temporary_directory;
 }
 
 
 Offset FileFinder::GetFileSize(std::string const& file) {
-	return rootFilesystem->GetFilesize(file);
+	return game_filesystem->GetFilesize(file);
 }
 
 bool FileFinder::IsMajorUpdatedTree() {
 	Offset size;
-
+#if 0
+	FIXME
 	// Find an MP3 music file only when official Harmony.dll exists
 	// in the gamedir or the file doesn't exist because
 	// the detection doesn't return reliable results for games created with
@@ -804,4 +808,6 @@ bool FileFinder::IsMajorUpdatedTree() {
 	bool assume_newer = Player::IsCP932() || Player::IsRPG2k3();
 	Output::Debug("Assuming %s engine", assume_newer ? "newer" : "older");
 	return assume_newer;
+#endif
+	return false;
 }

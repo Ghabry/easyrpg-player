@@ -21,6 +21,12 @@
 #include <string>
 #include <ios>
 #include <istream>
+#include <memory>
+
+namespace FileFinder {
+	class istream;
+	struct DirectoryTree;
+}
 
 class Filesystem {
 public:
@@ -42,6 +48,14 @@ public:
 	Filesystem() {}
 
 	virtual ~Filesystem() {}
+
+	/**
+	 * Checks whether the path used to initialize the filesystem exists.
+	 *
+	 * @return If the filesystem path exists
+	 */
+	virtual bool IsValid();
+
 	/**
 	* Checks whether the passed path is a file
 	*
@@ -71,11 +85,29 @@ public:
 	virtual uint32_t GetFilesize(std::string const & path) const=0;
 
 	/**
+	 * Creates stream from UTF-8 file name for reading.
+	 *
+	 * @param name UTF-8 string file name.
+	 * @param m stream mode.
+	 * @return NULL if open failed.
+	 */
+	std::shared_ptr<FileFinder::istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
+
+	/**
 	* Allocates a streambuffer with input capabilities on the given path.
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
 	virtual std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) = 0;
+
+	/**
+	 * Creates stream from UTF-8 file name for writing.
+	 *
+	 * @param name UTF-8 string file name.
+	 * @param m stream mode.
+	 * @return NULL if open failed.
+	 */
+	std::shared_ptr<std::ostream> openUTF8Output(const std::string& name, std::ios_base::openmode m);
 
 	/**
 	* Allocates a streambuffer with output capabilities on the given path.
@@ -97,6 +129,71 @@ public:
 	 * Static helper function which combines a directory path and an entry name to a concatenated Path
 	 */
 	static std::string CombinePath(std::string const & dir, std::string const & entry);
+
+	std::shared_ptr<FileFinder::DirectoryTree> directory_tree;
+
+	/* File system helper functions not intended to be overwritten */
+	std::string FindFile(const std::string& dir,
+						 const std::string& name,
+						 char const* exts[]);
+
+	/**
+	 * Finds an image file.
+	 * Searches through the current RPG Maker game and the RTP directories.
+	 *
+	 * @param dir directory to check.
+	 * @param name image file name to check.
+	 * @return path to file.
+	 */
+	std::string FindImage(const std::string& dir, const std::string& name);
+
+	/**
+	 * Finds a file.
+	 * Searches through the current RPG Maker game and the RTP directories.
+	 *
+	 * @param dir directory to check.
+	 * @param name file name to check.
+	 * @return path to file.
+	 */
+	std::string FindDefault(const std::string& dir, const std::string& name);
+
+	/**
+	 * Finds a file.
+	 * Searches through the current RPG Maker game and the RTP directories.
+	 *
+	 * @param name the path and name.
+	 * @return path to file.
+	 */
+	std::string FindDefault(const std::string& name);
+
+	/**
+	 * Finds a music file.
+	 * Searches through the Music folder of the current RPG Maker game and
+	 * the RTP directories.
+	 *
+	 * @param name the music path and name.
+	 * @return path to file.
+	 */
+	std::string FindMusic(const std::string& name);
+
+	/**
+	 * Finds a sound file.
+	 * Searches through the Sound folder of the current RPG Maker game and
+	 * the RTP directories.
+	 *
+	 * @param name the sound path and name.
+	 * @return path to file.
+	 */
+	std::string FindSound(const std::string& name);
+
+	/**
+	 * Finds a font file.
+	 * Searches through the current RPG Maker game and the RTP directories.
+	 *
+	 * @param name the font name.
+	 * @return path to file.
+	 */
+	std::string FindFont(const std::string& name);
 };
 
 
