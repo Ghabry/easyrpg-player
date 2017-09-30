@@ -259,15 +259,15 @@ namespace FileFinder {
 	 *
 	 * @param directory_tree Directory tree to use.
 	 */
-	void SetGameFilesystem(std::shared_ptr<Filesystem> filesystem);
+	void SetGameFilesystem(FilesystemRef filesystem);
 
 	/**
 	 * Gets the virtual filesystem tree that is used by the current game.
 	 *
 	 * @return directory tree
 	 */
-	const std::shared_ptr<Filesystem> GetGameFilesystem();
-	const std::shared_ptr<Filesystem> CreateSaveFilesystem();
+	const FilesystemRef GetGameFilesystem();
+	const FilesystemRef CreateSaveFilesystem();
 
 	/**
 	 * Creates a new directory tree from the specified path.
@@ -277,7 +277,7 @@ namespace FileFinder {
 	 * @param recursive Whether the parsing is recursive
 	 * @return DirectoryTree when the parsing was successful, otherwise nullptr
 	 */
-	std::shared_ptr<Filesystem> CreateFilesystem(std::string const& p, bool recursive = true);
+	FilesystemRef CreateFilesystem(std::string const& p, bool recursive = true);
 
 	bool IsValidProject(const Filesystem& fs);
 	bool IsRPG2kProject(const Filesystem& fs);

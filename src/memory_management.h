@@ -23,8 +23,10 @@
 
 class Bitmap;
 class Font;
+class Filesystem;
 
-typedef std::shared_ptr<Bitmap> BitmapRef;
-typedef std::shared_ptr<Font> FontRef;
+using BitmapRef = std::shared_ptr<Bitmap>;
+using FontRef = std::shared_ptr<Font>;
+using FilesystemRef = std::shared_ptr<Filesystem>;
 
 #endif // EP_MEMORY_MANAGEMENT_H

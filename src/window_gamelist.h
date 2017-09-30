@@ -61,7 +61,7 @@ public:
 	std::string GetGamePath();
 
 private:
-	std::shared_ptr<Filesystem> filesystem;
+	FilesystemRef filesystem;
 	std::vector<std::string> game_directories;
 };
 

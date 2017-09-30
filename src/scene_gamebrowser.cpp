@@ -176,7 +176,7 @@ void Scene_GameBrowser::BootGame() {
 		browser_dir = Main_Data::GetProjectPath();
 	Main_Data::SetProjectPath(path);
 
-	std::shared_ptr<Filesystem> fs = FileFinder::CreateFilesystem(path);
+	FilesystemRef fs = FileFinder::CreateFilesystem(path);
 	FileFinder::SetGameFilesystem(fs);
 
 	Player::CreateGameObjects();

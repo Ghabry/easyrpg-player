@@ -58,8 +58,8 @@ namespace {
 	const char* const MOVIE_TYPES[] = { ".avi", ".mpg" };
 #endif
 
-	typedef std::vector<std::shared_ptr<Filesystem>> search_path_list;
-	std::shared_ptr<Filesystem> game_filesystem;
+	typedef std::vector<FilesystemRef> search_path_list;
+	FilesystemRef game_filesystem;
 	search_path_list search_paths;
 	std::string fonts_path;
 
@@ -185,11 +185,11 @@ namespace {
 	}*/
 } // anonymous namespace
 
-const std::shared_ptr<Filesystem> FileFinder::GetGameFilesystem() {
+const FilesystemRef FileFinder::GetGameFilesystem() {
 	return game_filesystem;
 }
 
-const std::shared_ptr<Filesystem> FileFinder::CreateSaveFilesystem() {
+const FilesystemRef FileFinder::CreateSaveFilesystem() {
 	std::string save_path = Main_Data::GetSavePath();
 
 	/*if (!(Exists(save_path) && IsDirectory(save_path))) {
@@ -197,22 +197,23 @@ const std::shared_ptr<Filesystem> FileFinder::CreateSaveFilesystem() {
 		return std::shared_ptr<DirectoryTree>();
 	}*/
 
-	std::shared_ptr<Filesystem> tree = CreateFilesystem(save_path, false);
-	if (!tree) {
+	FilesystemRef fs = CreateFilesystem(save_path, false);
+	if (!fs) {
 		Output::Warning("Save game directory %s is invalid. Saving will not work.", save_path.c_str());
-		return std::shared_ptr<Filesystem>();
+		return FilesystemRef();
 	}
 
-	return tree;
+	return fs;
 }
 
-void FileFinder::SetGameFilesystem(std::shared_ptr<Filesystem> filesystem) {
+void FileFinder::SetGameFilesystem(FilesystemRef filesystem) {
 	game_filesystem = filesystem;
 }
 
-std::shared_ptr<Filesystem> FileFinder::CreateFilesystem(std::string const& p, bool recursive) {
+FilesystemRef FileFinder::CreateFilesystem(std::string const& p, bool recursive) {
 	// Determine the proper file system to use
-	std::shared_ptr<Filesystem> filesystem;
+	FilesystemRef filesystem;
+	// TODO: Determine main filesystem to use
 	filesystem.reset(new OSFilesystem(p));
 
 	// The path "mounted" by the virtual filesystem
@@ -248,7 +249,7 @@ std::shared_ptr<Filesystem> FileFinder::CreateFilesystem(std::string const& p, b
 
 		filesystem.reset(new ZIPFilesystem(path_prefix, internal_path, "windows-1252"));
 		if (!filesystem->IsValid()) {
-			return std::shared_ptr<Filesystem>();
+			return FilesystemRef();
 		}
 
 		path_prefix = "";
@@ -257,7 +258,7 @@ std::shared_ptr<Filesystem> FileFinder::CreateFilesystem(std::string const& p, b
 		path_prefix = p;
 	}
 
-	if(! (filesystem->Exists("") && filesystem->IsDirectory(""))) { return std::shared_ptr<Filesystem>(); }
+	if(! (filesystem->Exists("") && filesystem->IsDirectory(""))) { return FilesystemRef(); }
 
 	filesystem->directory_tree = std::make_shared<DirectoryTree>();
 
@@ -423,7 +424,7 @@ std::string FileFinder::FindFont(const std::string& name) {
 
 static void add_rtp_path(const std::string& p) {
 	using namespace FileFinder;
-	std::shared_ptr<Filesystem> fs(CreateFilesystem(p));
+	FilesystemRef fs(CreateFilesystem(p));
 	if (fs) {
 		Output::Debug("Adding %s to RTP path", p.c_str());
 		search_paths.push_back(fs);
@@ -633,7 +634,7 @@ bool FileFinder::IsEasyRpgProject(const Filesystem& fs){
 }
 
 bool FileFinder::HasSavegame() {
-	std::shared_ptr<Filesystem> fs = FileFinder::CreateSaveFilesystem();
+	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
 	if (!fs) {
 		return false;
 	}

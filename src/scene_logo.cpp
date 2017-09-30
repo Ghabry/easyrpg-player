@@ -61,7 +61,7 @@ void Scene_Logo::Update() {
 		}
 #endif
 
-		std::shared_ptr<Filesystem> fs = FileFinder::CreateFilesystem(Main_Data::GetProjectPath(), false);
+		FilesystemRef fs = FileFinder::CreateFilesystem(Main_Data::GetProjectPath(), false);
 
 		if (!fs) {
 			Output::Error("%s is not a valid path", Main_Data::GetProjectPath().c_str());
@@ -84,7 +84,7 @@ void Scene_Logo::Update() {
 		if (is_valid) {
 			Scene::Push(std::make_shared<Scene_Title>(), true);
 			if (Player::load_game_id > 0) {
-				std::shared_ptr<Filesystem> fs = FileFinder::CreateSaveFilesystem();
+				FilesystemRef fs = FileFinder::CreateSaveFilesystem();
 				if (!fs) {
 					Output::Error("Invalid save directory:\n%s", Main_Data::GetSavePath().c_str());
 				}

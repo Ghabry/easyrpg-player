@@ -60,7 +60,7 @@ protected:
 	std::unique_ptr<Sprite> border_bottom;
 	std::string message;
 
-	std::shared_ptr<Filesystem> filesystem;
+	FilesystemRef filesystem;
 
 	double latest_time;
 	int latest_slot;
