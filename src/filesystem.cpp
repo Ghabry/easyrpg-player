@@ -18,7 +18,10 @@
 #include "filesystem.h"
 #include "filefinder.h"
 #include "utils.h"
+#include "output.h"
+#include "player.h"
 #include <algorithm>
+#include <cassert>
 
 std::string Filesystem::CombinePath(std::string const & dir, std::string const & entry) {
 	std::string str = dir.empty() ? entry : dir + "/" + entry;
@@ -27,6 +30,7 @@ std::string Filesystem::CombinePath(std::string const & dir, std::string const &
 #else
 	std::replace(str.begin(), str.end(), '\\', '/');
 #endif
+	printf("Combined to %s\n", str.c_str());
 	return str;
 }
 
@@ -52,22 +56,115 @@ std::shared_ptr<std::ostream> Filesystem::openUTF8Output(const std::string &name
 	return (*ret) ? ret : std::shared_ptr<std::ostream>();
 }
 
+#ifdef SUPPORT_MOVIES
+const char* const MOVIE_TYPES[] = { ".avi", ".mpg" };
+#endif
+
+typedef std::vector<FilesystemRef> search_path_list;
+FilesystemRef game_filesystem;
+search_path_list search_paths;
+std::string fonts_path;
+
 std::string Filesystem::FindFile(const std::string& dir,
-								 const std::string& name,
-								 char const* exts[]) {
-	return FileFinder::FindFile(*directory_tree, dir, name, exts);
+					 const std::string& name,
+					 char const* exts[]) const
+{
+	using namespace FileFinder;
+
+#ifdef EMSCRIPTEN
+	// The php filefinder should have given us an useable path
+	std::string em_file = CombinePath(dir, name);
+
+	if (Exists(em_file))
+		return em_file;
+#endif
+
+	std::string lower_dir = Utils::LowerCase(dir);
+	std::string const escape_symbol = Player::escape_symbol;
+	std::string corrected_name = Utils::LowerCase(name);
+
+	std::string combined_path = Filesystem::CombinePath(lower_dir, corrected_name);
+	std::string canon = MakeCanonical(combined_path, 1);
+	if (combined_path != canon) {
+		// Very few games (e.g. Yume2kki) use path traversal (..) in the filenames to point
+		// to files outside of the actual directory.
+		// Fix the path and search the file again with the correct root directory set.
+		Output::Debug("Path adjusted: %s -> %s", combined_path.c_str(), canon.c_str());
+		/*FIXME for (char const** c = exts; *c != NULL; ++c) {
+			std::string res = FileFinder::FindDefault(tree, canon + *c);
+			if (!res.empty()) {
+				return res;
+			}
+		}
+		return "";*/
+	}
+
+	if (lower_dir.empty()) {
+		lower_dir = "/";
+	}
+
+	if (!escape_symbol.empty()) {
+#ifdef _WIN32
+		if (escape_symbol != "\\") {
+#endif
+		std::size_t escape_pos = corrected_name.find(escape_symbol);
+		while (escape_pos != std::string::npos) {
+			corrected_name.erase(escape_pos, escape_symbol.length());
+			corrected_name.insert(escape_pos, "/");
+			escape_pos = corrected_name.find(escape_symbol);
+		}
+#ifdef _WIN32
+		}
+#endif
+	} else {
+		assert(lower_dir == "/");
+	}
+
+	auto dir_it = dir_cache.find(lower_dir);
+	if (dir_it == dir_cache.end()) {
+		assert(fs_cache.find(lower_dir) == fs_cache.end());
+
+		auto entries = ListDirectory(lower_dir);
+
+		dir_cache[lower_dir] = dir;
+
+		std::unordered_map<std::string, DirectoryEntry> fs_cache_entry;
+
+		for (auto& entry : entries) {
+			fs_cache_entry[Utils::LowerCase(entry.name)] = entry;
+		}
+
+		fs_cache.emplace(lower_dir, fs_cache_entry);
+	}
+
+	dir_it = dir_cache.find(lower_dir);
+	auto it = fs_cache.find(lower_dir);
+
+	for (char const** c = exts; *c != NULL; ++c) {
+		auto entry_it = (*it).second.find(corrected_name + *c);
+		if (entry_it != (*it).second.end()) {
+			return Filesystem::CombinePath((*dir_it).second, (*entry_it).second.name);
+		}
+	}
+
+	return "";
 }
 
-std::string Filesystem::FindImage(const std::string& dir, const std::string& name) {
+std::string Filesystem::FindFile(const std::string& name,
+								 char const* exts[]) const {
+	return FindFile("", name, exts);
+}
+
+std::string Filesystem::FindImage(const std::string& dir, const std::string& name) const {
 #ifdef EMSCRIPTEN
 	return FileFinder::FindDefault(*directory_tree, dir, name);
 #endif
 
 	static const char* IMG_TYPES[] = { ".bmp",  ".png", ".xyz", NULL };
-	return FileFinder::FindFile(*directory_tree, dir, name, IMG_TYPES);
+	return game_filesystem->FindFile(dir, name, IMG_TYPES);
 }
 
-std::string Filesystem::FindDefault(const std::string& name) {
+std::string Filesystem::FindDefault(const std::string& name) const {
 	std::vector<std::string> path_comps = FileFinder::SplitPath(name);
 	if (path_comps.size() > 1) {
 		// When the searched name contains a directory search in this directory
@@ -81,41 +178,39 @@ std::string Filesystem::FindDefault(const std::string& name) {
 		return FindDefault(path_comps[0], f);
 	}
 
-	auto it = directory_tree->files.find(Utils::LowerCase(name));
-
-	return(it != directory_tree->files.end()) ? Filesystem::CombinePath(directory_tree->directory_path, it->second) : "";
+	return FindDefault("", name);
 }
 
-std::string Filesystem::FindDefault(const std::string& dir, const std::string& name) {
+std::string Filesystem::FindDefault(const std::string& dir, const std::string& name) const {
 	static const char* no_exts[] = {"", NULL};
-	return FileFinder::FindFile(*directory_tree, dir, name, no_exts);
+	return FindFile(dir, name, no_exts);
 }
 
-std::string Filesystem::FindMusic(const std::string& name) {
+std::string Filesystem::FindMusic(const std::string& name) const {
 #ifdef EMSCRIPTEN
 	return FileFinder::FindDefault(*directory_tree, "Music", name);
 #endif
 
 	static const char* MUSIC_TYPES[] = {
 			".opus", ".oga", ".ogg", ".wav", ".mid", ".midi", ".mp3", ".wma", nullptr };
-	return FileFinder::FindFile(*directory_tree, "Music", name, MUSIC_TYPES);
+	return FindFile("Music", name, MUSIC_TYPES);
 }
 
-std::string Filesystem::FindSound(const std::string& name) {
+std::string Filesystem::FindSound(const std::string& name) const {
 #ifdef EMSCRIPTEN
 	return FileFinder::FindDefault(*directory_tree, "Sound", name);
 #endif
 
 	static const char* SOUND_TYPES[] = {
 			".opus", ".oga", ".ogg", ".wav", ".mp3", ".wma", nullptr };
-	return FileFinder::FindFile(*directory_tree, "Sound", name, SOUND_TYPES);
+	return FindFile("Sound", name, SOUND_TYPES);
 }
 
 
-std::string Filesystem::FindFont(const std::string& name) {
+std::string Filesystem::FindFont(const std::string& name) const {
 	static const char* FONTS_TYPES[] = {
 			".ttf", ".ttc", ".otf", ".fon", NULL, };
-	std::string path = FileFinder::FindFile(*directory_tree, "Font", name, FONTS_TYPES);
+	std::string path = FindFile("Font", name, FONTS_TYPES);
 
 #if defined(_WIN32) && !defined(_ARM_)
 	if (!path.empty()) {
@@ -146,3 +241,14 @@ std::string Filesystem::FindFont(const std::string& name) {
 #endif
 }
 
+bool Filesystem::IsValidProject() {
+	return IsRPG2kProject() || IsEasyRpgProject();
+}
+
+bool Filesystem::IsRPG2kProject() {
+	return !FindDefault(DATABASE_NAME).empty() && !FindDefault(TREEMAP_NAME).empty();
+}
+
+bool Filesystem::IsEasyRpgProject(){
+	return !FindDefault(DATABASE_NAME_EASYRPG).empty() && !FindDefault(TREEMAP_NAME_EASYRPG).empty();
+}

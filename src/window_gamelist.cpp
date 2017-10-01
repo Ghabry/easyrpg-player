@@ -29,14 +29,14 @@ Window_GameList::Window_GameList(int ix, int iy, int iwidth, int iheight) :
 }
 
 void Window_GameList::Refresh() {
+// FIXME
+#if 0
 	filesystem = FileFinder::CreateFilesystem(Main_Data::GetProjectPath(), false);
 	game_directories.clear();
 
-	// FIXME
-#if 0
 	// Find valid game diectories
 	for (auto dir : tree.get()->directories) {
-		std::shared_ptr<FileFinder::DirectoryTree> subtree = FileFinder::CreateDirectoryTree(FileFinder::MakePath(Main_Data::GetProjectPath(), dir.second), false);
+		std::shared_ptr<FileFinder::DirectoryTree> subtree = FileFinder::CreateFilesystem(FileFinder::MakePath(Main_Data::GetProjectPath(), dir.second));
 		if (FileFinder::IsValidProject(*subtree)) {
 			game_directories.push_back(dir.second);
 		}

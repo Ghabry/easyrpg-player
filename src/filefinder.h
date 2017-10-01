@@ -23,7 +23,6 @@
 #include "filesystem.h"
 #include <string>
 #include <cstdio>
-#include <unordered_map>
 #include <vector>
 
 #ifdef PSP2
@@ -49,28 +48,6 @@ namespace FileFinder {
 	 * Quits FileFinder.
 	 */
 	void Quit();
-
-	/**
-	 * { case lowered path, real path }
-	 */
-	typedef std::unordered_map<std::string, std::string> string_map;
-
-	/**
-	 * { case lowered directory name, non directory file list }
-	 */
-	typedef std::unordered_map<std::string, string_map> sub_members_type;
-
-	struct DirectoryTree {
-		std::string directory_path;
-		string_map files, directories;
-		sub_members_type sub_members;
-		std::unique_ptr<Filesystem> filesystem;
-	}; // struct DirectoryTree
-
-	std::string FindFile(FileFinder::DirectoryTree const& tree,
-						 const std::string& dir,
-						 const std::string& name,
-						 char const* exts[]);
 
 	/**
 	 * Finds an image file.
@@ -164,8 +141,8 @@ namespace FileFinder {
 
 	struct Directory {
 		std::string base;
-		string_map files;
-		string_map directories;
+		//string_map files;
+		//string_map directories;
 	}; // struct Directory
 
 	/**
@@ -244,16 +221,6 @@ namespace FileFinder {
 	};
 
 	/**
-	 * Lists directory members.
-	 *
-	 * @param dir directory to list members.
-	 * @param m member listing mode.
-	 * @param max_depth max recursion depth if m is RECURSIVE (the max stack depth will be 2 times as high, because two functions are involved)
-	 * @return member list.
-	 */
-	Directory GetDirectoryMembers(const Filesystem& filesystem, const std::string& dir, Mode m = Mode::ALL, uint32_t max_depth = 10);
-
-	/**
 	 * Sets the virtual filesystem used for executing the current RPG Maker
 	 * game.
 	 *
@@ -274,14 +241,9 @@ namespace FileFinder {
 	 * The path is processed to initialize the proper virtual filesystem handler.
 	 *
 	 * @param p Virtual path to use
-	 * @param recursive Whether the parsing is recursive
 	 * @return DirectoryTree when the parsing was successful, otherwise nullptr
 	 */
-	FilesystemRef CreateFilesystem(std::string const& p, bool recursive = true);
-
-	bool IsValidProject(const Filesystem& fs);
-	bool IsRPG2kProject(const Filesystem& fs);
-	bool IsEasyRpgProject(const Filesystem& fs);
+	FilesystemRef CreateFilesystem(std::string const& p);
 
 	/**
 	 * Checks whether the save directory contains any savegame with name

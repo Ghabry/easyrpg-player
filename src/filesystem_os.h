@@ -74,6 +74,8 @@ public:
 
 	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const override;
 
+	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
+
 private:
 	std::string MakeAbsolutePath(std::string const & path) const;
 

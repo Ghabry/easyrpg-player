@@ -724,8 +724,7 @@ void Player::LoadDatabase() {
 	// Load Database
 	Data::Clear();
 
-	if (!FileFinder::IsRPG2kProject(*FileFinder::GetGameFilesystem()) &&
-		!FileFinder::IsEasyRpgProject(*FileFinder::GetGameFilesystem())) {
+	if (!FileFinder::GetGameFilesystem()->IsValidProject()) {
 		// Unlikely to happen because of the game browser only launches valid games
 
 		Output::Debug("%s is not a supported project", Main_Data::GetProjectPath().c_str());

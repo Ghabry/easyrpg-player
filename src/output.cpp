@@ -126,6 +126,7 @@ void Output::IgnorePause(bool const val) {
 
 static void WriteLog(std::string const& type, std::string const& msg, Color const& c = Color()) {
 // Skip logging to file in the browser
+	return;
 #ifndef EMSCRIPTEN
 	if (!Main_Data::GetSavePath().empty()) {
 		// Only write to file when project path is initialized

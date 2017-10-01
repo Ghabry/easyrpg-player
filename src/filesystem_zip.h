@@ -84,6 +84,8 @@ public:
 
 	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const override;
 
+	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
+
 private:
 	enum class StorageMethod {Unknown,Plain,Deflate};
 	struct ZipEntry {

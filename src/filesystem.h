@@ -22,6 +22,8 @@
 #include <ios>
 #include <istream>
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace FileFinder {
 	class istream;
@@ -30,20 +32,33 @@ namespace FileFinder {
 
 class Filesystem {
 public:
+	enum class FileType {
+		Regular,
+		Directory,
+		Other,
+		Invalid
+	};
 
 	/**
 	 * A entry of a directory (eg. file or subdir)
 	 */
 	struct DirectoryEntry {
 		std::string name;
-		bool isDirectory;
+		FileType type;
 	};
 
+	using DirectoryIterator = std::vector<DirectoryEntry>::const_iterator;
+
+#if 0
+	struct DirectoryTree {
+		std::unordered_map<std::string, DirectoryEntry> files; // lowered path -> entry
+		std::unordered_map<std::string, std::string> dirs; // lowered path -> real path
+	} entry_cache;
+#endif
 	/**
 	 * Callback which is used by ListDirectoryEntries to transmit found entries
 	 */
-	typedef void(*ListDirectoryEntriesCallback)(Filesystem const * filesystem,DirectoryEntry const &);
-
+	typedef bool (*ListDirectoryEntriesCallback)(Filesystem const * filesystem, DirectoryEntry const &);
 
 	Filesystem() {}
 
@@ -98,7 +113,7 @@ public:
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	virtual std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) = 0;
+	virtual std::streambuf* CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) = 0;
 
 	/**
 	 * Creates stream from UTF-8 file name for writing.
@@ -125,17 +140,20 @@ public:
 	*/
 	virtual bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const = 0;
 
+	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const = 0;
+
 	/**
 	 * Static helper function which combines a directory path and an entry name to a concatenated Path
 	 */
 	static std::string CombinePath(std::string const & dir, std::string const & entry);
 
-	std::shared_ptr<FileFinder::DirectoryTree> directory_tree;
-
 	/* File system helper functions not intended to be overwritten */
+	std::string FindFile(const std::string& name,
+						 char const* exts[]) const;
+
 	std::string FindFile(const std::string& dir,
 						 const std::string& name,
-						 char const* exts[]);
+						 char const* exts[]) const;
 
 	/**
 	 * Finds an image file.
@@ -145,7 +163,7 @@ public:
 	 * @param name image file name to check.
 	 * @return path to file.
 	 */
-	std::string FindImage(const std::string& dir, const std::string& name);
+	std::string FindImage(const std::string& dir, const std::string& name) const;
 
 	/**
 	 * Finds a file.
@@ -155,7 +173,7 @@ public:
 	 * @param name file name to check.
 	 * @return path to file.
 	 */
-	std::string FindDefault(const std::string& dir, const std::string& name);
+	std::string FindDefault(const std::string& dir, const std::string& name) const;
 
 	/**
 	 * Finds a file.
@@ -164,7 +182,7 @@ public:
 	 * @param name the path and name.
 	 * @return path to file.
 	 */
-	std::string FindDefault(const std::string& name);
+	std::string FindDefault(const std::string& name) const;
 
 	/**
 	 * Finds a music file.
@@ -174,7 +192,7 @@ public:
 	 * @param name the music path and name.
 	 * @return path to file.
 	 */
-	std::string FindMusic(const std::string& name);
+	std::string FindMusic(const std::string& name) const;
 
 	/**
 	 * Finds a sound file.
@@ -184,7 +202,7 @@ public:
 	 * @param name the sound path and name.
 	 * @return path to file.
 	 */
-	std::string FindSound(const std::string& name);
+	std::string FindSound(const std::string& name) const;
 
 	/**
 	 * Finds a font file.
@@ -193,8 +211,17 @@ public:
 	 * @param name the font name.
 	 * @return path to file.
 	 */
-	std::string FindFont(const std::string& name);
-};
+	std::string FindFont(const std::string& name) const;
 
+	bool IsValidProject();
+	bool IsRPG2kProject();
+	bool IsEasyRpgProject();
+
+private:
+	// lowered dir -> <map of> lowered file -> Entry
+	mutable std::unordered_map<std::string, std::unordered_map<std::string, DirectoryEntry>> fs_cache;
+	// lowered dir -> real dir
+	mutable std::unordered_map<std::string, std::string> dir_cache;
+};
 
 #endif

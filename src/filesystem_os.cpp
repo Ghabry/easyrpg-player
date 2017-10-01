@@ -230,11 +230,12 @@ DirectoryEntry result;
 			continue;
 		}
 
-		result.isDirectory = is_directory;
+		result.type = is_directory ? FileType::Directory : FileType::Regular;
 		result.name = name;
 
-		callback(this, result);
-
+		if (!callback(this, result)) {
+			return true;
+		}
 	}
 #ifdef _WIN32
 #  undef DIR
@@ -248,5 +249,99 @@ DirectoryEntry result;
 	closedir(dir);
 #endif
 	return true;
+}
+
+std::vector<Filesystem::DirectoryEntry> OSFilesystem::ListDirectory(const std::string &path) const {
+	std::vector<Filesystem::DirectoryEntry> entries;
+
+	std::string abs_path = MakeAbsolutePath(path);
+
+	DirectoryEntry result;
+	result.name = ".";
+	result.type = Filesystem::FileType::Directory;
+	entries.push_back(result);
+
+#ifdef _WIN32
+	#  define DIR _WDIR
+#  define opendir _wopendir
+#  define closedir _wclosedir
+#  define wpath Utils::ToWideString(abs_path)
+#  define dirent _wdirent
+#  define readdir _wreaddir
+#elif _3DS
+	std::string wpath = abs_path + "/";
+#else
+#  define wpath abs_path
+#endif
+#ifdef PSP2
+	int dir = opendir(wpath.c_str());
+	if (dir < 0) {
+#else
+	std::shared_ptr< ::DIR> dir(::opendir(wpath.c_str()), ::closedir);
+	if (!dir) {
+#endif
+		Output::Debug("Error opening dir %s: %s", path.c_str(),
+					  ::strerror(errno));
+		entries[0].type = Filesystem::FileType::Invalid;
+		return entries;
+	}
+
+	static bool has_fast_dir_stat = true;
+
+#ifdef PSP2
+	struct dirent ent;
+	while (readdir(dir, &ent) > 0) {
+#else
+	struct dirent* ent;
+	while ((ent = ::readdir(dir.get())) != NULL) {
+#endif
+#ifdef _WIN32
+		std::string const name = Utils::FromWideString(ent->d_name);
+#else
+#ifdef PSP2
+		std::string const name = ent.d_name;
+#else
+		std::string const name = ent->d_name;
+#endif
+#endif
+		bool is_directory;
+		if (has_fast_dir_stat) {
+#ifdef PSP2
+			is_directory = S_ISDIR(ent.d_stat.st_mode);
+#else
+			is_directory = ent->d_type == DT_DIR;
+#endif
+		}
+		else {
+			is_directory = IsDirectory(CombinePath(path, name));
+		}
+
+		if (name == "." || name == "..") {
+			if (has_fast_dir_stat && !is_directory) {
+				Output::Debug("File system does not populate type field (d_type) correctly.");
+				Output::Debug("Directory parsing will be slower.");
+				has_fast_dir_stat = false;
+			}
+
+			continue;
+		}
+
+		result.type = is_directory ? FileType::Directory : FileType::Regular;
+		result.name = name;
+
+		entries.push_back(result);
+	}
+#ifdef _WIN32
+	#  undef DIR
+#  undef opendir
+#  undef closedir
+#  undef dirent
+#  undef readdir
+#endif
+#undef wpath
+#ifdef PSP2
+	closedir(dir);
+#endif
+	return entries;
 }
 
