@@ -357,6 +357,7 @@ void Player::Exit() {
 #endif
 
 	Font::Dispose();
+	DynRpg::Reset();
 	Graphics::Quit();
 	FileFinder::Quit();
 	Output::Quit();
