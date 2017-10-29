@@ -177,7 +177,7 @@ namespace {
 	* and things like that) and ellipsis in the middle of the line. */
 	FontRef const gothic = std::make_shared<BitmapFont>("Shinonome Gothic", &find_gothic_glyph);
 	FontRef const mincho = std::make_shared<BitmapFont>("Shinonome Mincho", &find_mincho_glyph);
-	FontRef const freetype = std::make_shared<FTFont>("Font", 14, false, false);
+	FontRef const freetype = std::make_shared<FTFont>("Font", 10, false, false);
 
 	/* Bitmap fonts used for non-Japanese games.
 	 *
@@ -314,7 +314,8 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 			Output::Error("Couldn't load FreeType character %d", glyph);
 		}
 
-		if (FT_Render_Glyph(face_->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok) {
+		// TODO: Allow configuring of this option (FT_RENDER_MODE_NORMAL)
+		if (FT_Render_Glyph(face_->glyph, FT_RENDER_MODE_MONO) != FT_Err_Ok) {
 			Output::Error("Couldn't render FreeType character %d", glyph);
 		}
 
@@ -322,20 +323,40 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 
 		FT_Bitmap const& ft_bitmap = slot->bitmap;
 
-		size_t const pitch = std::abs(ft_bitmap.pitch);
+		int const pitch = ft_bitmap.pitch;
 		int const width = ft_bitmap.width;
 		int const height = ft_bitmap.rows;
 		int const top_offset = slot->bitmap_top;
 		int const left_offset = slot->bitmap_left;
 
+		int bm_idx = 0;
 		uint32_t* data = reinterpret_cast<uint32_t*>(bm->pixels());
-		for(int row = 0; row < height; ++row) {
-			for(int col = 0; col < width; ++col) {
+		for (int row = 0; row < height; ++row) {
+			for (int col = 0; col < 8; ++col) {
+				int byte = ft_bitmap.buffer[bm_idx];
+				int bit_idx = (row * 8 + col) % 8;
+
+				unsigned c = (byte & (0x80 >> bit_idx)) ? 255 : 0;
+
+				uint32_t pixel = (c << 24) + (c << 16) + (c << 8) + c;
+				data[(size.height + row + cursor_y + y_offset - top_offset) * bm->width() + (col + cursor_x + x_offset + left_offset)] = pixel;
+			}
+
+			bm_idx += pitch;
+		}
+
+		/*
+		 * TODO Allow configuring of this option
+		 * Code for FT_RENDER_MODE_NORMAL
+		uint32_t* data = reinterpret_cast<uint32_t*>(bm->pixels());
+		for (int row = 0; row < height; ++row) {
+			for (int col = 0; col < width; ++col) {
 				unsigned c = ft_bitmap.buffer[pitch * row + col];
 				uint32_t pixel = (c << 24) + (c << 16) + (c << 8) + c;
 				data[(size.height + row + cursor_y + y_offset - top_offset) * bm->width() + (col + cursor_x + x_offset + left_offset)] = pixel;
 			}
 		}
+		 */
 
 		cursor_x += x_advance;
 		cursor_y += y_advance;
