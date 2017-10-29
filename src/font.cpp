@@ -465,35 +465,18 @@ Rect Font::GetSize(std::string const& txt) const {
 }
 
 void Font::Render(Bitmap& bmp, int const x, int const y, Bitmap const& sys, int color, char32_t code) {
-	if(color != ColorShadow) {
-		BitmapRef system = Cache::System();
-		Render(bmp, x + 1, y + 1, system->GetShadowColor(), code);
-	}
+	std::u32string s;
+	s += code;
 
-	Rect glyph_box;
-	BitmapRef bm = Glyph(code, glyph_box);
-	glyph_box.x += x;
-	glyph_box.y += y;
-
-	unsigned const
-		src_x = color == ColorShadow? 16 : color % 10 * 16 + 2,
-		src_y = color == ColorShadow? 32 : color / 10 * 16 + 48 + 16;
-
-	BitmapRef maskbm = Bitmap::Create(glyph_box.width, glyph_box.height);
-	maskbm->StretchBlit(maskbm->GetRect(), sys, Rect(src_x, src_y, 16, 16), Opacity::opaque);
-
-	bmp.MaskedBlit(glyph_box, *bm, 0, 0, *maskbm, 0, 0);
+	Render(bmp, x, y, sys, color, s);
 }
 
 void Font::Render(Bitmap& bmp, int x, int y, Color const& color, char32_t code) {
-	Rect glyph_box;
-	BitmapRef bm = Glyph(code, glyph_box);
-	glyph_box.x += x;
-	glyph_box.y += y;
+	std::u32string s;
+	s += code;
 
-	bmp.MaskedBlit(glyph_box, *bm, 0, 0, color);
+	Render(bmp, x, y, color, s);
 }
-
 
 void Font::Render(Bitmap &bmp, int x, int y, Bitmap const &sys, int color, const std::u32string& text) {
 	if (color != ColorShadow) {
@@ -517,7 +500,12 @@ void Font::Render(Bitmap &bmp, int x, int y, Bitmap const &sys, int color, const
 }
 
 void Font::Render(Bitmap &bmp, int x, int y, Color const &color, const std::u32string& text) {
+	Rect glyph_box;
+	BitmapRef bm = Glyph(text, glyph_box);
+	glyph_box.x += x;
+	glyph_box.y += y;
 
+	bmp.MaskedBlit(glyph_box, *bm, 0, 0, color);
 }
 
 ExFont::ExFont() : Font("exfont", 12, false, false) {
