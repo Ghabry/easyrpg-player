@@ -59,11 +59,16 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 	// The current char is an exfont
 	bool is_exfont = false;
 
-	// This loops always renders a single char, color blends it and then puts
+	// This loop sends blocks of chars to the font renderer which color blends it and then puts
 	// it onto the text_surface (including the drop shadow)
+	// A char block ends when an ExFont is encountered or reached the end of the source string
 	std::u32string u32text = Utils::DecodeUTF32(text);
+	std::u32string to_render = U"";
+
+	Rect next_glyph_rect(next_glyph_pos, 0, 0, 0);
+
 	for (auto c = u32text.begin(), end = u32text.end(); c != end; ++c) {
-		Rect next_glyph_rect(next_glyph_pos, 0, 0, 0);
+		next_glyph_rect.Set(next_glyph_pos, 0, 0, 0);
 
 		char32_t const next_c = std::distance(c, end) > 1? *std::next(c) : 0;
 
@@ -78,12 +83,15 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 			} else { assert(false); }
 			is_exfont = true;
 
+			if (!to_render.empty()) {
+				font->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, to_render);
+				to_render.clear();
+			}
 			Font::exfont->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, exfont_value);
 		} else { // Not ExFont, draw normal text
-			font->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, *c);
+			to_render += *c;
 		}
 
-		// If it's a full size glyph, add the size of a half-size glyph twice
 		if (is_exfont) {
 			is_exfont = false;
 			next_glyph_pos += 12;
@@ -92,6 +100,10 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 		} else {
 			next_glyph_pos += font->GetSize(std::u32string(1, *c)).width;
 		}
+	}
+
+	if (!to_render.empty()) {
+		font->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, to_render);
 	}
 
 	BitmapRef text_bmp = Bitmap::Create(*text_surface, text_surface->GetRect());
@@ -121,7 +133,7 @@ void Text::Draw(Bitmap& dest, int x, int y, Color color, FontRef font, std::stri
 		Rect next_glyph_rect(x + next_glyph_pos, y, 0, 0);
 
 		font->Render(dest, next_glyph_rect.x, next_glyph_rect.y, color, c);
-		
+
 		next_glyph_pos += font->GetSize(glyph).width;
 	}
 }

@@ -121,7 +121,7 @@ namespace {
 
 		Rect GetSize(std::u32string const& txt) const override;
 
-		BitmapRef Glyph(char32_t code, Rect& glyph_box) override;
+		BitmapRef Glyph(const std::u32string& code, Rect& glyph_box) override;
 
 	private:
 		function_type const func_;
@@ -148,7 +148,7 @@ namespace {
 
 		Rect GetSize(std::u32string const& txt) const override;
 
-		BitmapRef Glyph(char32_t code, Rect& glyph_box) override;
+		BitmapRef Glyph(const std::u32string& code, Rect& glyph_box) override;
 
 	private:
 		static std::weak_ptr<std::remove_pointer<FT_Library>::type> library_checker_;
@@ -169,7 +169,7 @@ namespace {
 	* and things like that) and ellipsis in the middle of the line. */
 	FontRef const gothic = std::make_shared<BitmapFont>("Shinonome Gothic", &find_gothic_glyph);
 	FontRef const mincho = std::make_shared<BitmapFont>("Shinonome Mincho", &find_mincho_glyph);
-	FontRef const freetype = std::make_shared<FTFont>("Font", 11, false, false);
+	FontRef const freetype = std::make_shared<FTFont>("Font", 12, false, false);
 
 	/* Bitmap fonts used for non-Japanese games.
 	 *
@@ -184,7 +184,7 @@ namespace {
 	struct ExFont : public Font {
 		ExFont();
 		Rect GetSize(std::u32string const& txt) const override;
-		BitmapRef Glyph(char32_t code, Rect& glyph_box) override;
+		BitmapRef Glyph(const std::u32string& code, Rect& glyph_box) override;
 	};
 } // anonymous namespace
 
@@ -201,7 +201,10 @@ Rect BitmapFont::GetSize(std::u32string const& txt) const {
 	return Rect(0, 0, units * HALF_WIDTH, HEIGHT);
 }
 
-BitmapRef BitmapFont::Glyph(char32_t code, Rect& glyph_box) {
+BitmapRef BitmapFont::Glyph(const std::u32string& str, Rect& glyph_box) {
+	// FIXME
+	char32_t code = str[0];
+
 	BitmapFontGlyph const* const glyph = func_(code);
 	assert(glyph);
 	size_t const width = glyph->is_full? FULL_WIDTH : HALF_WIDTH;
@@ -249,7 +252,10 @@ Rect FTFont::GetSize(std::u32string const& txt) const {
 	return size;
 }
 
-BitmapRef FTFont::Glyph(char32_t glyph, Rect& glyph_box) {
+BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
+	// FIXME
+	char32_t glyph = str[0];
+
 	if (!check_face()) {
 		return Font::Default()->Glyph(glyph, glyph_box);
 	}
@@ -429,12 +435,45 @@ void Font::Render(Bitmap& bmp, int x, int y, Color const& color, char32_t code) 
 	bmp.MaskedBlit(glyph_box, *bm, 0, 0, color);
 }
 
+
+void Font::Render(Bitmap &bmp, int x, int y, Bitmap const &sys, int color, const std::u32string& text) {
+	if (color != ColorShadow) {
+		BitmapRef system = Cache::System();
+		Render(bmp, x + 1, y + 1, system->GetShadowColor(), text);
+	}
+
+	Rect glyph_box;
+	BitmapRef bm = Glyph(text, glyph_box);
+	glyph_box.x += x;
+	glyph_box.y += y;
+
+	unsigned const
+			src_x = color == ColorShadow? 16 : color % 10 * 16 + 2,
+			src_y = color == ColorShadow? 32 : color / 10 * 16 + 48 + 16;
+
+	bmp.MaskedBlit(glyph_box, *bm, 0, 0, sys, src_x, src_y);
+}
+
+void Font::Render(Bitmap &bmp, int x, int y, Color const &color, const std::u32string& text) {
+
+}
+
 ExFont::ExFont() : Font("exfont", 12, false, false) {
 }
 
 FontRef Font::exfont = std::make_shared<ExFont>();
 
-BitmapRef ExFont::Glyph(char32_t code, Rect& glyph_box) {
+BitmapRef Font::Glyph(char32_t code, Rect &glyph_box) {
+	std::u32string str;
+	str += code;
+	return Glyph(str, glyph_box);
+}
+
+BitmapRef ExFont::Glyph(const std::u32string& str, Rect& glyph_box) {
+	assert(str.size() == 1 && "Only one ExFont glitch can be rendered at once");
+
+	char32_t code = str[0];
+
 	BitmapRef exfont = Cache::Exfont();
 	Rect const rect((code % 13) * 12, (code / 13) * 12, 12, 12);
 	glyph_box.Set(0, 0, 12, 12);

@@ -35,10 +35,14 @@ class Font {
 	Rect GetSize(std::string const& txt) const;
 	virtual Rect GetSize(std::u32string const& txt) const = 0;
 
-	virtual BitmapRef Glyph(char32_t code, Rect& glyph_box) = 0;
+	BitmapRef Glyph(char32_t code, Rect& glyph_box);
+
+	virtual BitmapRef Glyph(const std::u32string& code, Rect& glyph_box) = 0;
 
 	void Render(Bitmap& bmp, int x, int y, Bitmap const& sys, int color, char32_t glyph);
 	void Render(Bitmap& bmp, int x, int y, Color const& color, char32_t glyph);
+	void Render(Bitmap& bmp, int x, int y, Bitmap const& sys, int color, const std::u32string& text);
+	void Render(Bitmap& bmp, int x, int y, Color const& color, const std::u32string& text);
 
 	static FontRef Create(const std::string& name, int size, bool bold, bool italic);
 	static FontRef Default();
