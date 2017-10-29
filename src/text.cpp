@@ -85,6 +85,7 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 
 			if (!to_render.empty()) {
 				font->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, to_render);
+				next_glyph_pos += font->GetSize(to_render).width;
 				to_render.clear();
 			}
 			Font::exfont->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, exfont_value);
@@ -97,8 +98,6 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 			next_glyph_pos += 12;
 			// Skip the next character
 			++c;
-		} else {
-			next_glyph_pos += font->GetSize(std::u32string(1, *c)).width;
 		}
 	}
 
