@@ -32,9 +32,7 @@
 
 #ifdef HAVE_HARFBUZZ
 #	include <hb.h>
-#include <hb-ft.h>
-#include <fstream>
-
+#   include <hb-ft.h>
 #endif
 
 #include "reader_util.h"
@@ -163,7 +161,9 @@ namespace {
 		mutable std::shared_ptr<std::remove_pointer<FT_Face>::type> face_;
 		mutable std::string face_name_;
 		mutable unsigned current_size_;
+#ifdef HAVE_HARFBUZZ
 		mutable hb_font_t* hb_ft_font;
+#endif
 
 		bool check_face() const;
 	}; // class FTFont
@@ -248,6 +248,7 @@ Rect FTFont::GetSize(std::u32string const& txt) const {
 
 	std::string text = Utils::EncodeUTF(txt);
 
+#ifdef HAVE_HARFBUZZ
 	hb_buffer_t* hb_buf = hb_buffer_create();
 	hb_buffer_add_utf8(hb_buf, text.c_str(), (int)text.size(), 0, (int)text.size());
 	hb_buffer_guess_segment_properties(hb_buf);
@@ -260,12 +261,13 @@ Rect FTFont::GetSize(std::u32string const& txt) const {
 	int x_off_max = 0;
 
 	hb_position_t cursor_x = 0;
+#endif
 
 	for (unsigned i = 0; i < glyph_count; ++i) {
 		hb_codepoint_t glyph = glyph_info[i].codepoint;
 		hb_position_t x_advance = glyph_pos[i].x_advance / 64.0;
 
-		if (FT_Load_Glyph(face_.get(), glyph, FT_LOAD_DEFAULT) != FT_Err_Ok) {
+		if (FT_Load_Glyph(face_.get(), glyph, FT_LOAD_TARGET_MONO) != FT_Err_Ok) {
 			Output::Error("Couldn't load FreeType character %d", glyph);
 		}
 
@@ -336,8 +338,12 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 		int bm_idx = 0;
 		uint32_t* data = reinterpret_cast<uint32_t*>(bm->pixels());
 		for (int row = 0; row < height; ++row) {
-			for (int col = 0; col < 8; ++col) {
+			for (int col = 0; col < pitch * 8; ++col) {
 				int buffer_idx = (baseline + row + cursor_y + y_offset - bearing_y) * bm->width() + (col + cursor_x + x_offset + left_offset);
+
+				if (col > 0 && col % 8 == 0) {
+					++bm_idx;
+				}
 
 				if ((baseline + row + cursor_y + y_offset - bearing_y) < 0) {
 					// Glyph segment > 10 pixels from the baseline
@@ -358,7 +364,7 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 				}
 			}
 
-			bm_idx += pitch;
+			++bm_idx;
 		}
 		/*
 		 * TODO Allow configuring of this option

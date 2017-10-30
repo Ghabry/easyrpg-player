@@ -32,6 +32,7 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 	if (text.length() == 0) return;
 
 	Rect dst_rect = font->GetSize(text);
+	dst_rect.width += 5;
 
 	switch (align) {
 	case Text::AlignCenter:
