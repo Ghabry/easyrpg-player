@@ -168,6 +168,12 @@ protected:
 	std::u32string::iterator text_index, end;
 	/** text message that will be displayed. */
 	std::u32string text;
+	/** Prerendered text that contains the to-be-drawn section of the message */
+	std::vector<std::pair<std::u32string, BitmapRef>> text_bitmaps;
+	/** Index of the next bitmap to display */
+	std::vector<std::pair<std::u32string, BitmapRef>>::iterator bitmap_index;
+	/** How many chars of this bitmap were already drawn */
+	int chars_of_bitmap_drawn = 0;
 	/** Used by Message kill command \^. */
 	bool kill_message;
 	/** Text color. */

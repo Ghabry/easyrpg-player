@@ -174,6 +174,7 @@ void Window_Message::StartMessageProcessing() {
 
 	ApplyTextInsertingCommands();
 	text_index = text.begin();
+	text_bitmaps.clear();
 
 	InsertNewPage();
 }
@@ -377,6 +378,76 @@ void Window_Message::UpdateMessage() {
 		}
 	}
 
+	if (text_bitmaps.empty()) {
+		// Simulate a text parsing in order to prerender the text
+		// Due to special command codes the prerendered text must be splitted at any \-command
+
+		std::u32string text_to_render = U"";
+
+		int color = 0;
+
+		for (;;) {
+			if (text_index == end) {
+				break;
+			} else if (*text_index == '\n' ||
+				*text_index == '\f') {
+				if (!text_to_render.empty()) {
+					// Render
+					Rect rect = Font::Default()->GetSize(text_to_render);
+					text_bitmaps.emplace_back(std::make_pair(text_to_render, Bitmap::Create(rect.width, rect.height, true)));
+					text_bitmaps.back().second->TextDraw(0, 0, color, Utils::EncodeUTF(text_to_render));
+					text_to_render.clear();
+				}
+			} else if (*text_index == escape_char && std::distance(text_index, end) > 1) {
+				// Special message codes
+				// For simplicity reasons any \-code will trigger a draw, even invalid ones
+				++text_index;
+
+				if (!text_to_render.empty()) {
+					// Render
+					Rect rect = Font::Default()->GetSize(text_to_render);
+					text_bitmaps.emplace_back(std::make_pair(text_to_render, Bitmap::Create(rect.width, rect.height, true)));
+					text_bitmaps.back().second->TextDraw(0, 0, color, Utils::EncodeUTF(text_to_render));
+					text_to_render.clear();
+				}
+
+				// Color codes must be processed
+				if (tolower(*text_index) == 'c') {
+					bool is_valid;
+					int parameter = ParseParameter(is_valid);
+					color = parameter > 19 ? 0 : parameter;
+				}
+
+				if (*text_index == escape_char) {
+					// Show Escape Symbol
+					text_to_render += Utils::DecodeUTF32(Player::escape_symbol);
+				}
+
+				++text_index;
+			} else if (*text_index == '$'
+					   && std::distance(text_index, end) > 1
+					   && std::isalpha(*std::next(text_index))) {
+				// ExFont, draw text and skip
+				if (!text_to_render.empty()) {
+					// Render
+					Rect rect = Font::Default()->GetSize(text_to_render);
+					text_bitmaps.emplace_back(std::make_pair(text_to_render, Bitmap::Create(rect.width, rect.height, true)));
+					text_bitmaps.back().second->TextDraw(0, 0, color, Utils::EncodeUTF(text_to_render));
+					text_to_render.clear();
+				}
+				++text_index;
+			} else {
+				text_to_render += *text_index;
+			}
+
+			++text_index;
+		}
+
+		bitmap_index = text_bitmaps.begin();
+		text_index = text.begin();
+		chars_of_bitmap_drawn = 0;
+	}
+
 	int loop_count = 0;
 	int loop_max = speed_table[speed_modifier] == 0 ? 2 : 1;
 
@@ -395,6 +466,7 @@ void Window_Message::UpdateMessage() {
 
 		++loop_count;
 		if (text_index == end) {
+			text_bitmaps.clear();
 			FinishMessageProcessing();
 			break;
 		} else if (line_count == 4) {
@@ -418,6 +490,8 @@ void Window_Message::UpdateMessage() {
 				}
 			}
 			InsertNewLine();
+			++bitmap_index;
+			chars_of_bitmap_drawn = 0;
 		} else if (*text_index == '\f') {
 			instant_speed = false;
 			++text_index;
@@ -428,10 +502,14 @@ void Window_Message::UpdateMessage() {
 				pause = true;
 				new_page_after_pause = true;
 			}
+			++bitmap_index;
+			chars_of_bitmap_drawn = 0;
 			break;
 		} else if (*text_index == escape_char && std::distance(text_index, end) > 1) {
 			// Special message codes
 			++text_index;
+			++bitmap_index;
+			chars_of_bitmap_drawn = 0;
 
 			int parameter;
 			bool is_valid;
@@ -492,8 +570,9 @@ void Window_Message::UpdateMessage() {
 			default:
 				if (*text_index == escape_char) {
 					// Show Escape Symbol
-					contents->TextDraw(contents_x, contents_y, text_color, Player::escape_symbol);
-					contents_x += Font::Default()->GetSize(Player::escape_symbol).width;
+					contents->Blit(contents_x, contents_y, *(*bitmap_index).second, (*bitmap_index).second->GetRect(), Opacity::opaque);
+					contents_x += (*bitmap_index).second->width() / (*bitmap_index).first.size();
+					chars_of_bitmap_drawn += 1;
 				}
 			}
 		} else if (*text_index == '$'
@@ -505,15 +584,22 @@ void Window_Message::UpdateMessage() {
 			contents_x += 12;
 			++loop_count;
 			++text_index;
+			++bitmap_index;
+			chars_of_bitmap_drawn = 0;
 		} else {
 			std::string const glyph(Utils::EncodeUTF(std::u32string(text_index, std::next(text_index))));
 
-			contents->TextDraw(contents_x, contents_y, text_color, glyph);
-			int glyph_width = Font::Default()->GetSize(glyph).width;
+			int factor = (*bitmap_index).second->width() / (*bitmap_index).first.size();
+			Rect rect(factor * chars_of_bitmap_drawn, 0, factor, (*bitmap_index).second->height());
+
+			contents->Blit(contents_x, contents_y, *(*bitmap_index).second, rect, Opacity::opaque);
+			// FIXME!!! int glyph_width = Font::Default()->GetSize(glyph).width;
 			// Show full-width characters twice as slow as half-width characters
-			if (glyph_width >= 12)
-				loop_count++;
-			contents_x += glyph_width;
+			// ??? if (glyph_width >= 12)
+			// ???	loop_count++;
+			contents_x += (*bitmap_index).second->width() / (*bitmap_index).first.size();
+
+			chars_of_bitmap_drawn += 1;
 		}
 
 		++text_index;
