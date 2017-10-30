@@ -422,8 +422,6 @@ void Window_Message::UpdateMessage() {
 					// Show Escape Symbol
 					text_to_render += Utils::DecodeUTF32(Player::escape_symbol);
 				}
-
-				++text_index;
 			} else if (*text_index == '$'
 					   && std::distance(text_index, end) > 1
 					   && std::isalpha(*std::next(text_index))) {
@@ -570,8 +568,12 @@ void Window_Message::UpdateMessage() {
 			default:
 				if (*text_index == escape_char) {
 					// Show Escape Symbol
-					contents->Blit(contents_x, contents_y, *(*bitmap_index).second, (*bitmap_index).second->GetRect(), Opacity::opaque);
-					contents_x += (*bitmap_index).second->width() / (*bitmap_index).first.size();
+					int factor = (*bitmap_index).second->width() / (*bitmap_index).first.size();
+					Rect rect(factor * chars_of_bitmap_drawn, 0, factor, (*bitmap_index).second->height());
+
+					contents->Blit(contents_x, contents_y, *(*bitmap_index).second, rect, Opacity::opaque);
+
+					contents_x += factor;
 					chars_of_bitmap_drawn += 1;
 				}
 			}
@@ -590,15 +592,18 @@ void Window_Message::UpdateMessage() {
 			std::string const glyph(Utils::EncodeUTF(std::u32string(text_index, std::next(text_index))));
 
 			int factor = (*bitmap_index).second->width() / (*bitmap_index).first.size();
+
 			Rect rect(factor * chars_of_bitmap_drawn, 0, factor, (*bitmap_index).second->height());
 
-			contents->Blit(contents_x, contents_y, *(*bitmap_index).second, rect, Opacity::opaque);
-			// FIXME!!! int glyph_width = Font::Default()->GetSize(glyph).width;
-			// Show full-width characters twice as slow as half-width characters
-			// ??? if (glyph_width >= 12)
-			// ???	loop_count++;
-			contents_x += (*bitmap_index).second->width() / (*bitmap_index).first.size();
+			if (chars_of_bitmap_drawn + 1 == (*bitmap_index).first.size()) {
+				// Special handling for the last char because when width / size was not divisable without remainder
+				// some pixels will be missing at the end
+				rect.width = factor + ((*bitmap_index).second->width() - factor * (chars_of_bitmap_drawn + 1));
+			}
 
+			contents->Blit(contents_x, contents_y, *(*bitmap_index).second, rect, Opacity::opaque);
+
+			contents_x += rect.width;
 			chars_of_bitmap_drawn += 1;
 		}
 
