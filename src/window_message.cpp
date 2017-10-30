@@ -397,6 +397,8 @@ void Window_Message::UpdateMessage() {
 					text_bitmaps.emplace_back(std::make_pair(text_to_render, Bitmap::Create(rect.width, rect.height, true)));
 					text_bitmaps.back().second->TextDraw(0, 0, color, Utils::EncodeUTF(text_to_render));
 					text_to_render.clear();
+				} else {
+					text_bitmaps.emplace_back(std::make_pair(U"", BitmapRef()));
 				}
 			} else if (*text_index == escape_char && std::distance(text_index, end) > 1) {
 				// Special message codes
@@ -409,6 +411,8 @@ void Window_Message::UpdateMessage() {
 					text_bitmaps.emplace_back(std::make_pair(text_to_render, Bitmap::Create(rect.width, rect.height, true)));
 					text_bitmaps.back().second->TextDraw(0, 0, color, Utils::EncodeUTF(text_to_render));
 					text_to_render.clear();
+				} else {
+					text_bitmaps.emplace_back(std::make_pair(U"", BitmapRef()));
 				}
 
 				// Color codes must be processed
@@ -432,6 +436,8 @@ void Window_Message::UpdateMessage() {
 					text_bitmaps.emplace_back(std::make_pair(text_to_render, Bitmap::Create(rect.width, rect.height, true)));
 					text_bitmaps.back().second->TextDraw(0, 0, color, Utils::EncodeUTF(text_to_render));
 					text_to_render.clear();
+				} else {
+					text_bitmaps.emplace_back(std::make_pair(U"", BitmapRef()));
 				}
 				++text_index;
 			} else {
