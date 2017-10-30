@@ -177,7 +177,7 @@ namespace {
 	* and things like that) and ellipsis in the middle of the line. */
 	FontRef const gothic = std::make_shared<BitmapFont>("Shinonome Gothic", &find_gothic_glyph);
 	FontRef const mincho = std::make_shared<BitmapFont>("Shinonome Mincho", &find_mincho_glyph);
-	FontRef const freetype = std::make_shared<FTFont>("Font", 10, false, false);
+	FontRef const freetype = std::make_shared<FTFont>("Font", 12, false, false);
 
 	/* Bitmap fonts used for non-Japanese games.
 	 *
@@ -258,36 +258,31 @@ Rect FTFont::GetSize(std::u32string const& txt) const {
 	hb_glyph_position_t *glyph_pos = hb_buffer_get_glyph_positions(hb_buf, &glyph_count);
 
 	int x_off_max = 0;
-	int y_off_max = 0;
 
 	hb_position_t cursor_x = 0;
-	hb_position_t cursor_y = 0;
 
 	for (unsigned i = 0; i < glyph_count; ++i) {
 		hb_codepoint_t glyph = glyph_info[i].codepoint;
 		hb_position_t x_advance = glyph_pos[i].x_advance / 64.0;
-		hb_position_t y_advance = glyph_pos[i].y_advance / 64.0;
 
 		if (FT_Load_Glyph(face_.get(), glyph, FT_LOAD_DEFAULT) != FT_Err_Ok) {
 			Output::Error("Couldn't load FreeType character %d", glyph);
 		}
 
-		if (FT_Render_Glyph(face_->glyph, FT_RENDER_MODE_NORMAL) != FT_Err_Ok) {
+		if (FT_Render_Glyph(face_->glyph, FT_RENDER_MODE_MONO) != FT_Err_Ok) {
 			Output::Error("Couldn't render FreeType character %d", glyph);
 		}
 
 		FT_GlyphSlot slot = face_->glyph;
 
 		x_off_max = std::max(slot->bitmap_left, x_off_max);
-		y_off_max = std::max(slot->bitmap_top, y_off_max);
 
 		cursor_x += x_advance;
-		cursor_y += y_advance;
 	}
 
 	hb_buffer_destroy(hb_buf);
 
-	return Rect(0, 0, x_off_max + cursor_x, y_off_max);
+	return Rect(0, 0, x_off_max + cursor_x, 24);
 }
 
 BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
@@ -304,7 +299,7 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 	hb_glyph_info_t *glyph_info = hb_buffer_get_glyph_infos(hb_buf, &glyph_count);
 	hb_glyph_position_t *glyph_pos = hb_buffer_get_glyph_positions(hb_buf, &glyph_count);
 
-	BitmapRef bm = Bitmap::Create(size.width + 12, size.height * 2);
+	BitmapRef bm = Bitmap::Create(size.width + 12, 14);
 
 	hb_position_t cursor_x = 0;
 	hb_position_t cursor_y = 0;
@@ -329,40 +324,61 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 
 		FT_Bitmap const& ft_bitmap = slot->bitmap;
 
+		// Arbitrary. Gives 10 pixels above the baseline and 4 pixels below.
+		int const baseline = 10;
 		int const pitch = ft_bitmap.pitch;
 		int const width = ft_bitmap.width;
 		int const height = ft_bitmap.rows;
 		int const top_offset = slot->bitmap_top;
 		int const left_offset = slot->bitmap_left;
+		int const bearing_y = slot->metrics.horiBearingY / 64;
 
 		int bm_idx = 0;
 		uint32_t* data = reinterpret_cast<uint32_t*>(bm->pixels());
 		for (int row = 0; row < height; ++row) {
 			for (int col = 0; col < 8; ++col) {
+				int buffer_idx = (baseline + row + cursor_y + y_offset - bearing_y) * bm->width() + (col + cursor_x + x_offset + left_offset);
+
+				if ((baseline + row + cursor_y + y_offset - bearing_y) < 0) {
+					// Glyph segment > 10 pixels from the baseline
+					continue;
+				} else if (buffer_idx >= bm->pitch() * bm->height()) {
+					// Glyph segment > 4 pixel from the baseline
+					continue;
+				}
+
 				int byte = ft_bitmap.buffer[bm_idx];
 				int bit_idx = (row * 8 + col) % 8;
 
 				unsigned c = (byte & (0x80 >> bit_idx)) ? 255 : 0;
 
 				uint32_t pixel = (c << 24) + (c << 16) + (c << 8) + c;
-				data[(size.height + row + cursor_y + y_offset - top_offset) * bm->width() + (col + cursor_x + x_offset + left_offset)] = pixel;
+				data[buffer_idx] = pixel;
 			}
 
 			bm_idx += pitch;
 		}
-
 		/*
 		 * TODO Allow configuring of this option
 		 * Code for FT_RENDER_MODE_NORMAL
 		uint32_t* data = reinterpret_cast<uint32_t*>(bm->pixels());
 		for (int row = 0; row < height; ++row) {
 			for (int col = 0; col < width; ++col) {
+				int buffer_idx = (baseline + row + cursor_y + y_offset - bearing_y) * bm->width() + (col + cursor_x + x_offset + left_offset);
+
+				if ((baseline + row + cursor_y + y_offset - bearing_y) < 0) {
+					// Glyph segment > 10 pixels from the baseline
+					continue;
+				} else if (buffer_idx >= bm->pitch() * bm->height()) {
+					// Glyph segment > 4 pixel from the baseline
+					continue;
+				}
+
 				unsigned c = ft_bitmap.buffer[pitch * row + col];
 				uint32_t pixel = (c << 24) + (c << 16) + (c << 8) + c;
-				data[(size.height + row + cursor_y + y_offset - top_offset) * bm->width() + (col + cursor_x + x_offset + left_offset)] = pixel;
+				data[buffer_idx] = pixel;
 			}
-		}
-		 */
+		}*/
 
 		cursor_x += x_advance;
 		cursor_y += y_advance;
@@ -449,6 +465,8 @@ FontRef Font::Default() {
 }
 
 FontRef Font::Default(bool const m) {
+	return freetype;
+
 	if (Player::IsCJK()) {
 		return m ? mincho : gothic;
 	}
@@ -516,7 +534,7 @@ void Font::Render(Bitmap &bmp, int x, int y, Bitmap const &sys, int color, const
 
 	unsigned const
 		src_x = color == ColorShadow? 16 : color % 10 * 16 + 2,
-		src_y = color == ColorShadow? 32 : color / 10 * 16 + 48 + 16 - bm->height();
+		src_y = color == ColorShadow? 32 : color / 10 * 16 + 48;
 
 	BitmapRef maskbm = Bitmap::Create(glyph_box.width, glyph_box.height);
 	maskbm->StretchBlit(sys, Rect(src_x, src_y, 16 - 4, 16), Opacity::opaque);
