@@ -53,9 +53,6 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 
 	BitmapRef system = Cache::System();
 
-	// Where to draw the next glyph (x pos)
-	int next_glyph_pos = 0;
-
 	// The current char is an exfont
 	bool is_exfont = false;
 
@@ -65,11 +62,10 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 	std::u32string u32text = Utils::DecodeUTF32(text);
 	std::u32string to_render = U"";
 
-	Rect next_glyph_rect(next_glyph_pos, 0, 0, 0);
+	// Where to draw the next glyph (x pos)
+	Rect next_glyph_rect(0, 0, 0, 0);
 
 	for (auto c = u32text.begin(), end = u32text.end(); c != end; ++c) {
-		next_glyph_rect.Set(next_glyph_pos, 0, 0, 0);
-
 		char32_t const next_c = std::distance(c, end) > 1? *std::next(c) : 0;
 
 		// ExFont-Detection: Check for A-Z or a-z behind the $
@@ -85,7 +81,7 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 
 			if (!to_render.empty()) {
 				font->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, to_render);
-				next_glyph_pos += font->GetSize(to_render).width;
+				next_glyph_rect.x += font->GetSize(to_render).width;
 				to_render.clear();
 			}
 			Font::exfont->Render(*text_surface, next_glyph_rect.x, next_glyph_rect.y, *system, color, exfont_value);
@@ -95,7 +91,7 @@ void Text::Draw(Bitmap& dest, int x, int y, int color, FontRef font, std::string
 
 		if (is_exfont) {
 			is_exfont = false;
-			next_glyph_pos += 12;
+			next_glyph_rect.x += 12;
 			// Skip the next character
 			++c;
 		}

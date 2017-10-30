@@ -210,21 +210,27 @@ Rect BitmapFont::GetSize(std::u32string const& txt) const {
 }
 
 BitmapRef BitmapFont::Glyph(const std::u32string& str, Rect& glyph_box) {
-	// FIXME
-	char32_t code = str[0];
+	BitmapRef bm = Bitmap::Create(nullptr, GetSize(str).width, HEIGHT, 0, DynamicFormat(8, 8, 0, 8, 0, 8, 0, 8, 0, PF::Alpha));
 
-	BitmapFontGlyph const* const glyph = func_(code);
-	assert(glyph);
-	size_t const width = glyph->is_full? FULL_WIDTH : HALF_WIDTH;
+	int x_offset = 0;
 
-	BitmapRef bm = Bitmap::Create(nullptr, width, HEIGHT, 0, DynamicFormat(8,8,0,8,0,8,0,8,0,PF::Alpha));
-	uint8_t* data = reinterpret_cast<uint8_t*>(bm->pixels());
-	int pitch = bm->pitch();
-	for(size_t y_ = 0; y_ < HEIGHT; ++y_)
-		for(size_t x_ = 0; x_ < width; ++x_)
-			data[y_*pitch+x_] = (glyph->data[y_] & (0x1 << x_)) ? 255 : 0;
+	for (char32_t code : str) {
+		BitmapFontGlyph const *const glyph = func_(code);
+		assert(glyph);
+		size_t const width = glyph->is_full ? FULL_WIDTH : HALF_WIDTH;
 
-	glyph_box.Set(0, 0, width, HEIGHT);
+		uint8_t *data = reinterpret_cast<uint8_t *>(bm->pixels());
+		int pitch = bm->pitch();
+		for (size_t y_ = 0; y_ < HEIGHT; ++y_) {
+			for (size_t x_ = 0; x_ < width; ++x_) {
+				data[(y_ * pitch + x_ + x_offset)] = (glyph->data[y_] & (0x1 << x_)) ? 255 : 0;
+			}
+		}
+
+		x_offset += width;
+	}
+
+	glyph_box = bm->GetRect();
 
 	return bm;
 }
@@ -443,8 +449,6 @@ FontRef Font::Default() {
 }
 
 FontRef Font::Default(bool const m) {
-	return freetype;
-
 	if (Player::IsCJK()) {
 		return m ? mincho : gothic;
 	}
@@ -511,11 +515,11 @@ void Font::Render(Bitmap &bmp, int x, int y, Bitmap const &sys, int color, const
 	glyph_box.y += y;
 
 	unsigned const
-			src_x = color == ColorShadow? 16 : color % 10 * 16 + 2,
-			src_y = color == ColorShadow? 32 : color / 10 * 16 + 48 + 16;
+		src_x = color == ColorShadow? 16 : color % 10 * 16 + 2,
+		src_y = color == ColorShadow? 32 : color / 10 * 16 + 48 + 16 - bm->height();
 
 	BitmapRef maskbm = Bitmap::Create(glyph_box.width, glyph_box.height);
-	maskbm->StretchBlit(sys, Rect(src_x, src_y, 16, 16), Opacity::opaque);
+	maskbm->StretchBlit(sys, Rect(src_x, src_y, 16 - 4, 16), Opacity::opaque);
 
 	bmp.MaskedBlit(glyph_box, *bm, 0, 0, *maskbm, 0, 0);
 }
