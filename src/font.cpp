@@ -264,6 +264,13 @@ Rect FTFont::GetSize(std::u32string const& txt) const {
 #endif
 
 	for (unsigned i = 0; i < glyph_count; ++i) {
+		// Needs exfont detection logic to fulfill the assumption that exfont has a width of 12 pixel
+		if (i < text.size() - 1 && text[i] == '$' && std::isalpha(text[i+1])) {
+			cursor_x += exfont->GetSize("$A").width;
+			++i;
+			continue;
+		}
+
 		hb_codepoint_t glyph = glyph_info[i].codepoint;
 		hb_position_t x_advance = glyph_pos[i].x_advance / 64.0;
 
