@@ -311,7 +311,7 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 		hb_position_t x_advance = glyph_pos[i].x_advance / 64.0;
 		hb_position_t y_advance = glyph_pos[i].y_advance / 64.0;
 
-		if (FT_Load_Glyph(face_.get(), glyph, FT_LOAD_DEFAULT) != FT_Err_Ok) {
+		if (FT_Load_Glyph(face_.get(), glyph, FT_LOAD_TARGET_MONO) != FT_Err_Ok) {
 			Output::Error("Couldn't load FreeType character %d", glyph);
 		}
 
@@ -353,15 +353,17 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 				unsigned c = (byte & (0x80 >> bit_idx)) ? 255 : 0;
 
 				uint32_t pixel = (c << 24) + (c << 16) + (c << 8) + c;
-				data[buffer_idx] = pixel;
+				if (pixel) {
+					data[buffer_idx] = pixel;
+				}
 			}
 
 			bm_idx += pitch;
 		}
 		/*
 		 * TODO Allow configuring of this option
-		 * Code for FT_RENDER_MODE_NORMAL
-		uint32_t* data = reinterpret_cast<uint32_t*>(bm->pixels());
+		 * Code for FT_RENDER_MODE_NORMAL*/
+		/*uint32_t* data = reinterpret_cast<uint32_t*>(bm->pixels());
 		for (int row = 0; row < height; ++row) {
 			for (int col = 0; col < width; ++col) {
 				int buffer_idx = (baseline + row + cursor_y + y_offset - bearing_y) * bm->width() + (col + cursor_x + x_offset + left_offset);
@@ -376,7 +378,9 @@ BitmapRef FTFont::Glyph(const std::u32string& str, Rect& glyph_box) {
 
 				unsigned c = ft_bitmap.buffer[pitch * row + col];
 				uint32_t pixel = (c << 24) + (c << 16) + (c << 8) + c;
-				data[buffer_idx] = pixel;
+				if (pixel) {
+					data[buffer_idx] = pixel;
+				}
 			}
 		}*/
 
