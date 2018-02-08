@@ -165,19 +165,11 @@ void Scene_GameBrowser::UpdateGameListSelection() {
 }
 
 void Scene_GameBrowser::BootGame() {
-#ifdef _WIN32
-	SetCurrentDirectory(Utils::ToWideString(gamelist_window->GetGamePath()).c_str());
-	const std::string& path = ".";
-#else
-	const std::string& path = gamelist_window->GetGamePath();
-#endif
-
 	if (browser_dir.empty())
 		browser_dir = Main_Data::GetProjectPath();
-	Main_Data::SetProjectPath(path);
+	//Main_Data::SetProjectPath(path); FIXME?
 
-	FilesystemRef fs = FileFinder::CreateFilesystem(path);
-	FileFinder::SetGameFilesystem(fs);
+	FileFinder::SetGameFilesystem(gamelist_window->GetGameFilesystem());
 
 	Player::CreateGameObjects();
 

@@ -30,7 +30,6 @@ std::string Filesystem::CombinePath(std::string const & dir, std::string const &
 #else
 	std::replace(str.begin(), str.end(), '\\', '/');
 #endif
-	printf("Combined to %s\n", str.c_str());
 	return str;
 }
 
@@ -65,7 +64,7 @@ FilesystemRef game_filesystem;
 search_path_list search_paths;
 std::string fonts_path;
 
-std::string Filesystem::FindFile(const std::string& dir,
+std::string Filesystem::FindFile(const std::string& dir_,
 					 const std::string& name,
 					 char const* exts[]) const
 {
@@ -78,6 +77,8 @@ std::string Filesystem::FindFile(const std::string& dir,
 	if (Exists(em_file))
 		return em_file;
 #endif
+
+	std::string dir = dir_.empty() ? "/" : dir_;
 
 	std::string lower_dir = Utils::LowerCase(dir);
 	std::string const escape_symbol = Player::escape_symbol;
@@ -97,10 +98,6 @@ std::string Filesystem::FindFile(const std::string& dir,
 			}
 		}
 		return "";*/
-	}
-
-	if (lower_dir.empty()) {
-		lower_dir = "/";
 	}
 
 	if (!escape_symbol.empty()) {
@@ -124,7 +121,7 @@ std::string Filesystem::FindFile(const std::string& dir,
 	if (dir_it == dir_cache.end()) {
 		assert(fs_cache.find(lower_dir) == fs_cache.end());
 
-		auto entries = ListDirectory(lower_dir);
+		auto entries = ListDirectory(dir);
 
 		dir_cache[lower_dir] = dir;
 

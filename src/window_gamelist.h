@@ -56,9 +56,9 @@ public:
 	bool HasValidGames();
 
 	/**
-	 * @return path to the selected game
+	 * @return filesystem of the selected game
 	 */
-	std::string GetGamePath();
+	FilesystemRef GetGameFilesystem() const;
 
 private:
 	FilesystemRef filesystem;

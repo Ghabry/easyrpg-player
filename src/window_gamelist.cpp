@@ -29,16 +29,16 @@ Window_GameList::Window_GameList(int ix, int iy, int iwidth, int iheight) :
 }
 
 void Window_GameList::Refresh() {
-// FIXME
-#if 0
-	filesystem = FileFinder::CreateFilesystem(Main_Data::GetProjectPath(), false);
+	filesystem = FileFinder::CreateFilesystem(Main_Data::GetProjectPath());
 	game_directories.clear();
 
 	// Find valid game diectories
-	for (auto dir : tree.get()->directories) {
-		std::shared_ptr<FileFinder::DirectoryTree> subtree = FileFinder::CreateFilesystem(FileFinder::MakePath(Main_Data::GetProjectPath(), dir.second));
-		if (FileFinder::IsValidProject(*subtree)) {
-			game_directories.push_back(dir.second);
+	for (auto entry : filesystem->ListDirectory("/")) {
+		if (entry.type == Filesystem::FileType::Directory) {
+			FilesystemRef subtree = FileFinder::CreateFilesystem(FileFinder::MakePath(Main_Data::GetProjectPath(), entry.name));
+			if (subtree->IsValidProject()) {
+				game_directories.push_back(entry.name);
+			}
 		}
 	}
 
@@ -64,7 +64,6 @@ void Window_GameList::Refresh() {
 
 		DrawErrorText();
 	}
-#endif
 }
 
 void Window_GameList::DrawItem(int index) {
@@ -116,6 +115,6 @@ bool Window_GameList::HasValidGames()
 	return !game_directories.empty();
 }
 
-std::string Window_GameList::GetGamePath() {
-	return game_directories[GetIndex()]; // FIXME. Is this correct?
+FilesystemRef Window_GameList::GetGameFilesystem() const {
+	return FileFinder::CreateFilesystem(FileFinder::MakePath(Main_Data::GetProjectPath(), game_directories[GetIndex()]));
 }
