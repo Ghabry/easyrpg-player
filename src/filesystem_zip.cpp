@@ -611,35 +611,7 @@ std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path
 }
 
 std::streambuf * ZIPFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
-	std::filebuf *buf = new std::filebuf();
-	return buf->open(
-#ifdef _MSC_VER
-		Utils::ToWideString(path).c_str(),
-#else
-		path.c_str(),
-#endif
-		mode);
-}
-
-bool ZIPFilesystem::ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const {
-	if (!m_isValid) return false;
-
-	std::string path_lower = normalize_path(path);
-	if (path_lower.size() != 0 && path_lower.back() != '/') path_lower += "/";
-
-	DirectoryEntry entry;
-	for (auto it = m_zipContent.begin(); it != m_zipContent.end(); it++) {
-		if (Utils::BeginsWith(it->first,path_lower)&&it->first.substr(path_lower.size(),it->first.size()- path_lower.size()).find_last_of('/')==std::string::npos) {
-			//Everything that starts with the path but isn't the path and does contain no slash
-			entry.name = it->first.substr(path_lower.size(), it->first.size()- path_lower.size());
-			entry.type = it->second.isDirectory ? Filesystem::FileType::Directory : Filesystem::FileType::Regular;
-			if (!callback(this, entry)) {
-				return true;
-			}
-		}
-	}
-
-	return true;
+	return nullptr;
 }
 
 std::vector<Filesystem::DirectoryEntry> ZIPFilesystem::ListDirectory(const std::string &path) const {

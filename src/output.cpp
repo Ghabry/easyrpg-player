@@ -53,7 +53,7 @@ namespace {
 
 	std::ostream& output_time() {
 		if (!init) {
-			LOG_FILE=FileFinder::openUTF8Output(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(), std::ios_base::out | std::ios_base::app);
+			LOG_FILE=FileFinder::CreateSaveFilesystem()->openUTF8Output(OUTPUT_FILENAME, std::ios_base::out | std::ios_base::app);
 			init = true;
 		}
 		std::time_t t = std::time(NULL);
@@ -126,7 +126,6 @@ void Output::IgnorePause(bool const val) {
 
 static void WriteLog(std::string const& type, std::string const& msg, Color const& c = Color()) {
 // Skip logging to file in the browser
-	return;
 #ifndef EMSCRIPTEN
 	if (!Main_Data::GetSavePath().empty()) {
 		// Only write to file when project path is initialized

@@ -55,11 +55,6 @@ public:
 		std::unordered_map<std::string, std::string> dirs; // lowered path -> real path
 	} entry_cache;
 #endif
-	/**
-	 * Callback which is used by ListDirectoryEntries to transmit found entries
-	 */
-	typedef bool (*ListDirectoryEntriesCallback)(Filesystem const * filesystem, DirectoryEntry const &);
-
 	Filesystem() {}
 
 	virtual ~Filesystem() {}
@@ -130,15 +125,6 @@ public:
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
 	virtual std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) = 0;
-
-	/**
-	* Calls the provided callback for every entry in the directory dir
-	*
-	* @param path directory to list members.
-	* @param callback the cllback function to invoke when an entry is found
-	* @return whether the operation was successful.
-	*/
-	virtual bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const = 0;
 
 	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const = 0;
 

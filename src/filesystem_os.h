@@ -72,8 +72,6 @@ public:
 	*/
 	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) override;
 
-	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const override;
-
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
 
 private:

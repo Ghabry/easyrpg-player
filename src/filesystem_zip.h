@@ -28,8 +28,8 @@ class ZIPFilesystem : public Filesystem {
 public:
 
 	/**
-	* Initializes a  OS Filesystem inside the given ZIP File
-	* If you don't know the encoding, or want toknow which sub path contains a certain file
+	* Initializes a OS Filesystem inside the given ZIP File
+	* If you don't know the encoding, or want to know which sub path contains a certain file
 	* use the static function CheckIfContains
 	*/
 	ZIPFilesystem(std::string const & os_path, std::string const & sub_path, std::string const & encoding);
@@ -81,8 +81,6 @@ public:
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
 	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) override;
-
-	bool ListDirectoryEntries(std::string const& path, ListDirectoryEntriesCallback callback) const override;
 
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
 
