@@ -55,7 +55,7 @@ namespace {
 		if (!init) {
 			FilesystemRef fs = FileFinder::CreateSaveFilesystem();
 			if (fs) {
-				LOG_FILE = fs->openUTF8Output(OUTPUT_FILENAME, std::ios_base::out | std::ios_base::app);
+				LOG_FILE = fs->OpenOutputStream(OUTPUT_FILENAME, std::ios_base::out | std::ios_base::app);
 			}
 
 			if (!fs || !LOG_FILE) {
@@ -220,7 +220,8 @@ void Output::Quit() {
 	char* buf = new char[log_size];
 
 	std::shared_ptr<std::istream> in;
-	in=FileFinder::openUTF8Input(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),std::ios_base::in);
+	in= FileFinder::OpenInputStream(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),
+									std::ios_base::in);
 	if (in&&!in->bad()) {
 		in->seekg(0, std::ios_base::end);
 		if (in->tellg() > log_size) {
@@ -232,7 +233,8 @@ void Output::Quit() {
 			in.reset();
 
 			std::shared_ptr<std::ostream> out;
-			out=FileFinder::openUTF8Output(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(), std::ios_base::out);
+			out= FileFinder::OpenOutputStream(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),
+											  std::ios_base::out);
 			out->write(buf, read);
 			out.reset();
 		}
@@ -255,7 +257,7 @@ bool Output::TakeScreenshot() {
 
 bool Output::TakeScreenshot(std::string const& file) {
 	std::shared_ptr<std::ostream> ret =
-		FileFinder::openUTF8Output(file, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
+			FileFinder::OpenOutputStream(file, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
 
 	if (ret) {
 		Output::Debug("Saving Screenshot %s", file.c_str());

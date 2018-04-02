@@ -43,8 +43,7 @@
 namespace {
 
 	static Sint64 SDLCALL vio_size(struct SDL_RWops * context) {
-		std::istream* stream = (*reinterpret_cast<std::shared_ptr<std::istream>*>(context->hidden.unknown.data1)).get();
-		return stream->get_size();
+		return -1;
 	}
 
 	static Sint64 SDLCALL vio_seek(struct SDL_RWops * context, Sint64 offset, int whence) {
@@ -309,7 +308,7 @@ void SdlMixerAudio::BGM_OnPlayedOnce() {
 }
 
 void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int fadein) {
-	auto filestream = FileFinder::openUTF8Input(file, std::ios_base::in| std::ios_base::binary);
+	auto filestream = FileFinder::OpenInputStream(file, std::ios_base::in| std::ios_base::binary);
 	if (!filestream) {
 		Output::Warning("Music not readable: %s", file.c_str());
 		return;
@@ -320,7 +319,7 @@ void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int
 		return;
 	}
 
-	filestream = FileFinder::openUTF8Input(file, std::ios_base::in | std::ios_base::binary);
+	filestream = FileFinder::OpenInputStream(file, std::ios_base::in | std::ios_base::binary);
 	SDL_RWops *rw = create_StreamRWOps(filestream); //SDL_RWFromFile(file.c_str(), "rb");
 
 	bgm_stop = false;

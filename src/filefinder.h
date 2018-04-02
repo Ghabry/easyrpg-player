@@ -114,7 +114,7 @@ namespace FileFinder {
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<std::istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
+	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m);
 
 	/**
 	 * Creates stream from UTF-8 file name for writing.
@@ -123,7 +123,7 @@ namespace FileFinder {
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<std::ostream> openUTF8Output(const std::string& name, std::ios_base::openmode m);
+	std::shared_ptr<std::ostream> OpenOutputStream(const std::string &name, std::ios_base::openmode m);
 
 	/**
 	 * Checks whether passed file is directory.

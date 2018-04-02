@@ -77,7 +77,7 @@ void Scene_File::Start() {
 
 		if (!file.empty()) {
 			// File found
-			auto save_stream = FileFinder::openUTF8Input(file, std::ios_base::in | std::ios_base::binary);
+			auto save_stream = FileFinder::OpenInputStream(file, std::ios_base::in | std::ios_base::binary);
 			std::unique_ptr<RPG::Save> savegame =
 				LSD_Reader::Load(*save_stream, Player::encoding);
 

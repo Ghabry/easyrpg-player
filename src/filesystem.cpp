@@ -37,7 +37,7 @@ bool Filesystem::IsValid() {
 	return Exists("");
 }
 
-std::shared_ptr<std::istream> Filesystem::openUTF8Input(const std::string &name, std::ios_base::openmode m) {
+std::shared_ptr<std::istream> Filesystem::OpenInputStream(const std::string &name, std::ios_base::openmode m) {
 	std::streambuf* buf = CreateInputStreambuffer(name, m);
 
 	std::shared_ptr<std::istream> ret(new std::istream(buf));
@@ -45,7 +45,7 @@ std::shared_ptr<std::istream> Filesystem::openUTF8Input(const std::string &name,
 	return (*ret) ? ret : std::shared_ptr<std::istream>();
 }
 
-std::shared_ptr<std::ostream> Filesystem::openUTF8Output(const std::string &name, std::ios_base::openmode m) {
+std::shared_ptr<std::ostream> Filesystem::OpenOutputStream(const std::string &name, std::ios_base::openmode m) {
 	//std::streamsize size = GetFilesize(name);
 	std::streambuf* buf = CreateOutputStreambuffer(name, m);
 

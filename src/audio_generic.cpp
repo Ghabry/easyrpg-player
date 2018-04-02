@@ -183,7 +183,7 @@ bool GenericAudio::PlayOnChannel(BgmChannel& chan, const std::string& file, int 
 	chan.paused = true; // Pause channel so the audio thread doesn't work on it
 	chan.stopped = false; // Unstop channel so the audio thread doesn't delete it
 
-	auto filestream = FileFinder::openUTF8Input(file, std::ios_base::in | std::ios_base::binary);
+	auto filestream = FileFinder::OpenInputStream(file, std::ios_base::in | std::ios_base::binary);
 	if (!filestream) {
 		Output::Warning("BGM file not readable: %s", FileFinder::GetPathInsideGamePath(file).c_str());
 		return false;

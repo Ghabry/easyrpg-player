@@ -464,9 +464,8 @@ void FileFinder::Quit() {
 	game_filesystem.reset();
 }
 
-std::shared_ptr<std::istream> FileFinder::openUTF8Input(const std::string& name,
-	std::ios_base::openmode m)
-{
+std::shared_ptr<std::istream> FileFinder::OpenInputStream(const std::string &name,
+														  std::ios_base::openmode m) {
 	std::streambuf* buf = game_filesystem->CreateInputStreambuffer(name, m);
 
 	std::shared_ptr<std::istream> ret(new std::istream(buf));
@@ -474,9 +473,7 @@ std::shared_ptr<std::istream> FileFinder::openUTF8Input(const std::string& name,
 	return (*ret) ? ret : std::shared_ptr<std::istream>();
 }
 
-std::shared_ptr<std::ostream> FileFinder::openUTF8Output(const std::string& name, std::ios_base::openmode m)
-{
-	std::streamsize size = game_filesystem->GetFilesize(name);
+std::shared_ptr<std::ostream> FileFinder::OpenOutputStream(const std::string &name, std::ios_base::openmode m) {
 	std::streambuf* buf = game_filesystem->CreateOutputStreambuffer(name, m);
 
 	std::shared_ptr<std::ostream> ret(new std::ostream(buf));
