@@ -115,7 +115,7 @@ bool OSFilesystem::Exists(std::string const & path) const {
 	std::string filename = MakeAbsolutePath(path);
 #ifdef _WIN32
 	return ::GetFileAttributesW(Utils::ToWideString(filename).c_str()) != (DWORD)-1;
-#elif (defined(GEKKO) || defined(_3DS) || defined(SWITCH))
+#elif defined(GEKKO) || defined(SWITCH) || defined(_3DS)
 	struct stat sb;
 	return ::stat(filename.c_str(), &sb) == 0;
 #elif defined(PSP2)
@@ -215,15 +215,15 @@ std::vector<Filesystem::DirectoryEntry> OSFilesystem::ListDirectory(const std::s
 		if (has_fast_dir_stat) {
 			#ifdef PSP2
 			is_directory = S_ISDIR(ent.d_stat.st_mode);
-			#elif defined(_DIRENT_HAVE_D_TYPE) || defined(_3DS)
+#elif defined(_DIRENT_HAVE_D_TYPE) || defined(_3DS)
 			if (ent->d_type == DT_UNKNOWN) {
 				has_fast_dir_stat = false;
 			} else {
 				is_directory = ent->d_type == DT_DIR;
 			}
-			#else
+#else
 			has_fast_dir_stat = false;
-			#endif
+#endif
 		}
 
 		if (!has_fast_dir_stat) {
