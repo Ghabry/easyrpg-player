@@ -47,6 +47,7 @@
 #include "main_data.h"
 #include "filesystem_os.h"
 #include "filesystem_zip.h"
+#include "filesystem_overlay.h"
 
 namespace {
 #ifdef SUPPORT_MOVIES
@@ -457,10 +458,22 @@ void FileFinder::InitRtpPaths(bool warn_no_rtp_found) {
 			"If this game really does not require RTP, then add "
 			"FullPackageFlag=1 line to the RPG_RT.ini game file.");
 	}
+
+	if (!search_paths.empty()) {
+		// "Remount" game filesystem as a OverlayFilesystem and layer RTP below
+		FilesystemRef game_fs = game_filesystem;
+		OverlayFilesystem* overlay_fs = new OverlayFilesystem();
+		overlay_fs->AddFilesystem(game_fs, 1);
+
+		for (const auto& s : search_paths) {
+			overlay_fs->AddFilesystem(s, 0);
+		}
+
+		game_filesystem.reset(overlay_fs);
+	}
 }
 
 void FileFinder::Quit() {
-	search_paths.clear();
 	game_filesystem.reset();
 }
 

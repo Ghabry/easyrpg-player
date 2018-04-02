@@ -199,6 +199,8 @@ public:
 	 */
 	std::string FindFont(const std::string& name) const;
 
+	
+
 	bool IsValidProject();
 	bool IsRPG2kProject();
 	bool IsEasyRpgProject();
