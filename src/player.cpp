@@ -44,6 +44,7 @@
 #include "audio.h"
 #include "cache.h"
 #include "filefinder.h"
+#include "filesystem_rtp.h"
 #include "game_actors.h"
 #include "game_map.h"
 #include "game_message.h"
@@ -683,7 +684,7 @@ void Player::CreateGameObjects() {
 	Output::Debug("Engine configured as: 2k=%d 2k3=%d 2k3Legacy=%d MajorUpdated=%d Eng=%d", Player::IsRPG2k(), Player::IsRPG2k3(), Player::IsRPG2k3Legacy(), Player::IsMajorUpdatedVersion(), Player::IsEnglish());
 
 	if (!no_rtp_flag) {
-		FileFinder::InitRtpPaths();
+		RtpFilesystem::InitRtpPaths();
 	}
 
 	ResetGameObjects();

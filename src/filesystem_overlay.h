@@ -21,6 +21,11 @@
 #include "filesystem.h"
 #include "system.h"
 
+/**
+ * A virtual filesystem that combines multiple VFS into one.
+ * The VFS are ordered by priority. For file operations the VFS where the file exists is used and for directory
+ * operations the union of all VFS is used.
+ */
 class OverlayFilesystem : public Filesystem {
 public:
 	/**

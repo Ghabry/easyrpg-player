@@ -32,6 +32,7 @@ add_library(${PROJECT_NAME}
 	src/filesystem.cpp
 	src/filesystem_os.cpp
 	src/filesystem_overlay.cpp
+	src/filesystem_rtp.cpp
 	src/filesystem_zip.cpp
 	src/font.cpp
 	src/fps_overlay.cpp

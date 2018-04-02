@@ -15,23 +15,33 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EASYRPG_PLAYER_FILESYSTEM_OS_H_
-#define _EASYRPG_PLAYER_FILESYSTEM_OS_H_
+#ifndef _EASYRPG_PLAYER_FILESYSTEM_RTP_H_
+#define _EASYRPG_PLAYER_FILESYSTEM_RTP_H_
 
 #include "filesystem.h"
+#include "system.h"
 
 /**
- * A virtual filesystem that represents the file system of the host system.
+ * A special virtual filesystem for the Runtime Package (RTP) that wraps another VFS and attempts to find a requested
+ * file using a translation table when the requested file is missing.
+ * Only file operations are translated, directory reading is passed through without any translation logic.
  */
-class OSFilesystem : public Filesystem {
+class RtpFilesystem : public Filesystem {
 public:
+	/**
+	 * Adds RTP paths to the file finder
+	 *
+	 * @param warn_no_rtp_found Emits a warning on screen when no RTP was found.
+	 */
+	static void InitRtpPaths(bool warn_no_rtp_found = true);
 
 	/**
-	 * Initializes a OS Filesystem on the given os path
+	 * Initializes a RTP filesystem.
 	 */
-	OSFilesystem(std::string const & rootPath);
+	RtpFilesystem(FilesystemRef wrapped_filesystem);
 
-    ~OSFilesystem();
+    ~RtpFilesystem();
+
 	/**
 	* Checks whether the passed path is a file
 	*
@@ -77,10 +87,7 @@ public:
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
 
 private:
-	std::string MakeAbsolutePath(std::string const & path) const;
-
-	std::string m_rootPath;
+	FilesystemRef wrapped_fs;
 };
-
 
 #endif

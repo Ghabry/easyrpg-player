@@ -24,6 +24,9 @@
 #include <unordered_map>
 #include <vector>
 
+/**
+ * A virtual filesystem that allows file/directory operations inside a ZIP archive.
+ */
 class ZIPFilesystem : public Filesystem {
 public:
 
