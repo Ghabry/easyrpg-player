@@ -20,7 +20,7 @@
 
 // Headers
 #include "audio_decoder.h"
-#include <string>	
+#include <string>
 #include <memory>
 
 /**
@@ -32,7 +32,7 @@ public:
 
 	~WavDecoder();
 
-	bool Open(std::shared_ptr<FileFinder::istream> stream) override;
+	bool Open(std::shared_ptr<std::istream> stream) override;
 
 	bool Seek(size_t offset, Origin origin) override;
 
@@ -45,7 +45,7 @@ public:
 private:
 	int FillBuffer(uint8_t* buffer, int length) override;
 	Format output_format;
-	std::shared_ptr<FileFinder::istream> stream;
+	std::shared_ptr<std::istream> stream;
 	bool finished;
 	uint32_t samplerate;
 	uint16_t nchannels;

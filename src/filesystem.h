@@ -101,7 +101,7 @@ public:
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<FileFinder::istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
+	std::shared_ptr<std::istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
 
 	/**
 	* Allocates a streambuffer with input capabilities on the given path.

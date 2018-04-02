@@ -33,13 +33,13 @@
 #include "decoder_oggvorbis.h"
 
 static size_t vio_read_func(void *ptr, size_t size,size_t nmemb,void* userdata) {
-	FileFinder::istream* f = reinterpret_cast<FileFinder::istream*>(userdata);
+	std::istream* f = reinterpret_cast<std::istream*>(userdata);
 	if (size == 0) return 0;
 	return f->read(reinterpret_cast<char*>(ptr), size*nmemb).gcount()/size;
 }
 
 static int vio_seek_func(void* userdata, ogg_int64_t offset, int seek_type) {
-	FileFinder::istream* f = reinterpret_cast<FileFinder::istream*>(userdata);
+	std::istream* f = reinterpret_cast<std::istream*>(userdata);
 	if (f->eof()) f->clear(); //emulate behaviour of fseek
 	switch (seek_type) {
 	case SEEK_CUR:
@@ -59,7 +59,7 @@ static int vio_seek_func(void* userdata, ogg_int64_t offset, int seek_type) {
 }
 
 static long vio_tell_func(void* userdata) {
-	FileFinder::istream* f = reinterpret_cast<FileFinder::istream*>(userdata);
+	std::istream* f = reinterpret_cast<std::istream*>(userdata);
 	return f->tellg();
 }
 
@@ -81,7 +81,7 @@ OggVorbisDecoder::~OggVorbisDecoder() {
 	}
 }
 
-bool OggVorbisDecoder::Open(std::shared_ptr<FileFinder::istream> stream) {
+bool OggVorbisDecoder::Open(std::shared_ptr<std::istream> stream) {
 	finished = false;
 	this->stream = stream;
 	if (ovf) {

@@ -43,16 +43,16 @@ public:
 		Medium,
 		Low
 	};
-	
+
 	/**
 	 * Constructs a resampler
-	 * 
+	 *
 	 * @param[in] decoder The decoder which provides samples to the resampler - will be owned by the resampler
-	 * @param[in] pitch_handled Defines whether the decoder handles pitch changes by itself or not. 
+	 * @param[in] pitch_handled Defines whether the decoder handles pitch changes by itself or not.
 	 * @param[in] quality Sets the quality rting of the resampler - higher quality implies slower filtering
 	 */
 	AudioResampler(std::unique_ptr<AudioDecoder> decoder, bool pitch_handled=false, Quality quality=Quality::Medium);
-	
+
 	/**
 	 * Destroys the resampler as well as its owned ressources
 	 */
@@ -68,16 +68,16 @@ public:
 
 	/**
 	 * Wraps the opening function of the contained decoder
-	 * 
+	 *
 	 * @param[in] file Filepointer to a file readable by the wrapped decoder
-	 * 
+	 *
 	 * @return Whether the operation was successful or not
 	 */
-	bool Open(std::shared_ptr<FileFinder::istream> file) override;
+	bool Open(std::shared_ptr<std::istream> file) override;
 
 	/**
 	 * Wraps the seek function of the contained decoder
-	 * @note If the seek function of the wrapped decoder is 
+	 * @note If the seek function of the wrapped decoder is
 	 *	somewhat corelated to time the offset is not influenced by the resampling ratio
 	 *
 	 * @param offset Offset to seek to
@@ -100,7 +100,7 @@ public:
 	 * @return Amount of MIDI ticks.
 	 */
 	int GetTicks() const override;
-	
+
 	/**
 	 * Returns wheter the resampled audio stream is finished
 	 *
@@ -118,7 +118,7 @@ public:
 	void GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const override;
 
 	/**
-	 * Requests a certain frame format from the resampler. 
+	 * Requests a certain frame format from the resampler.
 	 * Supported formats are:
 	 *  * float,int16_t for libspeexdsp
 	 *  * float for libsamplerate
@@ -144,7 +144,7 @@ public:
 	 * 100 = normal speed
 	 * 200 = double speed and so on
 	 * If the pitch is handled by the resampler this setting controls the resampling in conjunction with the frequency.
-	 * 
+	 *
 	 * @param pitch Pitch multiplier to use
 	 * @return true if pitch was set, false otherwise
 	 */
@@ -159,7 +159,7 @@ private:
 	 * @return number of bytes read or -1 on error
 	 */
 	int FillBuffer(uint8_t* buffer, int length) override;
-	
+
 	/**
 	 * Internally used by the FillBuffer function if the output rate equals the input rate
 	 */
@@ -169,7 +169,7 @@ private:
 	 * Internally used by the FillBuffer function if resampling is necessary
 	 */
 	int FillBufferDifferentRate(uint8_t* buffer, int length);
-	
+
 	std::unique_ptr<AudioDecoder> wrapped_decoder;
 	bool pitch_handled_by_decoder;
 	int pitch;
@@ -182,7 +182,7 @@ private:
 	int input_rate;
 	Format output_format;
 	int output_rate;
-	
+
 	#if defined(HAVE_LIBSPEEXDSP)
 		struct {
 			spx_uint32_t input_frames, output_frames;

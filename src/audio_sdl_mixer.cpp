@@ -43,12 +43,12 @@
 namespace {
 
 	static Sint64 SDLCALL vio_size(struct SDL_RWops * context) {
-		FileFinder::istream* stream = (*reinterpret_cast<std::shared_ptr<FileFinder::istream>*>(context->hidden.unknown.data1)).get();
+		std::istream* stream = (*reinterpret_cast<std::shared_ptr<std::istream>*>(context->hidden.unknown.data1)).get();
 		return stream->get_size();
 	}
 
 	static Sint64 SDLCALL vio_seek(struct SDL_RWops * context, Sint64 offset, int whence) {
-		FileFinder::istream* stream = (*reinterpret_cast<std::shared_ptr<FileFinder::istream>*>(context->hidden.unknown.data1)).get();
+		std::istream* stream = (*reinterpret_cast<std::shared_ptr<std::istream>*>(context->hidden.unknown.data1)).get();
 		switch (whence) {
 		case RW_SEEK_CUR:
 			stream->seekg(offset, std::ios_base::cur);
@@ -67,7 +67,7 @@ namespace {
 	}
 
 	static size_t SDLCALL vio_read(struct SDL_RWops * context, void *ptr, size_t size, size_t maxnum) {
-		FileFinder::istream* stream = (*reinterpret_cast<std::shared_ptr<FileFinder::istream>*>(context->hidden.unknown.data1)).get();
+		std::istream* stream = (*reinterpret_cast<std::shared_ptr<std::istream>*>(context->hidden.unknown.data1)).get();
 		if (size == 0) return 0;
 		return stream->read(reinterpret_cast<char*>(ptr), size*maxnum).gcount() / size;
 	}
@@ -79,15 +79,15 @@ namespace {
 
 	static int SDLCALL vio_close(struct SDL_RWops * context) {
 		//If this is the last shared pointer, the stream get's closed now
-		delete reinterpret_cast<std::shared_ptr<FileFinder::istream>*>(context->hidden.unknown.data1);
+		delete reinterpret_cast<std::shared_ptr<std::istream>*>(context->hidden.unknown.data1);
 		context->hidden.unknown.data1 = NULL;
 		return 0;
 	}
 
-	SDL_RWops * create_StreamRWOps(std::shared_ptr<FileFinder::istream> stream){
+	SDL_RWops * create_StreamRWOps(std::shared_ptr<std::istream> stream){
 		SDL_RWops * ret = SDL_AllocRW();
 		//create a new shared pointer to avoid deletion of the content when the scope of this function ends
-		ret->hidden.unknown.data1 = new std::shared_ptr<FileFinder::istream>(stream);
+		ret->hidden.unknown.data1 = new std::shared_ptr<std::istream>(stream);
 		ret->close = vio_close;
 		ret->read = vio_read;
 		ret->write = vio_write;
@@ -397,7 +397,7 @@ void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int
 	Mix_HookMusicFinished(&bgm_played_once);
 }
 
-void SdlMixerAudio::SetupAudioDecoder(std::shared_ptr<FileFinder::istream> stream, const std::string& file, int volume, int pitch, int fadein) {
+void SdlMixerAudio::SetupAudioDecoder(std::shared_ptr<std::istream> stream, const std::string& file, int volume, int pitch, int fadein) {
 	if (!audio_decoder->Open(stream)) {
 		Output::Warning("Couldn't play %s BGM. %s", FileFinder::GetPathInsideGamePath(file).c_str(), audio_decoder->GetError().c_str());
 		audio_decoder.reset();

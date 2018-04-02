@@ -249,6 +249,14 @@ namespace Utils {
 	 */
 	template <typename T> T Clamp(T value, const T& minv, const T& maxv);
 
+	/**
+	 * Reads a stream until EOF and returns the read bytes.
+	 *
+	 * @param stream input stream to read
+	 * @return content read from stream
+	 */
+	std::vector<uint8_t> ReadStream(std::istream& stream);
+
 } // namespace Utils
 
 template <typename T>

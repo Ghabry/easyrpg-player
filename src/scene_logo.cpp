@@ -68,7 +68,7 @@ void Scene_Logo::Update() {
 		}
 
 		if (fs->IsValidProject()) {
-			FileFinder::SetGameFilesystem(FileFinder::CreateFilesystem(Main_Data::GetProjectPath()));
+			FileFinder::SetGameFilesystem(fs);
 			Player::CreateGameObjects();
 			is_valid = true;
 		}

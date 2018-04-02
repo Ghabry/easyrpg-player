@@ -25,6 +25,7 @@
 #include <vector>
 #include "output.h"
 #include "image_xyz.h"
+#include "utils.h"
 
 bool ImageXYZ::ReadXYZ(const uint8_t* data, unsigned len, bool transparent,
 					   int& width, int& height, void*& pixels) {
@@ -73,16 +74,10 @@ bool ImageXYZ::ReadXYZ(const uint8_t* data, unsigned len, bool transparent,
 	return true;
 }
 
-bool ImageXYZ::ReadXYZ(FileFinder::istream & stream, bool transparent,
+bool ImageXYZ::ReadXYZ(std::istream & stream, bool transparent,
 					   int& width, int& height, void*& pixels) {
-	long size = stream.get_size();
-	std::vector<uint8_t> buffer(size);
-	long size_read = stream.read(reinterpret_cast<char*>(&buffer.front()), size).gcount();
-	if (size_read != size) {
-		Output::Warning("Error reading XYZ file.");
-		return false;
-	}
-	return ReadXYZ(&buffer.front(), (unsigned) size, transparent, width, height, pixels);
+	std::vector<uint8_t> buffer = Utils::ReadStream(stream);
+	return ReadXYZ(&buffer.front(), (unsigned) buffer.size(), transparent, width, height, pixels);
 }
 
 #endif // SUPPORT_XYZ

@@ -277,7 +277,7 @@ bool WildMidiDecoder::WasInited() const {
 	return init;
 }
 
-bool WildMidiDecoder::Open(std::shared_ptr<FileFinder::istream> stream) {
+bool WildMidiDecoder::Open(std::shared_ptr<std::istream> stream) {
 	if (!init)
 		return false;
 

@@ -26,7 +26,7 @@
 
 namespace ImageBMP {
 	bool ReadBMP(const uint8_t* data, unsigned len, bool transparent, int& width, int& height, void*& pixels);
-	bool ReadBMP(FileFinder::istream & stream, bool transparent, int& width, int& height, void*& pixels);
+	bool ReadBMP(std::istream & stream, bool transparent, int& width, int& height, void*& pixels);
 }
 
 #endif // SUPPORT_BMP

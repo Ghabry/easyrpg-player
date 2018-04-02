@@ -490,3 +490,17 @@ std::string Utils::ReplacePlaceholders(const std::string& text_template, std::ve
 
 	return str;
 }
+
+std::vector<uint8_t> Utils::ReadStream(std::istream &stream) {
+	constexpr int buffer_incr = 8192;
+	std::vector<uint8_t> outbuf;
+
+	do {
+		outbuf.resize(outbuf.size() + buffer_incr);
+		stream.read(reinterpret_cast<char*>(outbuf.data() + outbuf.size() - buffer_incr), buffer_incr);
+	} while (stream.gcount() == buffer_incr);
+
+	outbuf.resize(outbuf.size() - buffer_incr + stream.gcount());
+
+	return outbuf;
+}

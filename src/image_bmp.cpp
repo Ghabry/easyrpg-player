@@ -26,6 +26,7 @@
 #include <vector>
 #include "output.h"
 #include "image_bmp.h"
+#include "utils.h"
 
 static uint16_t get_2(const uint8_t *p) {
 	return (uint16_t) p[0] | (p[1] << 8);
@@ -139,16 +140,10 @@ bool ImageBMP::ReadBMP(const uint8_t* data, unsigned len, bool transparent,
 	return true;
 }
 
-bool ImageBMP::ReadBMP(FileFinder::istream & stream, bool transparent,
+bool ImageBMP::ReadBMP(std::istream & stream, bool transparent,
 					int& width, int& height, void*& pixels) {
-	long size =stream.get_size();
-	std::vector<uint8_t> buffer(size);
-	long size_read = stream.read(reinterpret_cast<char*>(&buffer.front()), size).gcount();
-	if (size_read != size) {
-		Output::Warning("Error reading BMP file.");
-		return false;
-	}
-	return ReadBMP(&buffer.front(), (unsigned) size, transparent, width, height, pixels);
+	std::vector<uint8_t> buffer = Utils::ReadStream(stream);
+	return ReadBMP(&buffer.front(), (unsigned) buffer.size(), transparent, width, height, pixels);
 }
 
 #endif // SUPPORT_BMP

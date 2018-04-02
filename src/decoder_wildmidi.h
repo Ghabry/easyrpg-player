@@ -38,7 +38,7 @@ public:
 	bool WasInited() const override;
 
 	// Audio Decoder interface
-	bool Open(std::shared_ptr<FileFinder::istream> stream) override;
+	bool Open(std::shared_ptr<std::istream> stream) override;
 
 	bool Seek(size_t offset, Origin origin) override;
 

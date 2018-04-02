@@ -25,14 +25,15 @@
 #include "audio_decoder.h"
 #include "output.h"
 #include "decoder_fmmidi.h"
+#include "utils.h"
 
 FmMidiDecoder::FmMidiDecoder() {
 	note_factory.reset(new midisynth::fm_note_factory());
 	synth.reset(new midisynth::synthesizer(note_factory.get()));
 	seq.reset(new midisequencer::sequencer());
-	
+
 	music_type = "midi";
-	
+
 	load_programs();
 }
 
@@ -49,14 +50,11 @@ int read_func(void* instance) {
 	return fmmidi->file_buffer[fmmidi->file_buffer_pos++];
 }
 
-bool FmMidiDecoder::Open(std::shared_ptr<FileFinder::istream> stream) {
+bool FmMidiDecoder::Open(std::shared_ptr<std::istream> stream) {
 	seq->clear();
-	Output::Debug("MIDI Size: %d\n", stream->get_size());
-	file_buffer.resize(stream->get_size());
-	stream->read(reinterpret_cast<char*>(file_buffer.data()), stream->get_size());
-	size_t bytes_read = stream->gcount();
+	file_buffer = Utils::ReadStream(*stream);
 
-	if ((bytes_read != file_buffer.size()) || (!seq->load(this, read_func))) {
+	if (!seq->load(this, read_func)) {
 		error_message = "FM Midi: Error reading file";
 		return false;
 	}

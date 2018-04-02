@@ -179,7 +179,7 @@ public:
 		// no-op
 	}
 
-	bool Open(std::shared_ptr<FileFinder::istream>) {
+	bool Open(std::shared_ptr<std::istream>) {
 		// No file operations needed
 		return true;
 	}

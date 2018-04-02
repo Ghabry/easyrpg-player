@@ -30,12 +30,12 @@ static void Mpg123Decoder_deinit(void) {
 }
 
 static ssize_t custom_read(void* io, void* buffer, size_t nbyte) {
-	FileFinder::istream* f = reinterpret_cast<FileFinder::istream*>(io);
+	std::istream* f = reinterpret_cast<std::istream*>(io);
 	return f->read(reinterpret_cast<char*>(buffer), nbyte).gcount();
 }
 
 static off_t custom_seek(void* io, off_t offset, int seek_type) {
-	FileFinder::istream* f = reinterpret_cast<FileFinder::istream*>(io);
+	std::istream* f = reinterpret_cast<std::istream*>(io);
 	if (f->eof()) f->clear(); //emulate behaviour of fseek
 	switch (seek_type) {
 	case SEEK_CUR:
@@ -92,7 +92,7 @@ bool Mpg123Decoder::WasInited() const {
 	return init;
 }
 
-bool Mpg123Decoder::Open(std::shared_ptr<FileFinder::istream> stream) {
+bool Mpg123Decoder::Open(std::shared_ptr<std::istream> stream) {
 	if (!init) {
 		return false;
 	}
@@ -211,7 +211,7 @@ int Mpg123Decoder::GetTicks() const {
 }
 
 
-bool Mpg123Decoder::IsMp3(std::shared_ptr<FileFinder::istream> stream) {
+bool Mpg123Decoder::IsMp3(std::shared_ptr<std::istream> stream) {
 	Mpg123Decoder decoder;
 	// Prevent stream handle destruction
 	mpg123_replace_reader_handle(decoder.handle.get(), custom_read, custom_seek, noop_close);

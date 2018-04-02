@@ -92,7 +92,7 @@ public:
 	 * @param filename Path to the file handle
 	 * @return An audio decoder instance when the format was detected, otherwise null
 	 */
-	static std::unique_ptr<AudioDecoder> Create(std::shared_ptr<FileFinder::istream> stream, const std::string& filename);
+	static std::unique_ptr<AudioDecoder> Create(std::shared_ptr<std::istream> stream, const std::string& filename);
 
 	/**
 	 * Updates the volume for the fade in/out effect.
@@ -203,7 +203,7 @@ public:
 	 *
 	 * @return true if inititalizing was succesful, false otherwise
 	 */
-	virtual bool Open(std::shared_ptr<FileFinder::istream> stream) = 0;
+	virtual bool Open(std::shared_ptr<std::istream> stream) = 0;
 
 	/**
 	 * Determines whether the stream is finished.

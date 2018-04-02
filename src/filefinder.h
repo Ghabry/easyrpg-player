@@ -108,27 +108,13 @@ namespace FileFinder {
 	std::string FindFont(const std::string& name);
 
 	/**
-	 * An input stream annotated with the size of the connected file
-	 */
-	class istream : public std::istream {
-	public:
-		inline istream(std::streambuf * buf, std::streamsize size) :
-				std::istream(buf), size(size), buffer(buf) {}
-		~istream() { delete buffer; }
-		inline std::streamsize get_size() { return size; }
-	private:
-		std::streamsize size;
-		std::streambuf* buffer;
-	};
-
-	/**
 	 * Creates stream from UTF-8 file name for reading.
 	 *
 	 * @param name UTF-8 string file name.
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<FileFinder::istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
+	std::shared_ptr<std::istream> openUTF8Input(const std::string& name, std::ios_base::openmode m);
 
 	/**
 	 * Creates stream from UTF-8 file name for writing.
@@ -138,12 +124,6 @@ namespace FileFinder {
 	 * @return NULL if open failed.
 	 */
 	std::shared_ptr<std::ostream> openUTF8Output(const std::string& name, std::ios_base::openmode m);
-
-	struct Directory {
-		std::string base;
-		//string_map files;
-		//string_map directories;
-	}; // struct Directory
 
 	/**
 	 * Checks whether passed file is directory.

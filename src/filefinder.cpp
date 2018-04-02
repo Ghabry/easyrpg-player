@@ -119,11 +119,6 @@ const FilesystemRef FileFinder::GetGameFilesystem() {
 const FilesystemRef FileFinder::CreateSaveFilesystem() {
 	std::string save_path = Main_Data::GetSavePath();
 
-	/*if (!(Exists(save_path) && IsDirectory(save_path))) {
-		Output::Warning("Save game directory %s is invalid. Saving will not work.", save_path.c_str());
-		return std::shared_ptr<DirectoryTree>();
-	}*/
-
 	FilesystemRef fs = CreateFilesystem(save_path);
 	if (!fs) {
 		Output::Warning("Save game directory %s is invalid. Saving will not work.", save_path.c_str());
@@ -469,15 +464,14 @@ void FileFinder::Quit() {
 	game_filesystem.reset();
 }
 
-std::shared_ptr<FileFinder::istream> FileFinder::openUTF8Input(const std::string& name,
+std::shared_ptr<std::istream> FileFinder::openUTF8Input(const std::string& name,
 	std::ios_base::openmode m)
 {
-	std::streamsize size = game_filesystem->GetFilesize(name);
 	std::streambuf* buf = game_filesystem->CreateInputStreambuffer(name, m);
 
-	std::shared_ptr<FileFinder::istream> ret(new FileFinder::istream(buf, size));
+	std::shared_ptr<std::istream> ret(new std::istream(buf));
 
-	return (*ret) ? ret : std::shared_ptr<FileFinder::istream>();
+	return (*ret) ? ret : std::shared_ptr<std::istream>();
 }
 
 std::shared_ptr<std::ostream> FileFinder::openUTF8Output(const std::string& name, std::ios_base::openmode m)

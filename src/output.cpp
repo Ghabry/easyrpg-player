@@ -53,7 +53,16 @@ namespace {
 
 	std::ostream& output_time() {
 		if (!init) {
-			LOG_FILE=FileFinder::CreateSaveFilesystem()->openUTF8Output(OUTPUT_FILENAME, std::ios_base::out | std::ios_base::app);
+			FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+			if (fs) {
+				LOG_FILE = fs->openUTF8Output(OUTPUT_FILENAME, std::ios_base::out | std::ios_base::app);
+			}
+
+			if (!fs || !LOG_FILE) {
+				// Create a bad ofstream as a fake handle for logfile output
+				LOG_FILE.reset(new std::ofstream());
+			}
+
 			init = true;
 		}
 		std::time_t t = std::time(NULL);
@@ -210,7 +219,7 @@ void Output::Quit() {
 
 	char* buf = new char[log_size];
 
-	std::shared_ptr<FileFinder::istream> in;
+	std::shared_ptr<std::istream> in;
 	in=FileFinder::openUTF8Input(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),std::ios_base::in);
 	if (in&&!in->bad()) {
 		in->seekg(0, std::ios_base::end);

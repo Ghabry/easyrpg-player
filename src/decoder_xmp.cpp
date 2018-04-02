@@ -40,7 +40,7 @@ XMPDecoder::~XMPDecoder() {
 	}
 }
 
-bool XMPDecoder::Open(std::shared_ptr<FileFinder::istream> stream) {
+bool XMPDecoder::Open(std::shared_ptr<std::istream> stream) {
 	finished = false;
 
 	if (!ctx)
@@ -49,7 +49,7 @@ bool XMPDecoder::Open(std::shared_ptr<FileFinder::istream> stream) {
 	Output::Debug("MOD Size: %d\n", stream->get_size());
 	file_buffer.resize(stream->get_size());
 	stream->read(reinterpret_cast<char*>(file_buffer.data()), stream->get_size());
-		
+
 	int res =  xmp_load_module_from_memory(ctx, file_buffer.data(), stream->get_size());
 	if (res != 0) {
 		error_message = "XMP: Error loading file";

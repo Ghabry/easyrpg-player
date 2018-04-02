@@ -36,7 +36,7 @@ public:
 	~XMPDecoder();
 
 	// Audio Decoder interface
-	bool Open(std::shared_ptr<FileFinder::istream> stream) override;
+	bool Open(std::shared_ptr<std::istream> stream) override;
 
 	bool Seek(size_t offset, Origin origin) override;
 
@@ -49,7 +49,7 @@ public:
 	static bool IsModule(std::string filename);
 private:
 	int FillBuffer(uint8_t* buffer, int length) override;
-	
+
 	std::vector<uint8_t> file_buffer;
 #ifdef HAVE_XMP
 	xmp_context ctx = nullptr;
