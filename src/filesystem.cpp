@@ -136,8 +136,15 @@ std::string Filesystem::FindFile(const std::string& dir_,
 	dir_it = dir_cache.find(lower_dir);
 	auto it = fs_cache.find(lower_dir);
 
-	for (char const** c = exts; *c != NULL; ++c) {
-		auto entry_it = (*it).second.find(corrected_name + *c);
+	if (exts != nullptr) {
+		for (char const **c = exts; *c != NULL; ++c) {
+			auto entry_it = (*it).second.find(corrected_name + *c);
+			if (entry_it != (*it).second.end()) {
+				return Filesystem::CombinePath((*dir_it).second, (*entry_it).second.name);
+			}
+		}
+	} else {
+		auto entry_it = (*it).second.find(corrected_name);
 		if (entry_it != (*it).second.end()) {
 			return Filesystem::CombinePath((*dir_it).second, (*entry_it).second.name);
 		}
@@ -151,100 +158,11 @@ std::string Filesystem::FindFile(const std::string& name,
 	return FindFile("", name, exts);
 }
 
-std::string Filesystem::FindImage(const std::string& dir, const std::string& name) const {
-#ifdef EMSCRIPTEN
-	return FileFinder::FindDefault(*directory_tree, dir, name);
-#endif
-
-	static const char* IMG_TYPES[] = { ".bmp",  ".png", ".xyz", NULL };
-	return game_filesystem->FindFile(dir, name, IMG_TYPES);
+std::string Filesystem::FindFile(const std::string& name) const {
+	return FindFile("", name, nullptr);
 }
 
-std::string Filesystem::FindDefault(const std::string& name) const {
-	std::vector<std::string> path_comps = FileFinder::SplitPath(name);
-	if (path_comps.size() > 1) {
-		// When the searched name contains a directory search in this directory
-		// instead of the root
-
-		std::string f;
-		for (auto it = path_comps.begin() + 1; it != path_comps.end(); ++it) {
-			f = Filesystem::CombinePath(f, *it);
-		}
-
-		return FindDefault(path_comps[0], f);
-	}
-
-	return FindDefault("", name);
-}
-
-std::string Filesystem::FindDefault(const std::string& dir, const std::string& name) const {
-	static const char* no_exts[] = {"", NULL};
-	return FindFile(dir, name, no_exts);
-}
-
-std::string Filesystem::FindMusic(const std::string& name) const {
-#ifdef EMSCRIPTEN
-	return FileFinder::FindDefault(*directory_tree, "Music", name);
-#endif
-
-	static const char* MUSIC_TYPES[] = {
-			".opus", ".oga", ".ogg", ".wav", ".mid", ".midi", ".mp3", ".wma", nullptr };
-	return FindFile("Music", name, MUSIC_TYPES);
-}
-
-std::string Filesystem::FindSound(const std::string& name) const {
-#ifdef EMSCRIPTEN
-	return FileFinder::FindDefault(*directory_tree, "Sound", name);
-#endif
-
-	static const char* SOUND_TYPES[] = {
-			".opus", ".oga", ".ogg", ".wav", ".mp3", ".wma", nullptr };
-	return FindFile("Sound", name, SOUND_TYPES);
-}
-
-
-std::string Filesystem::FindFont(const std::string& name) const {
-	static const char* FONTS_TYPES[] = {
-			".ttf", ".ttc", ".otf", ".fon", NULL, };
-	std::string path = FindFile("Font", name, FONTS_TYPES);
-
-#if defined(_WIN32) && !defined(_ARM_)
-	if (!path.empty()) {
-		return path;
-	}
-
-	std::string folder_path = "";
-	std::string filename = name;
-
-	size_t separator_pos = path.rfind('\\');
-	if (separator_pos != std::string::npos) {
-		folder_path = path.substr(0, separator_pos);
-		filename = path.substr(separator_pos, path.length() - separator_pos);
-	}
-
-	std::string font_filename = GetFontFilename(filename);
-	if (!font_filename.empty()) {
-		if (FileFinder::Exists(folder_path + font_filename))
-			return folder_path + font_filename;
-
-		if (FileFinder::Exists(fonts_path + font_filename))
-			return fonts_path + font_filename;
-	}
-
-	return "";
-#else
-	return path;
-#endif
-}
-
-bool Filesystem::IsValidProject() {
-	return IsRPG2kProject() || IsEasyRpgProject();
-}
-
-bool Filesystem::IsRPG2kProject() {
-	return !FindDefault(DATABASE_NAME).empty() && !FindDefault(TREEMAP_NAME).empty();
-}
-
-bool Filesystem::IsEasyRpgProject(){
-	return !FindDefault(DATABASE_NAME_EASYRPG).empty() && !FindDefault(TREEMAP_NAME_EASYRPG).empty();
+std::string Filesystem::FindFile(const std::string& dir,
+								 const std::string& name) const {
+	return FindFile(dir, name, nullptr);
 }

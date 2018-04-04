@@ -295,7 +295,7 @@ std::shared_ptr<std::ostream> FileFinder::OpenOutputStream(const std::string &na
 
 std::string FileFinder::FindImage(const std::string& dir, const std::string& name) {
 #ifdef EMSCRIPTEN
-	return FindDefault(dir, name);
+	return game_filesystem->FindFile(dir, name);
 #endif
 
 	static const char* IMG_TYPES[] = { ".bmp",  ".png", ".xyz", NULL };
@@ -308,7 +308,7 @@ std::string FileFinder::FindDefault(const std::string& dir, const std::string& n
 }
 
 std::string FileFinder::FindDefault(const std::string& name) {
-	return game_filesystem->FindDefault(name);
+	return game_filesystem->FindFile(name);
 }
 
 bool FileFinder::HasSavegame() {
@@ -320,7 +320,7 @@ bool FileFinder::HasSavegame() {
 	for (int i = 1; i <= 15; i++) {
 		std::stringstream ss;
 		ss << "Save" << (i <= 9 ? "0" : "") << i << ".lsd";
-		std::string filename = fs->FindDefault(ss.str());
+		std::string filename = fs->FindFile(ss.str());
 
 		if (!filename.empty()) {
 			return true;
@@ -331,7 +331,7 @@ bool FileFinder::HasSavegame() {
 
 std::string FileFinder::FindMusic(const std::string& name) {
 #ifdef EMSCRIPTEN
-	return FindDefault("Music", name);
+	return game_filesystem->FindFile("Music", name);
 #endif
 
 	static const char* MUSIC_TYPES[] = {
@@ -341,7 +341,7 @@ std::string FileFinder::FindMusic(const std::string& name) {
 
 std::string FileFinder::FindSound(const std::string& name) {
 #ifdef EMSCRIPTEN
-	return FindDefault("Sound", name);
+	return game_filesystem->FindFile("Sound", name);
 #endif
 
 	static const char* SOUND_TYPES[] = {
@@ -359,6 +359,22 @@ bool FileFinder::IsDirectory(const std::string& dir) {
 
 Offset FileFinder::GetFileSize(std::string const& file) {
 	return game_filesystem->GetFilesize(file);
+}
+
+bool FileFinder::IsValidProject() {
+	return IsValidProject(game_filesystem);
+}
+
+bool FileFinder::IsValidProject(FilesystemRef fs) {
+	return IsRPG2kProject(fs) || IsEasyRpgProject(fs);
+}
+
+bool FileFinder::IsRPG2kProject(FilesystemRef fs) {
+	return !fs->Exists(DATABASE_NAME) && !fs->Exists(TREEMAP_NAME);
+}
+
+bool FileFinder::IsEasyRpgProject(FilesystemRef fs) {
+	return !fs->Exists(DATABASE_NAME_EASYRPG) && !fs->Exists(TREEMAP_NAME_EASYRPG);
 }
 
 bool FileFinder::IsMajorUpdatedTree() {

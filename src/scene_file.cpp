@@ -72,7 +72,7 @@ void Scene_File::Start() {
 
 		std::string file;
 		if (filesystem) {
-			file = filesystem->FindDefault(ss.str());
+			file = filesystem->FindFile(ss.str());
 		}
 
 		if (!file.empty()) {

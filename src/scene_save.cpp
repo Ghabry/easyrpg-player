@@ -95,7 +95,7 @@ void Scene_Save::Action(int index) {
 	Game_Map::PrepareSave();
 
 	std::string save_file = ss.str();
-	std::string filename = filesystem->FindDefault(ss.str());
+	std::string filename = filesystem->FindFile(ss.str());
 
 	if (filename.empty()) {
 		filename = save_file; // FIXME? Is this correct

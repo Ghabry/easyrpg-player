@@ -207,6 +207,9 @@ namespace FileFinder {
 	 * @return directory tree
 	 */
 	const FilesystemRef GetGameFilesystem();
+
+	const FilesystemRef GetNativeFilesystem();
+
 	const FilesystemRef CreateSaveFilesystem();
 
 	/**
@@ -240,6 +243,11 @@ namespace FileFinder {
 	enum KnownFileSize {
 		OFFICIAL_HARMONY_DLL = 473600,
 	};
+
+	bool IsValidProject();
+	bool IsValidProject(FilesystemRef fs);
+	bool IsRPG2kProject(FilesystemRef fs);
+	bool IsEasyRpgProject(FilesystemRef fs);
 
 	/**
 	 * Checks whether the game is created with RPG2k >= 1.50 or RPG2k3 >= 1.05.

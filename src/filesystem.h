@@ -137,73 +137,14 @@ public:
 	std::string FindFile(const std::string& name,
 						 char const* exts[]) const;
 
+	std::string FindFile(const std::string& name) const;
+
+	std::string FindFile(const std::string& dir,
+						 const std::string& name) const;
+
 	std::string FindFile(const std::string& dir,
 						 const std::string& name,
 						 char const* exts[]) const;
-
-	/**
-	 * Finds an image file.
-	 * Searches through the current RPG Maker game and the RTP directories.
-	 *
-	 * @param dir directory to check.
-	 * @param name image file name to check.
-	 * @return path to file.
-	 */
-	std::string FindImage(const std::string& dir, const std::string& name) const;
-
-	/**
-	 * Finds a file.
-	 * Searches through the current RPG Maker game and the RTP directories.
-	 *
-	 * @param dir directory to check.
-	 * @param name file name to check.
-	 * @return path to file.
-	 */
-	std::string FindDefault(const std::string& dir, const std::string& name) const;
-
-	/**
-	 * Finds a file.
-	 * Searches through the current RPG Maker game and the RTP directories.
-	 *
-	 * @param name the path and name.
-	 * @return path to file.
-	 */
-	std::string FindDefault(const std::string& name) const;
-
-	/**
-	 * Finds a music file.
-	 * Searches through the Music folder of the current RPG Maker game and
-	 * the RTP directories.
-	 *
-	 * @param name the music path and name.
-	 * @return path to file.
-	 */
-	std::string FindMusic(const std::string& name) const;
-
-	/**
-	 * Finds a sound file.
-	 * Searches through the Sound folder of the current RPG Maker game and
-	 * the RTP directories.
-	 *
-	 * @param name the sound path and name.
-	 * @return path to file.
-	 */
-	std::string FindSound(const std::string& name) const;
-
-	/**
-	 * Finds a font file.
-	 * Searches through the current RPG Maker game and the RTP directories.
-	 *
-	 * @param name the font name.
-	 * @return path to file.
-	 */
-	std::string FindFont(const std::string& name) const;
-
-	
-
-	bool IsValidProject();
-	bool IsRPG2kProject();
-	bool IsEasyRpgProject();
 
 private:
 	// lowered dir -> <map of> lowered file -> Entry

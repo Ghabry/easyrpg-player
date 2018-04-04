@@ -67,7 +67,7 @@ void Scene_Logo::Update() {
 			Output::Error("%s is not a valid path", Main_Data::GetProjectPath().c_str());
 		}
 
-		if (fs->IsValidProject()) {
+		if (FileFinder::IsValidProject(fs)) {
 			FileFinder::SetGameFilesystem(fs);
 			Player::CreateGameObjects();
 			is_valid = true;
@@ -94,7 +94,7 @@ void Scene_Logo::Update() {
 
 				Output::Debug("Loading Save %s", ss.str().c_str());
 
-				std::string save_name = fs->FindDefault(ss.str());
+				std::string save_name = fs->FindFile(ss.str());
 				Player::LoadSavegame(save_name);
 				Scene::Push(std::make_shared<Scene_Map>(true));
 			}

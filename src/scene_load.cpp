@@ -37,7 +37,7 @@ void Scene_Load::Action(int index) {
 
 	Output::Debug("Loading Save %s", ss.str().c_str());
 
-	std::string save_name = filesystem->FindDefault(ss.str());
+	std::string save_name = filesystem->FindFile(ss.str());
 
 	Player::LoadSavegame(save_name);
 

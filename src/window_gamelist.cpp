@@ -36,7 +36,7 @@ void Window_GameList::Refresh() {
 	for (auto entry : filesystem->ListDirectory("/")) {
 		if (entry.type == Filesystem::FileType::Directory) {
 			FilesystemRef subtree = FileFinder::CreateFilesystem(FileFinder::MakePath(Main_Data::GetProjectPath(), entry.name));
-			if (subtree->IsValidProject()) {
+			if (FileFinder::IsValidProject(subtree)) {
 				game_directories.push_back(entry.name);
 			}
 		}

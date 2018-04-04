@@ -725,7 +725,7 @@ void Player::LoadDatabase() {
 	// Load Database
 	Data::Clear();
 
-	if (!FileFinder::GetGameFilesystem()->IsValidProject()) {
+	if (!FileFinder::IsValidProject()) {
 		// Unlikely to happen because of the game browser only launches valid games
 
 		Output::Debug("%s is not a supported project", Main_Data::GetProjectPath().c_str());
