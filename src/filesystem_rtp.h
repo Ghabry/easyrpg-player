@@ -75,14 +75,14 @@ public:
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) override;
+	std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const override;
 
 	/**
 	* Allocates a streambuffer with output capabilities on the given path.
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) override;
+	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const override;
 
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
 

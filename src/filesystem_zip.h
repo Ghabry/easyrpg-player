@@ -35,7 +35,7 @@ public:
 	* If you don't know the encoding, or want to know which sub path contains a certain file
 	* use the static function CheckIfContains
 	*/
-	ZIPFilesystem(std::string const & os_path, std::string const & sub_path, std::string const & encoding);
+	ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, std::string const & encoding);
 
 	/**
 	 * Returns the path of the checked file or an empty string if not contained.
@@ -43,6 +43,7 @@ public:
 	static bool CheckIfContains(std::string const & os_path, std::string const & filename, std::string & sub_path, std::string & encoding);
 
 	~ZIPFilesystem();
+
 	/**
 	* Checks whether the passed path is a file
 	*
@@ -76,14 +77,14 @@ public:
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode)override;
+	std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const override;
 
 	/**
 	* Allocates a streambuffer with output capabilities on the given path.
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) override;
+	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const override;
 
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
 
@@ -96,21 +97,22 @@ private:
 	};
 
 	struct StreamPoolEntry {
-		std::filebuf* filebuffer;
+		std::streambuf* filebuffer;
 		bool used;
 	};
 	class StorageIStreambuf;
 	class DeflateIStreambuf;
 	//No standard Constructor
-	ZIPFilesystem() {};
+	ZIPFilesystem() = delete;
 
 	static bool FindCentralDirectory(std::istream & stream, uint32_t & offset, uint32_t & size, uint16_t & numberOfEntries);
 	static bool ReadCentralDirectoryEntry(std::istream & zipfile, std::vector<char> & filepath, uint32_t & offset, uint32_t & uncompressed_size);
 	static bool ReadLocalHeader(std::istream & zipfile, uint32_t & offset, StorageMethod & method,uint32_t & compressedSize);
 
 	bool m_isValid;
-	std::string m_OSPath;
-	std::vector<StreamPoolEntry*> m_InputPool;
+	const FilesystemRef source_fs;
+	std::string fs_path;
+	mutable std::vector<StreamPoolEntry*> m_InputPool;
 	std::unordered_map<std::string, ZipEntry> m_zipContent;
 
 };

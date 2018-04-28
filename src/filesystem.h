@@ -25,12 +25,14 @@
 #include <unordered_map>
 #include <vector>
 
-namespace FileFinder {
-	class istream;
-	struct DirectoryTree;
+#include "memory_management.h"
+
+namespace {
+	FilesystemRef game_filesystem;
+	FilesystemRef native_filesystem;
 }
 
-class Filesystem {
+class Filesystem : public std::enable_shared_from_this<Filesystem> {
 public:
 	enum class FileType {
 		Regular,
@@ -49,12 +51,6 @@ public:
 
 	using DirectoryIterator = std::vector<DirectoryEntry>::const_iterator;
 
-#if 0
-	struct DirectoryTree {
-		std::unordered_map<std::string, DirectoryEntry> files; // lowered path -> entry
-		std::unordered_map<std::string, std::string> dirs; // lowered path -> real path
-	} entry_cache;
-#endif
 	Filesystem() {}
 
 	virtual ~Filesystem() {}
@@ -101,14 +97,14 @@ public:
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m);
+	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m) const;
 
 	/**
 	* Allocates a streambuffer with input capabilities on the given path.
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	virtual std::streambuf* CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) = 0;
+	virtual std::streambuf* CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const = 0;
 
 	/**
 	 * Creates stream from UTF-8 file name for writing.
@@ -117,14 +113,14 @@ public:
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<std::ostream> OpenOutputStream(const std::string &name, std::ios_base::openmode m);
+	std::shared_ptr<std::ostream> OpenOutputStream(const std::string &name, std::ios_base::openmode m) const;
 
 	/**
 	* Allocates a streambuffer with output capabilities on the given path.
 	* @param path a path relative to the filesystems root
 	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	*/
-	virtual std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) = 0;
+	virtual std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const = 0;
 
 	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const = 0;
 
@@ -145,6 +141,15 @@ public:
 	std::string FindFile(const std::string& dir,
 						 const std::string& name,
 						 char const* exts[]) const;
+
+	/**
+	 * Creates a new appropriate filesystem from the specified path.
+	 * The path is processed to initialize the proper virtual filesystem handler.
+	 *
+	 * @param p Virtual path to use
+	 * @return FilesystemRef when the parsing was successful, otherwise nullptr
+	 */
+	FilesystemRef Create(std::string const& p);
 
 private:
 	// lowered dir -> <map of> lowered file -> Entry

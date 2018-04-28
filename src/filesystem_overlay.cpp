@@ -66,7 +66,7 @@ uint32_t OverlayFilesystem::GetFilesize(std::string const & path) const {
 	return 0;
 }
 
-std::streambuf * OverlayFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * OverlayFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path)) {
 			return entry.fs->CreateInputStreambuffer(path, mode);
@@ -76,7 +76,7 @@ std::streambuf * OverlayFilesystem::CreateInputStreambuffer(std::string const & 
 	return nullptr;
 }
 
-std::streambuf * OverlayFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * OverlayFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path)) {
 			return entry.fs->CreateOutputStreambuffer(path, mode);

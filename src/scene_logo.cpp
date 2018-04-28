@@ -61,7 +61,7 @@ void Scene_Logo::Update() {
 		}
 #endif
 
-		FilesystemRef fs = FileFinder::CreateFilesystem(Main_Data::GetProjectPath());
+		FilesystemRef fs = FileFinder::GetNativeFilesystem()->Create(Main_Data::GetProjectPath());
 
 		if (!fs) {
 			Output::Error("%s is not a valid path", Main_Data::GetProjectPath().c_str());

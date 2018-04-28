@@ -23,6 +23,10 @@
 #include <algorithm>
 #include <cassert>
 
+#include "filesystem_os.h"
+#include "filesystem_zip.h"
+#include "filesystem_view.h"
+
 std::string Filesystem::CombinePath(std::string const & dir, std::string const & entry) {
 	std::string str = dir.empty() ? entry : dir + "/" + entry;
 #ifdef _WIN32
@@ -37,7 +41,7 @@ bool Filesystem::IsValid() {
 	return Exists("");
 }
 
-std::shared_ptr<std::istream> Filesystem::OpenInputStream(const std::string &name, std::ios_base::openmode m) {
+std::shared_ptr<std::istream> Filesystem::OpenInputStream(const std::string &name, std::ios_base::openmode m) const {
 	std::streambuf* buf = CreateInputStreambuffer(name, m);
 
 	std::shared_ptr<std::istream> ret(new std::istream(buf));
@@ -45,7 +49,7 @@ std::shared_ptr<std::istream> Filesystem::OpenInputStream(const std::string &nam
 	return (*ret) ? ret : std::shared_ptr<std::istream>();
 }
 
-std::shared_ptr<std::ostream> Filesystem::OpenOutputStream(const std::string &name, std::ios_base::openmode m) {
+std::shared_ptr<std::ostream> Filesystem::OpenOutputStream(const std::string &name, std::ios_base::openmode m) const {
 	//std::streamsize size = GetFilesize(name);
 	std::streambuf* buf = CreateOutputStreambuffer(name, m);
 
@@ -63,7 +67,7 @@ FilesystemRef game_filesystem;
 search_path_list search_paths;
 std::string fonts_path;
 
-std::string Filesystem::FindFile(const std::string& dir_,
+std::string Filesystem::FindFile(const std::string& dir,
 					 const std::string& name,
 					 char const* exts[]) const
 {
@@ -76,8 +80,6 @@ std::string Filesystem::FindFile(const std::string& dir_,
 	if (Exists(em_file))
 		return em_file;
 #endif
-
-	std::string dir = dir_.empty() ? "/" : dir_;
 
 	std::string lower_dir = Utils::LowerCase(dir);
 	std::string const escape_symbol = Player::escape_symbol;
@@ -113,7 +115,7 @@ std::string Filesystem::FindFile(const std::string& dir_,
 		}
 #endif
 	} else {
-		assert(lower_dir == "/");
+		assert(lower_dir == "");
 	}
 
 	auto dir_it = dir_cache.find(lower_dir);
@@ -165,4 +167,51 @@ std::string Filesystem::FindFile(const std::string& name) const {
 std::string Filesystem::FindFile(const std::string& dir,
 								 const std::string& name) const {
 	return FindFile(dir, name, nullptr);
+}
+
+FilesystemRef Filesystem::Create(const std::string& path) {
+	// Determine the proper file system to use
+	FilesystemRef filesystem;
+
+	// When the path doesn't exist check if the path contains a file that can
+	// be handled by another filesystem
+	std::string path_prefix = "";
+
+	if (!IsDirectory(path)) {
+		std::vector<std::string> components = FileFinder::SplitPath(path);
+
+		// TODO this should probably move to a static function in the FS classes
+
+		// search until ".zip", "do magic"
+		std::string internal_path;
+		bool handle_internal = false;
+		for (std::string comp : components) {
+			if (handle_internal) {
+				internal_path += comp + "/";
+			} else {
+				path_prefix += comp + "/";
+				if (Utils::EndsWith(comp, ".zip")) {
+					path_prefix.pop_back();
+					handle_internal = true;
+				}
+			}
+		}
+
+		if (!internal_path.empty()) {
+			internal_path.pop_back();
+		}
+
+		filesystem = std::make_shared<ZIPFilesystem>(shared_from_this(), path_prefix, "windows-1252");
+		if (!filesystem->IsValid()) {
+			return FilesystemRef();
+		} else if (!internal_path.empty()) {
+			filesystem = filesystem->Create(internal_path);
+		}
+	} else {
+		// Handle as a normal path in the local filesystem
+		filesystem = std::make_shared<ViewFilesystem>(shared_from_this(), path);
+		if (!(filesystem->Exists(path) || !filesystem->IsDirectory(path))) { return FilesystemRef(); }
+	}
+
+	return filesystem;
 }

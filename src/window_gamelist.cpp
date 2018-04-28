@@ -29,13 +29,13 @@ Window_GameList::Window_GameList(int ix, int iy, int iwidth, int iheight) :
 }
 
 void Window_GameList::Refresh() {
-	filesystem = FileFinder::CreateFilesystem(Main_Data::GetProjectPath());
+	filesystem = FileFinder::GetNativeFilesystem()->Create(Main_Data::GetProjectPath());
 	game_directories.clear();
 
 	// Find valid game diectories
 	for (auto entry : filesystem->ListDirectory("/")) {
 		if (entry.type == Filesystem::FileType::Directory) {
-			FilesystemRef subtree = FileFinder::CreateFilesystem(FileFinder::MakePath(Main_Data::GetProjectPath(), entry.name));
+			FilesystemRef subtree = filesystem->Create(entry.name);
 			if (FileFinder::IsValidProject(subtree)) {
 				game_directories.push_back(entry.name);
 			}
@@ -116,5 +116,5 @@ bool Window_GameList::HasValidGames()
 }
 
 FilesystemRef Window_GameList::GetGameFilesystem() const {
-	return FileFinder::CreateFilesystem(FileFinder::MakePath(Main_Data::GetProjectPath(), game_directories[GetIndex()]));
+	return FileFinder::GetNativeFilesystem()->Create(Filesystem::CombinePath(Main_Data::GetProjectPath(), game_directories[GetIndex()]));
 }

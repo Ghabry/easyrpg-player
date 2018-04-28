@@ -51,7 +51,6 @@ namespace {
 	const char* const MOVIE_TYPES[] = { ".avi", ".mpg" };
 #endif
 
-	FilesystemRef game_filesystem;
 	std::string fonts_path;
 } // anonymous namespace
 
@@ -59,73 +58,29 @@ const FilesystemRef FileFinder::GetGameFilesystem() {
 	return game_filesystem;
 }
 
+void FileFinder::SetGameFilesystem(FilesystemRef filesystem) {
+	game_filesystem = filesystem;
+}
+
+FilesystemRef FileFinder::GetNativeFilesystem() {
+	// ToDo: Support an optional path argument which support namespaces,
+	// e.g. apk:// for accessing the APK on Android
+
+	static FilesystemRef native_fs = std::make_shared<OSFilesystem>("");
+
+	return native_fs;
+}
+
 const FilesystemRef FileFinder::CreateSaveFilesystem() {
 	std::string save_path = Main_Data::GetSavePath();
 
-	FilesystemRef fs = CreateFilesystem(save_path);
+	FilesystemRef fs = FileFinder::GetNativeFilesystem()->Create(save_path);
 	if (!fs) {
 		Output::Warning("Save game directory %s is invalid. Saving will not work.", save_path.c_str());
 		return FilesystemRef();
 	}
 
 	return fs;
-}
-
-void FileFinder::SetGameFilesystem(FilesystemRef filesystem) {
-	game_filesystem = filesystem;
-}
-
-FilesystemRef FileFinder::CreateFilesystem(std::string const& p) {
-	// Determine the proper file system to use
-	FilesystemRef filesystem;
-	// TODO: Determine main filesystem to use
-	filesystem.reset(new OSFilesystem(p));
-
-	// The path "mounted" by the virtual filesystem
-	std::string path_prefix;
-
-	// When the path doesn't exist check if the path contains a file that can
-	// be handled by another filesystem
-	if (!filesystem->IsValid()) {
-		std::vector<std::string> path = FileFinder::SplitPath(p);
-
-		// TODO this should probably move to a static function in the FS classes
-
-		// search until ".zip", "do magic"
-		std::string internal_path;
-
-		bool handle_internal = false;
-		for (std::string comp : path) {
-			if (handle_internal) {
-				internal_path += comp + "/";
-			} else {
-				path_prefix += comp + "/";
-			}
-			// TODO check for directory but no rootFilesystem mounted yet
-			if (Utils::EndsWith(comp, ".zip")) {
-				path_prefix.pop_back();
-				handle_internal = true;
-			}
-		}
-
-		if (!internal_path.empty()) {
-			internal_path.pop_back();
-		}
-
-		filesystem.reset(new ZIPFilesystem(path_prefix, internal_path, "windows-1252"));
-		if (!filesystem->IsValid()) {
-			return FilesystemRef();
-		}
-
-		path_prefix = "";
-	} else {
-		// Handle as a normal path in the local filesystem
-		path_prefix = p;
-	}
-
-	if(! (filesystem->Exists("") && filesystem->IsDirectory(""))) { return FilesystemRef(); }
-
-	return filesystem;
 }
 
 std::string FileFinder::MakePath(std::string const& dir, std::string const& name) {
@@ -370,11 +325,11 @@ bool FileFinder::IsValidProject(FilesystemRef fs) {
 }
 
 bool FileFinder::IsRPG2kProject(FilesystemRef fs) {
-	return !fs->Exists(DATABASE_NAME) && !fs->Exists(TREEMAP_NAME);
+	return fs->Exists(DATABASE_NAME) && fs->Exists(TREEMAP_NAME);
 }
 
 bool FileFinder::IsEasyRpgProject(FilesystemRef fs) {
-	return !fs->Exists(DATABASE_NAME_EASYRPG) && !fs->Exists(TREEMAP_NAME_EASYRPG);
+	return fs->Exists(DATABASE_NAME_EASYRPG) && fs->Exists(TREEMAP_NAME_EASYRPG);
 }
 
 bool FileFinder::IsMajorUpdatedTree() {

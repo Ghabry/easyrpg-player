@@ -208,18 +208,16 @@ namespace FileFinder {
 	 */
 	const FilesystemRef GetGameFilesystem();
 
-	const FilesystemRef GetNativeFilesystem();
+	/**
+	 * Returns a filesystem which can access any path on the host.
+	 * Any file access is passed through which means any global and
+	 * local path will work as expected.
+	 *
+	 * @return FilesystemRef Handle to the host filesystem
+	 */
+	FilesystemRef GetNativeFilesystem();
 
 	const FilesystemRef CreateSaveFilesystem();
-
-	/**
-	 * Creates a new directory tree from the specified path.
-	 * The path is processed to initialize the proper virtual filesystem handler.
-	 *
-	 * @param p Virtual path to use
-	 * @return DirectoryTree when the parsing was successful, otherwise nullptr
-	 */
-	FilesystemRef CreateFilesystem(std::string const& p);
 
 	/**
 	 * Checks whether the save directory contains any savegame with name

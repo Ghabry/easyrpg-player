@@ -75,20 +75,11 @@ OSFilesystem::~OSFilesystem() {
 
 }
 
-std::string OSFilesystem::MakeAbsolutePath(std::string const & path) const {
-	if (path != ".") {
-		return m_rootPath + "/" + path;
-	} else {
-		return m_rootPath;
-	}
-}
-
 bool OSFilesystem::IsFile(std::string const & path) const {
 	return false;
 }
 
-bool OSFilesystem::IsDirectory(std::string const & path) const {
-	std::string dir = MakeAbsolutePath(path);
+bool OSFilesystem::IsDirectory(std::string const & dir) const {
 #if (defined(GEKKO) || defined(_3DS) || defined(SWITCH))
 	struct stat sb;
 	if (::stat(dir.c_str(), &sb) == 0)
@@ -111,8 +102,7 @@ bool OSFilesystem::IsDirectory(std::string const & path) const {
 #endif
 }
 
-bool OSFilesystem::Exists(std::string const & path) const {
-	std::string filename = MakeAbsolutePath(path);
+bool OSFilesystem::Exists(std::string const & filename) const {
 #ifdef _WIN32
 	return ::GetFileAttributesW(Utils::ToWideString(filename).c_str()) != (DWORD)-1;
 #elif defined(GEKKO) || defined(SWITCH) || defined(_3DS)
@@ -128,37 +118,35 @@ bool OSFilesystem::Exists(std::string const & path) const {
 
 uint32_t OSFilesystem::GetFilesize(std::string const & path) const {
 	StatBuf sb;
-	int result = GetStat(MakeAbsolutePath(path).c_str(), &sb);
+	int result = GetStat(path.c_str(), &sb);
 	return (result == 0) ? sb.st_size : -1;
 }
 
-std::streambuf * OSFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * OSFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	std::filebuf *buf = new std::filebuf();
 
 	return buf->open(
 #ifdef _MSC_VER
-		Utils::ToWideString(MakeAbsolutePath(path)).c_str(),
+		Utils::ToWideString(path).c_str(),
 #else
-		MakeAbsolutePath(path).c_str(),
+		path.c_str(),
 #endif
 		mode);
 }
 
-std::streambuf * OSFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * OSFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	std::filebuf *buf = new std::filebuf();
 	return buf->open(
 #ifdef _MSC_VER
-		Utils::ToWideString(MakeAbsolutePath(path)).c_str(),
+		Utils::ToWideString(path).c_str(),
 #else
-		MakeAbsolutePath(path).c_str(),
+		path.c_str(),
 #endif
 		mode);
 }
 
 std::vector<Filesystem::DirectoryEntry> OSFilesystem::ListDirectory(const std::string &path) const {
 	std::vector<Filesystem::DirectoryEntry> entries;
-
-	std::string abs_path = MakeAbsolutePath(path);
 
 	DirectoryEntry result;
 	result.name = ".";
@@ -169,13 +157,13 @@ std::vector<Filesystem::DirectoryEntry> OSFilesystem::ListDirectory(const std::s
 #  define DIR _WDIR
 #  define opendir _wopendir
 #  define closedir _wclosedir
-#  define wpath Utils::ToWideString(abs_path)
+#  define wpath Utils::ToWideString(path)
 #  define dirent _wdirent
 #  define readdir _wreaddir
 #elif _3DS
 	std::string wpath = abs_path + "/";
 #else
-#  define wpath abs_path
+#  define wpath path
 #endif
 
 

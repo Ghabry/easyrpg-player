@@ -58,7 +58,7 @@ namespace {
 
 static void add_rtp_path(const std::string& p) {
 	using namespace FileFinder;
-	FilesystemRef fs(CreateFilesystem(p));
+	FilesystemRef fs(FileFinder::GetNativeFilesystem()->Create(p));
 	if (fs) {
 		Output::Debug("Adding %s to RTP path", p.c_str());
 		search_paths.push_back(std::make_shared<RtpFilesystem>(fs));
@@ -238,7 +238,7 @@ uint32_t RtpFilesystem::GetFilesize(std::string const & path) const {
 	return false;
 }
 
-std::streambuf * RtpFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * RtpFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	if (wrapped_fs) {
 		return wrapped_fs->CreateInputStreambuffer(path, mode);
 	}
@@ -246,7 +246,7 @@ std::streambuf * RtpFilesystem::CreateInputStreambuffer(std::string const & path
 	return nullptr;
 }
 
-std::streambuf * RtpFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * RtpFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	if (wrapped_fs) {
 		return wrapped_fs->CreateOutputStreambuffer(path, mode);
 	}

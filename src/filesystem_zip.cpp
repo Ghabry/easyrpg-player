@@ -347,14 +347,14 @@ static std::string normalize_path(std::string const & path) {
 	return found;
 }
 
-ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & sub_path, std::string const & encoding) {
+ZIPFilesystem::ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, std::string const & encoding) :
+	source_fs(source_fs), fs_path(fs_path) {
 	//Open first entry of the input filebuffer pool
 	m_isValid = false;
-	m_OSPath = os_path;
 	StreamPoolEntry* initialEntry = new StreamPoolEntry();
 	initialEntry->filebuffer = new std::filebuf();
 	initialEntry->used = true;
-	initialEntry->filebuffer->open(os_path, std::ios_base::in | std::ios_base::binary);
+	initialEntry->filebuffer = source_fs->CreateInputStreambuffer(fs_path, std::ios_base::in | std::ios_base::binary);
 
 	uint16_t centralDirectoryEntries = 0;
 	uint32_t centralDirectorySize = 0;
@@ -364,9 +364,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 	std::vector<char> filepath_arr;
 	std::string filepath = "";
 
-	//inner path is needed to achieve an offset inside the archive
-	std::string inner_path = normalize_path(sub_path);
-	if(inner_path.size()!=0 && inner_path.back() != '/') inner_path += "/";
+	std::string inner_path = "";
 
 	std::istream zipfile(initialEntry->filebuffer); //Take the first streambuffer of the pool
 
@@ -391,6 +389,7 @@ ZIPFilesystem::ZIPFilesystem(std::string const & os_path, std::string const & su
 				}
 
 				m_zipContent.insert(std::pair<std::string, ZipEntry>(filepath, entry));
+				printf("%s\n", filepath.c_str());
 			}
 		}
 
@@ -564,7 +563,7 @@ uint32_t ZIPFilesystem::GetFilesize(std::string const & path) const {
 	}
 }
 
-std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	if (!m_isValid) return nullptr;
 
 	std::string path_lower = normalize_path(path);
@@ -582,7 +581,7 @@ std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path
 		if (inputStream == nullptr) {
 			StreamPoolEntry* newEntry = new StreamPoolEntry();
 			newEntry->filebuffer = new std::filebuf();
-			newEntry->filebuffer->open(m_OSPath, std::ios_base::in | std::ios_base::binary);
+			newEntry->filebuffer = source_fs->CreateInputStreambuffer(fs_path, std::ios_base::in | std::ios_base::binary);
 			newEntry->used = false;
 			m_InputPool.push_back(newEntry);
 			inputStream = m_InputPool.back();
@@ -610,7 +609,7 @@ std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path
 	return nullptr;
 }
 
-std::streambuf * ZIPFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) {
+std::streambuf * ZIPFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
 	return nullptr;
 }
 

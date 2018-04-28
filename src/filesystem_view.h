@@ -15,23 +15,25 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EASYRPG_PLAYER_FILESYSTEM_OS_H_
-#define _EASYRPG_PLAYER_FILESYSTEM_OS_H_
+#ifndef _EASYRPG_PLAYER_FILESYSTEM_VIEW_H_
+#define _EASYRPG_PLAYER_FILESYSTEM_VIEW_H_
 
 #include "filesystem.h"
+#include "system.h"
 
 /**
- * A virtual filesystem that represents the file system of the host system.
+ * A virtual filesystem that maintains a view on a subfolder of another filesystem.
+ * All operations are forwarded into the subfolder of the filesystem.
  */
-class OSFilesystem : public Filesystem {
+class ViewFilesystem : public Filesystem {
 public:
-
 	/**
-	 * Initializes a OS Filesystem on the given os path
+	 * Initializes a View filesystem.
 	 */
-	OSFilesystem(std::string const & rootPath);
+	ViewFilesystem(FilesystemRef wrapped_filesystem, const std::string& path);
 
-    ~OSFilesystem();
+    ~ViewFilesystem();
+
 	/**
 	* Checks whether the passed path is a file
 	*
@@ -77,8 +79,8 @@ public:
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
 
 private:
-	std::string m_rootPath;
+	FilesystemRef wrapped_fs;
+	std::string subpath;
 };
-
 
 #endif
