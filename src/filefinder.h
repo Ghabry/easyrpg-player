@@ -120,7 +120,7 @@ namespace FileFinder {
 
 	/**
 	 * Checks whether passed file is directory.
-	 * This function is case sensitve on some platform.
+	 * This function is case sensitive on some platforms.
 	 *
 	 * @param file file to check.
 	 * @return true if file is directory, otherwise false.
@@ -129,7 +129,7 @@ namespace FileFinder {
 
 	/**
 	 * Checks whether passed file exists.
-	 * This function is case sensitve on some platform.
+	 * This function is case sensitive on some platforms.
 	 *
 	 * @param file file to check
 	 * @return true if file exists, otherwise false.

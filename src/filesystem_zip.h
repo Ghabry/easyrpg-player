@@ -31,60 +31,55 @@ class ZIPFilesystem : public Filesystem {
 public:
 
 	/**
-	* Initializes a OS Filesystem inside the given ZIP File
-	* If you don't know the encoding, or want to know which sub path contains a certain file
-	* use the static function CheckIfContains
-	*/
-	ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, std::string const & encoding);
-
-	/**
-	 * Returns the path of the checked file or an empty string if not contained.
+	 * Initializes a OS Filesystem inside the given ZIP File
+	 * If you don't know the encoding, or want to know which sub path contains a certain file
+	 * use the static function CheckIfContains
 	 */
-	static bool CheckIfContains(std::string const & os_path, std::string const & filename, std::string & sub_path, std::string & encoding);
+	ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, const std::string& encoding);
 
 	~ZIPFilesystem();
 
 	/**
-	* Checks whether the passed path is a file
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	bool IsFile(std::string const & path) const override;
+	 * Checks whether the passed path is a file
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	bool IsFile(const std::string& path) const override;
 
 	/**
-	* Checks whether the passed path is a directory
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	bool IsDirectory(std::string const & path) const override;
+	 * Checks whether the passed path is a directory
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	bool IsDirectory(const std::string& path) const override;
 
 	/**
-	* Checks whether the passed path is an existant file
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	bool Exists(std::string const & path) const override;
+	 * Checks whether the passed path is an existant file
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	bool Exists(const std::string& path) const override;
 
 	/**
-	* Retrieves the size of the file on the given path
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	uint32_t GetFilesize(std::string const & path) const override;
+	 * Retrieves the size of the file on the given path
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	uint32_t GetFilesize(const std::string& path) const override;
 
 	/**
-	* Allocates a streambuffer with input capabilities on the given path.
-	* @param path a path relative to the filesystems root
-	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
-	*/
-	std::streambuf * CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const override;
+	 * Allocates a streambuffer with input capabilities on the given path.
+	 * @param path a path relative to the filesystems root
+	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
+	 */
+	std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const override;
 
 	/**
-	* Allocates a streambuffer with output capabilities on the given path.
-	* @param path a path relative to the filesystems root
-	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
-	*/
-	std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const override;
+	 * Allocates a streambuffer with output capabilities on the given path.
+	 * @param path a path relative to the filesystems root
+	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
+	 */
+	std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const override;
 
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
 
@@ -114,8 +109,6 @@ private:
 	std::string fs_path;
 	mutable std::vector<StreamPoolEntry*> m_InputPool;
 	std::unordered_map<std::string, ZipEntry> m_zipContent;
-
 };
-
 
 #endif

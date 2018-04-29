@@ -29,7 +29,6 @@
 
 namespace {
 	FilesystemRef game_filesystem;
-	FilesystemRef native_filesystem;
 }
 
 class Filesystem : public std::enable_shared_from_this<Filesystem> {
@@ -51,10 +50,6 @@ public:
 
 	using DirectoryIterator = std::vector<DirectoryEntry>::const_iterator;
 
-	Filesystem() {}
-
-	virtual ~Filesystem() {}
-
 	/**
 	 * Checks whether the path used to initialize the filesystem exists.
 	 *
@@ -63,32 +58,32 @@ public:
 	virtual bool IsValid();
 
 	/**
-	* Checks whether the passed path is a file
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	virtual bool IsFile(std::string const & path) const=0;
+	 * Checks whether the passed path is a file
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	virtual bool IsFile(const std::string& path) const = 0;
 
 	/**
-	* Checks whether the passed path is a directory
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	virtual bool IsDirectory(std::string const & path) const=0;
+	 * Checks whether the passed path is a directory
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	virtual bool IsDirectory(const std::string& path) const = 0;
 
 	/**
-	* Checks whether the passed path is an existant file
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	virtual bool Exists(std::string const & path) const=0;
+	 * Checks whether the passed path is an existant file
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	virtual bool Exists(const std::string& path) const = 0;
 
 	/**
-	* Retrieves the size of the file on the given path
-	*
-	* @param path a path relative to the filesystems root
-	*/
-	virtual uint32_t GetFilesize(std::string const & path) const=0;
+	 * Retrieves the size of the file on the given path
+	 *
+	 * @param path a path relative to the filesystems root
+	 */
+	virtual uint32_t GetFilesize(const std::string& path) const = 0;
 
 	/**
 	 * Creates stream from UTF-8 file name for reading.
@@ -100,11 +95,11 @@ public:
 	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m) const;
 
 	/**
-	* Allocates a streambuffer with input capabilities on the given path.
-	* @param path a path relative to the filesystems root
-	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
-	*/
-	virtual std::streambuf* CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const = 0;
+	 * Allocates a streambuffer with input capabilities on the given path.
+	 * @param path a path relative to the filesystems root
+	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
+	 */
+	virtual std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const = 0;
 
 	/**
 	 * Creates stream from UTF-8 file name for writing.
@@ -116,18 +111,18 @@ public:
 	std::shared_ptr<std::ostream> OpenOutputStream(const std::string &name, std::ios_base::openmode m) const;
 
 	/**
-	* Allocates a streambuffer with output capabilities on the given path.
-	* @param path a path relative to the filesystems root
-	* @return A valid pointer to a streambuffer or a nullptr in case of failure.
-	*/
-	virtual std::streambuf * CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const = 0;
+	 * Allocates a streambuffer with output capabilities on the given path.
+	 * @param path a path relative to the filesystems root
+	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
+	 */
+	virtual std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const = 0;
 
 	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const = 0;
 
 	/**
 	 * Static helper function which combines a directory path and an entry name to a concatenated Path
 	 */
-	static std::string CombinePath(std::string const & dir, std::string const & entry);
+	static std::string CombinePath(const std::string& dir, const std::string& entry);
 
 	/* File system helper functions not intended to be overwritten */
 	std::string FindFile(const std::string& name,

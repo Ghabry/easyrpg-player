@@ -301,10 +301,7 @@ private:
 
 };
 
-
-
-static std::string normalize_path(std::string const & path) {
-
+static std::string normalize_path(const std::string& path) {
 	if (path == "." || path == "/" || path=="") return "";
 	std::string inner_path = Utils::LowerCase(path);
 	std::replace(inner_path.begin(), inner_path.end(), '\\', '/');
@@ -313,41 +310,7 @@ static std::string normalize_path(std::string const & path) {
 	return inner_path;
 }
 
- bool ZIPFilesystem::CheckIfContains(std::string const & os_path, std::string const & filename, std::string & sub_path, std::string & encoding) {
-	uint16_t centralDirectoryEntries = 0;
-	uint32_t centralDirectorySize = 0;
-	uint32_t centralDirectoryOffset = 0;
-
-	std::ifstream zipfile(os_path, std::ios_base::in | std::ios_base::binary);
-	bool found = false;
-	ZipEntry entry;
-	std::vector<char> filepath_arr;
-	std::string filename_lower = Utils::LowerCase(filename);
-	std::ostringstream encodingdetection;
-	std::unordered_map<std::string, ZipEntry> preliminaryContent;
-
-	if (FindCentralDirectory(zipfile, centralDirectoryOffset, centralDirectorySize, centralDirectoryEntries)) {
-		zipfile.seekg(centralDirectoryOffset); //Seek to the start of the central directory
-		while (ReadCentralDirectoryEntry(zipfile, filepath_arr, entry.fileoffset, entry.filesize)) {
-			encodingdetection << filepath_arr.data();
-			preliminaryContent.insert(std::pair<std::string, ZipEntry>(filepath_arr.data(), entry));
-		}
-		encoding=ReaderUtil::DetectEncoding(encodingdetection.str());
-		for (auto it = preliminaryContent.begin(); it != preliminaryContent.end(); it++) {
-			std::string recoded = Utils::LowerCase(ReaderUtil::Recode(it->first, encoding));
-			int pos = recoded.size() - filename_lower.size();
-			if (pos>=0&&recoded.substr(pos,filename_lower.size())==filename_lower) {
-				found = true;
-				sub_path = Utils::LowerCase(ReaderUtil::Recode(it->first, encoding)).substr(0, pos);
-				break;
-			}
-		}
-	}
-	zipfile.close();
-	return found;
-}
-
-ZIPFilesystem::ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, std::string const & encoding) :
+ZIPFilesystem::ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, const std::string& encoding) :
 	source_fs(source_fs), fs_path(fs_path) {
 	//Open first entry of the input filebuffer pool
 	m_isValid = false;
@@ -413,7 +376,6 @@ ZIPFilesystem::ZIPFilesystem(const FilesystemRef source_fs, const std::string& f
 bool ZIPFilesystem::FindCentralDirectory(std::istream & zipfile, uint32_t & offset, uint32_t & size, uint16_t & numberOfEntries) {
 	uint32_t magic = 0;
 	bool found = false;
-
 
 	zipfile.seekg(-endOfCentralDirectorySize, std::ios_base::end); //seek to the first position where the endOfCentralDirectory Signature may occur
 
@@ -523,7 +485,7 @@ ZIPFilesystem::~ZIPFilesystem() {
 	}
 }
 
-bool ZIPFilesystem::IsFile(std::string const & path) const {
+bool ZIPFilesystem::IsFile(const std::string& path) const {
 	std::string path_lower = normalize_path(path);
 	auto it = m_zipContent.find(path_lower);
 	if (it != m_zipContent.end()) {
@@ -534,7 +496,7 @@ bool ZIPFilesystem::IsFile(std::string const & path) const {
 	}
 }
 
-bool ZIPFilesystem::IsDirectory(std::string const & path) const {
+bool ZIPFilesystem::IsDirectory(const std::string& path) const {
 	std::string path_lower = normalize_path(path);
 	auto it = m_zipContent.find(path_lower);
 	if (it != m_zipContent.end()) {
@@ -545,13 +507,13 @@ bool ZIPFilesystem::IsDirectory(std::string const & path) const {
 	}
 }
 
-bool ZIPFilesystem::Exists(std::string const & path) const {
+bool ZIPFilesystem::Exists(const std::string& path) const {
 	std::string path_lower = normalize_path(path);
 	auto it = m_zipContent.find(path_lower);
 	return (it != m_zipContent.end());
 }
 
-uint32_t ZIPFilesystem::GetFilesize(std::string const & path) const {
+uint32_t ZIPFilesystem::GetFilesize(const std::string& path) const {
 	std::string path_lower = normalize_path(path);
 
 	auto it = m_zipContent.find(path_lower);
@@ -563,7 +525,7 @@ uint32_t ZIPFilesystem::GetFilesize(std::string const & path) const {
 	}
 }
 
-std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* ZIPFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	if (!m_isValid) return nullptr;
 
 	std::string path_lower = normalize_path(path);
@@ -609,7 +571,7 @@ std::streambuf * ZIPFilesystem::CreateInputStreambuffer(std::string const & path
 	return nullptr;
 }
 
-std::streambuf * ZIPFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* ZIPFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	return nullptr;
 }
 

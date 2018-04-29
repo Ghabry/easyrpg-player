@@ -26,9 +26,6 @@ ViewFilesystem::ViewFilesystem(FilesystemRef wrapped_filesystem, const std::stri
 	wrapped_fs(wrapped_filesystem), subpath(subpath) {
 }
 
-ViewFilesystem::~ViewFilesystem() {
-}
-
 static std::string translate_path(const std::string& first, const std::string& second) {
 	std::string second_c = FileFinder::MakeCanonical(second, 0);
 	if (second_c.empty()) {
@@ -37,7 +34,7 @@ static std::string translate_path(const std::string& first, const std::string& s
 	return FileFinder::MakePath(first, second_c);
 }
 
-bool ViewFilesystem::IsFile(std::string const & path) const {
+bool ViewFilesystem::IsFile(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->IsFile(translate_path(subpath, path));
 	}
@@ -45,7 +42,7 @@ bool ViewFilesystem::IsFile(std::string const & path) const {
 	return false;
 }
 
-bool ViewFilesystem::IsDirectory(std::string const & path) const {
+bool ViewFilesystem::IsDirectory(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->IsDirectory(translate_path(subpath, path));
 	}
@@ -53,7 +50,7 @@ bool ViewFilesystem::IsDirectory(std::string const & path) const {
 	return false;
 }
 
-bool ViewFilesystem::Exists(std::string const & path) const {
+bool ViewFilesystem::Exists(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->Exists(translate_path(subpath, path));
 	}
@@ -61,7 +58,7 @@ bool ViewFilesystem::Exists(std::string const & path) const {
 	return false;
 }
 
-uint32_t ViewFilesystem::GetFilesize(std::string const & path) const {
+uint32_t ViewFilesystem::GetFilesize(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->GetFilesize(translate_path(subpath, path));
 	}
@@ -69,7 +66,7 @@ uint32_t ViewFilesystem::GetFilesize(std::string const & path) const {
 	return 0;
 }
 
-std::streambuf * ViewFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* ViewFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	if (wrapped_fs) {
 		return wrapped_fs->CreateInputStreambuffer(translate_path(subpath, path), mode);
 	}
@@ -77,7 +74,7 @@ std::streambuf * ViewFilesystem::CreateInputStreambuffer(std::string const & pat
 	return nullptr;
 }
 
-std::streambuf * ViewFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* ViewFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	if (wrapped_fs) {
 		return wrapped_fs->CreateOutputStreambuffer(translate_path(subpath, path), mode);
 	}

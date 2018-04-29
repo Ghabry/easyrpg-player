@@ -27,7 +27,7 @@
 #include "filesystem_zip.h"
 #include "filesystem_view.h"
 
-std::string Filesystem::CombinePath(std::string const & dir, std::string const & entry) {
+std::string Filesystem::CombinePath(const std::string& dir, const std::string& entry) {
 	std::string str = dir.empty() ? entry : dir + "/" + entry;
 #ifdef _WIN32
 	std::replace(str.begin(), str.end(), '/', '\\');

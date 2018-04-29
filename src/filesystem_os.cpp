@@ -67,7 +67,7 @@
 #include "utils.h"
 #include "output.h"
 
-OSFilesystem::OSFilesystem(std::string const & rootPath):m_rootPath(rootPath){
+OSFilesystem::OSFilesystem(const std::string& rootPath):m_rootPath(rootPath){
 
 }
 
@@ -75,11 +75,11 @@ OSFilesystem::~OSFilesystem() {
 
 }
 
-bool OSFilesystem::IsFile(std::string const & path) const {
+bool OSFilesystem::IsFile(const std::string& path) const {
 	return false;
 }
 
-bool OSFilesystem::IsDirectory(std::string const & dir) const {
+bool OSFilesystem::IsDirectory(const std::string& dir) const {
 #if (defined(GEKKO) || defined(_3DS) || defined(SWITCH))
 	struct stat sb;
 	if (::stat(dir.c_str(), &sb) == 0)
@@ -102,7 +102,7 @@ bool OSFilesystem::IsDirectory(std::string const & dir) const {
 #endif
 }
 
-bool OSFilesystem::Exists(std::string const & filename) const {
+bool OSFilesystem::Exists(const std::string& filename) const {
 #ifdef _WIN32
 	return ::GetFileAttributesW(Utils::ToWideString(filename).c_str()) != (DWORD)-1;
 #elif defined(GEKKO) || defined(SWITCH) || defined(_3DS)
@@ -116,13 +116,13 @@ bool OSFilesystem::Exists(std::string const & filename) const {
 #endif
 }
 
-uint32_t OSFilesystem::GetFilesize(std::string const & path) const {
+uint32_t OSFilesystem::GetFilesize(const std::string& path) const {
 	StatBuf sb;
 	int result = GetStat(path.c_str(), &sb);
 	return (result == 0) ? sb.st_size : -1;
 }
 
-std::streambuf * OSFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* OSFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	std::filebuf *buf = new std::filebuf();
 
 	return buf->open(
@@ -134,7 +134,7 @@ std::streambuf * OSFilesystem::CreateInputStreambuffer(std::string const & path,
 		mode);
 }
 
-std::streambuf * OSFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* OSFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	std::filebuf *buf = new std::filebuf();
 	return buf->open(
 #ifdef _MSC_VER

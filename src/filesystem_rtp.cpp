@@ -203,10 +203,7 @@ void RtpFilesystem::InitRtpPaths(bool warn_no_rtp_found) {
 RtpFilesystem::RtpFilesystem(FilesystemRef wrapped_filesystem) : wrapped_fs(wrapped_filesystem) {
 }
 
-RtpFilesystem::~RtpFilesystem() {
-}
-
-bool RtpFilesystem::IsFile(std::string const & path) const {
+bool RtpFilesystem::IsFile(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->IsFile(path);
 	}
@@ -214,7 +211,7 @@ bool RtpFilesystem::IsFile(std::string const & path) const {
 	return false;
 }
 
-bool RtpFilesystem::IsDirectory(std::string const & path) const {
+bool RtpFilesystem::IsDirectory(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->IsDirectory(path);
 	}
@@ -222,7 +219,7 @@ bool RtpFilesystem::IsDirectory(std::string const & path) const {
 	return false;
 }
 
-bool RtpFilesystem::Exists(std::string const & path) const {
+bool RtpFilesystem::Exists(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->Exists(path);
 	}
@@ -230,7 +227,7 @@ bool RtpFilesystem::Exists(std::string const & path) const {
 	return false;
 }
 
-uint32_t RtpFilesystem::GetFilesize(std::string const & path) const {
+uint32_t RtpFilesystem::GetFilesize(const std::string& path) const {
 	if (wrapped_fs) {
 		return wrapped_fs->GetFilesize(path);
 	}
@@ -238,7 +235,7 @@ uint32_t RtpFilesystem::GetFilesize(std::string const & path) const {
 	return false;
 }
 
-std::streambuf * RtpFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* RtpFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	if (wrapped_fs) {
 		return wrapped_fs->CreateInputStreambuffer(path, mode);
 	}
@@ -246,7 +243,7 @@ std::streambuf * RtpFilesystem::CreateInputStreambuffer(std::string const & path
 	return nullptr;
 }
 
-std::streambuf * RtpFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* RtpFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	if (wrapped_fs) {
 		return wrapped_fs->CreateOutputStreambuffer(path, mode);
 	}

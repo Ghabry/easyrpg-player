@@ -20,13 +20,7 @@
 #include <cstring>
 #include <fstream>
 
-OverlayFilesystem::OverlayFilesystem() {
-}
-
-OverlayFilesystem::~OverlayFilesystem() {
-}
-
-bool OverlayFilesystem::IsFile(std::string const & path) const {
+bool OverlayFilesystem::IsFile(const std::string& path) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path) && entry.fs->IsFile(path)) {
 			return true;
@@ -36,7 +30,7 @@ bool OverlayFilesystem::IsFile(std::string const & path) const {
 	return false;
 }
 
-bool OverlayFilesystem::IsDirectory(std::string const & path) const {
+bool OverlayFilesystem::IsDirectory(const std::string& path) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path) && entry.fs->IsDirectory(path)) {
 			return true;
@@ -46,7 +40,7 @@ bool OverlayFilesystem::IsDirectory(std::string const & path) const {
 	return false;
 }
 
-bool OverlayFilesystem::Exists(std::string const & path) const {
+bool OverlayFilesystem::Exists(const std::string& path) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path)) {
 			return true;
@@ -56,7 +50,7 @@ bool OverlayFilesystem::Exists(std::string const & path) const {
 	return false;
 }
 
-uint32_t OverlayFilesystem::GetFilesize(std::string const & path) const {
+uint32_t OverlayFilesystem::GetFilesize(const std::string& path) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path)) {
 			return entry.fs->GetFilesize(path);
@@ -66,7 +60,7 @@ uint32_t OverlayFilesystem::GetFilesize(std::string const & path) const {
 	return 0;
 }
 
-std::streambuf * OverlayFilesystem::CreateInputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* OverlayFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path)) {
 			return entry.fs->CreateInputStreambuffer(path, mode);
@@ -76,7 +70,7 @@ std::streambuf * OverlayFilesystem::CreateInputStreambuffer(std::string const & 
 	return nullptr;
 }
 
-std::streambuf * OverlayFilesystem::CreateOutputStreambuffer(std::string const & path, std::ios_base::openmode mode) const {
+std::streambuf* OverlayFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path)) {
 			return entry.fs->CreateOutputStreambuffer(path, mode);
