@@ -98,8 +98,7 @@ FilesystemRef Filesystem::Create(const std::string& path) {
 
 std::string Filesystem::FindFile(const std::string& dir,
 					 const std::string& name,
-					 char const* exts[]) const
-{
+					 char const* exts[]) const {
 	using namespace FileFinder;
 
 #ifdef EMSCRIPTEN
@@ -180,6 +179,8 @@ std::string Filesystem::FindFile(const std::string& dir,
 			return Filesystem::CombinePath((*dir_it).second, (*entry_it).second.name);
 		}
 	}
+
+	//Output::Debug("Cannot find: %s/%s", dir.c_str(), name.c_str());
 
 	return "";
 }

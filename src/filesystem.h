@@ -174,13 +174,14 @@ public:
 	/**
 	 * Does a case insensitive search for the file in a specific
 	 * directory.
+	 * General purpose version of FindFile.
 	 *
 	 * @param dir a path relative to the filesystem root
 	 * @param name Name of the file to search
 	 * @param exts List of file extensions to probe (null-terminated)
 	 * @return Path to file or empty string when not found
 	 */
-	std::string FindFile(const std::string& dir,
+	virtual std::string FindFile(const std::string& dir,
 						 const std::string& name,
 						 char const* exts[]) const;
 
@@ -219,7 +220,7 @@ public:
 	 */
 	static std::string GetPathInsidePath(const std::string& path_to, const std::string& path_in);
 
-private:
+protected:
 	// lowered dir -> <map of> lowered file -> Entry
 	mutable std::unordered_map<std::string, std::unordered_map<std::string, DirectoryEntry>> fs_cache;
 	// lowered dir -> real dir

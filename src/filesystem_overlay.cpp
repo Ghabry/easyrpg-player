@@ -22,7 +22,7 @@
 
 bool OverlayFilesystem::IsFile(const std::string& path) const {
 	for (auto& entry : file_systems) {
-		if (entry.fs->Exists(path) && entry.fs->IsFile(path)) {
+		if (entry.fs->IsFile(path)) {
 			return true;
 		}
 	}
@@ -32,7 +32,7 @@ bool OverlayFilesystem::IsFile(const std::string& path) const {
 
 bool OverlayFilesystem::IsDirectory(const std::string& path) const {
 	for (auto& entry : file_systems) {
-		if (entry.fs->Exists(path) && entry.fs->IsDirectory(path)) {
+		if (entry.fs->IsDirectory(path)) {
 			return true;
 		}
 	}
@@ -92,6 +92,17 @@ std::vector<Filesystem::DirectoryEntry> OverlayFilesystem::ListDirectory(const s
 	}
 
 	return entries;
+}
+
+std::string OverlayFilesystem::FindFile(const std::string &dir, const std::string &name, const char **exts) const {
+	for (auto& entry : file_systems) {
+		std::string file = entry.fs->FindFile(dir, name, exts);
+		if (!file.empty()) {
+			return file;
+		}
+	}
+
+	return "";
 }
 
 bool OverlayFilesystem::AddFilesystem(FilesystemRef fs, int priority) {

@@ -275,8 +275,7 @@ bool FileFinder::IsEasyRpgProject(FilesystemRef fs) {
 
 bool FileFinder::IsMajorUpdatedTree() {
 	Offset size;
-#if 0
-	FIXME
+
 	// Find an MP3 music file only when official Harmony.dll exists
 	// in the gamedir or the file doesn't exist because
 	// the detection doesn't return reliable results for games created with
@@ -291,16 +290,12 @@ bool FileFinder::IsMajorUpdatedTree() {
 		}
 	}
 	if (find_mp3) {
-		const std::shared_ptr<DirectoryTree> tree = GetDirectoryTree();
-		string_map::const_iterator const music_it = tree->directories.find("music");
-		if (music_it != tree->directories.end()) {
-			string_map mem = tree->sub_members["music"];
-			for (auto& i : mem) {
-				std::string file = mem[i.first];
-				if (Utils::EndsWith(Utils::LowerCase(file), ".mp3")) {
-					Output::Debug("MP3 file (%s) found", file.c_str());
-					return true;
-				}
+		auto entries = GetGameFilesystem()->ListDirectory("Music");
+		for (auto entry : entries) {
+			if (entry.type == Filesystem::FileType::Regular &&
+				Utils::EndsWith(Utils::LowerCase(entry.name), ".mp3")) {
+				Output::Debug("MP3 file (%s) found", entry.name.c_str());
+				return true;
 			}
 		}
 	}
@@ -321,6 +316,4 @@ bool FileFinder::IsMajorUpdatedTree() {
 	bool assume_newer = Player::IsCP932() || Player::IsRPG2k3();
 	Output::Debug("Assuming %s engine", assume_newer ? "newer" : "older");
 	return assume_newer;
-#endif
-	return false;
 }

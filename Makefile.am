@@ -70,6 +70,8 @@ libeasyrpg_player_la_SOURCES = \
 	src/filesystem_overlay.h \
 	src/filesystem_rtp.cpp \
 	src/filesystem_rtp.h \
+	src/filesystem_view.cpp \
+	src/filesystem_view.h \
 	src/filesystem_zip.cpp \
 	src/filesystem_zip.h \
 	src/font.cpp \

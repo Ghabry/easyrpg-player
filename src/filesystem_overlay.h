@@ -57,6 +57,9 @@ public:
 	std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const override;
 	std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const override;
 	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const override;
+	std::string FindFile(const std::string& dir,
+						 const std::string& name,
+						 char const* exts[]) const override;
 	/** @} */
 
 private:

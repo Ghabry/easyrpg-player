@@ -23,6 +23,7 @@
 #include "registry.h"
 #include "rtp_table.h"
 #include "utils.h"
+#include <algorithm>
 #include <cassert>
 #include <cstring>
 #include <functional>
@@ -31,29 +32,6 @@
 namespace {
 	typedef std::vector<FilesystemRef> search_path_list;
 	search_path_list search_paths;
-
-	std::string FindFile(const std::string &dir, const std::string& name, const char* exts[]) {
-		/*const std::shared_ptr<FileFinder::DirectoryTree> tree = FileFinder::GetDirectoryTree();
-		std::string const ret = FindFile(*tree, dir, name, exts);
-		if (!ret.empty()) { return ret; }
-
-		const std::string& rtp_name = translate_rtp(dir, name);
-
-		for(search_path_list::const_iterator i = search_paths.begin(); i != search_paths.end(); ++i) {
-			if (! *i) { continue; }
-
-			std::string const ret = FindFile(*(*i), dir, name, exts);
-			if (!ret.empty()) { return ret; }
-
-			std::string const ret_rtp = FindFile(*(*i), dir, rtp_name, exts);
-			if (!ret_rtp.empty()) { return ret_rtp; }
-		}
-
-		Output::Debug("Cannot find: %s/%s (%s)", dir.c_str(), name.c_str(),
-						name == rtp_name ? "!" : rtp_name.c_str());
-
-		return std::string();*/
-	}
 }
 
 static void add_rtp_path(const std::string& p) {
@@ -189,14 +167,14 @@ void RtpFilesystem::InitRtpPaths(bool warn_no_rtp_found) {
 		// "Remount" game filesystem as a OverlayFilesystem and layer RTP below
 		FilesystemRef game_fs = FileFinder::GetGameFilesystem();
 
-		OverlayFilesystem* overlay_fs = new OverlayFilesystem();
+		std::shared_ptr<OverlayFilesystem> overlay_fs(new OverlayFilesystem());
 		overlay_fs->AddFilesystem(game_fs, 1);
 
 		for (const auto& s : search_paths) {
 			overlay_fs->AddFilesystem(s, 0);
 		}
 
-		FileFinder::SetGameFilesystem(FilesystemRef(overlay_fs));
+		FileFinder::SetGameFilesystem(overlay_fs);
 	}
 }
 
@@ -230,4 +208,56 @@ std::streambuf* RtpFilesystem::CreateOutputStreambuffer(const std::string& path,
 
 std::vector<Filesystem::DirectoryEntry> RtpFilesystem::ListDirectory(const std::string &path) const {
 	return wrapped_fs->ListDirectory(path);
+}
+
+static bool is_not_ascii_char(uint8_t c) { return c > 0x80; }
+
+static bool is_not_ascii_filename(const std::string& n) {
+	return std::find_if(n.begin(), n.end(), &is_not_ascii_char) != n.end();
+}
+
+static const std::string translate_rtp(const std::string& dir, const std::string& name) {
+	RTP::rtp_table_type const& table =
+		Player::IsRPG2k() ? RTP::RTP_TABLE_2000 : RTP::RTP_TABLE_2003;
+
+	RTP::rtp_table_type::const_iterator dir_it = table.find(Utils::LowerCase(dir).c_str());
+	std::string lower_name = Utils::LowerCase(name);
+
+	if (dir_it == table.end()) { return name; }
+
+	std::map<const char*, const char*>::const_iterator file_it = dir_it->second.find(lower_name.c_str());
+	if (file_it == dir_it->second.end()) {
+		if (is_not_ascii_filename(lower_name)) {
+			// Linear Search: Japanese file name to English file name
+			for (const auto& entry : dir_it->second) {
+				if (!strcmp(entry.second, lower_name.c_str())) {
+					return entry.first;
+				}
+			}
+		}
+		return name;
+	}
+	return file_it->second;
+}
+
+std::string RtpFilesystem::FindFile(const std::string &dir, const std::string& name, const char* exts[]) const {
+	// Check for the requested filename in RTP first
+	std::string ret = Filesystem::FindFile(dir, name, exts);
+	if (!ret.empty()) {
+		return ret;
+	}
+
+	// Resolve Japanese -> English or Any -> Japanese
+	const std::string& rtp_name = translate_rtp(dir, name);
+
+	// Check for redirected RTP filename
+	std::string const ret_rtp = Filesystem::FindFile(dir, rtp_name, exts);
+	if (!ret_rtp.empty()) {
+		return ret_rtp;
+	}
+
+	//Output::Debug("Cannot find: %s/%s (%s)", dir.c_str(), name.c_str(),
+	//				rtp_name.c_str());
+
+	return "";
 }

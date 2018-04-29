@@ -215,14 +215,20 @@ void Output::Quit() {
 		LOG_FILE.reset();
 	}
 
+	// Truncate the logfile
+	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+	if (!fs) {
+		return;
+	}
+
 	int log_size = 1024 * 100;
 
 	char* buf = new char[log_size];
 
 	std::shared_ptr<std::istream> in;
-	in= FileFinder::OpenInputStream(Filesystem::CombinePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),
-									std::ios_base::in);
-	if (in&&!in->bad()) {
+	in = fs->OpenInputStream(OUTPUT_FILENAME, std::ios_base::in);
+
+	if (in && !in->bad()) {
 		in->seekg(0, std::ios_base::end);
 		if (in->tellg() > log_size) {
 			in->seekg(-log_size, std::ios_base::end);
@@ -233,8 +239,7 @@ void Output::Quit() {
 			in.reset();
 
 			std::shared_ptr<std::ostream> out;
-			out= FileFinder::OpenOutputStream(Filesystem::CombinePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),
-											  std::ios_base::out);
+			out = fs->OpenOutputStream(OUTPUT_FILENAME, std::ios_base::out);
 			out->write(buf, read);
 			out.reset();
 		}
@@ -244,20 +249,28 @@ void Output::Quit() {
 }
 
 bool Output::TakeScreenshot() {
+	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+	if (!fs) {
+		return false;
+	}
+
 	int index = 0;
 	std::string p;
 	do {
-		p = Filesystem::CombinePath(Main_Data::GetSavePath(),
-								 "screenshot_"
-								 + std::to_string(index++)
-								 + ".png");
-	} while(FileFinder::Exists(p));
+		p = "screenshot_" + std::to_string(index++) + ".png";
+	} while (fs->Exists(p));
+
 	return TakeScreenshot(p);
 }
 
-bool Output::TakeScreenshot(std::string const& file) {
+bool Output::TakeScreenshot(const std::string& file) {
+	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+	if (!fs) {
+		return false;
+	}
+
 	std::shared_ptr<std::ostream> ret =
-			FileFinder::OpenOutputStream(file, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
+			fs->OpenOutputStream(file, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
 
 	if (ret) {
 		Output::Debug("Saving Screenshot %s", file.c_str());
