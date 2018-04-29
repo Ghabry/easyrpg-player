@@ -53,33 +53,36 @@ public:
 	/**
 	 * Checks whether the path used to initialize the filesystem exists.
 	 *
-	 * @return If the filesystem path exists
+	 * @return If the filesystem is valid
 	 */
 	virtual bool IsValid();
 
 	/**
-	 * Checks whether the passed path is a file
+	 * Checks whether the passed path is a file.
+	 * This function is case sensitive on some platforms.
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
 	virtual bool IsFile(const std::string& path) const = 0;
 
 	/**
-	 * Checks whether the passed path is a directory
+	 * Checks whether the passed path is a directory.
+	 * This function is case sensitive on some platforms.
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
 	virtual bool IsDirectory(const std::string& path) const = 0;
 
 	/**
-	 * Checks whether the passed path is an existant file
+	 * Checks whether the passed path is an existant file.
+	 * This function is case sensitive on some platforms.
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
 	virtual bool Exists(const std::string& path) const = 0;
 
 	/**
-	 * Retrieves the size of the file on the given path
+	 * Retrieves the size of the file on the given path.
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
@@ -96,6 +99,7 @@ public:
 
 	/**
 	 * Allocates a streambuffer with input capabilities on the given path.
+	 *
 	 * @param path a path relative to the filesystems root
 	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	 */
@@ -112,30 +116,19 @@ public:
 
 	/**
 	 * Allocates a streambuffer with output capabilities on the given path.
+	 *
 	 * @param path a path relative to the filesystems root
 	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	 */
 	virtual std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const = 0;
 
-	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const = 0;
-
 	/**
-	 * Static helper function which combines a directory path and an entry name to a concatenated Path
+	 * Returns a directory listing of the given path.
+	 *
+	 * @param path a path relative to the filesystems root
+	 * @return List of directory entries
 	 */
-	static std::string CombinePath(const std::string& dir, const std::string& entry);
-
-	/* File system helper functions not intended to be overwritten */
-	std::string FindFile(const std::string& name,
-						 char const* exts[]) const;
-
-	std::string FindFile(const std::string& name) const;
-
-	std::string FindFile(const std::string& dir,
-						 const std::string& name) const;
-
-	std::string FindFile(const std::string& dir,
-						 const std::string& name,
-						 char const* exts[]) const;
+	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const = 0;
 
 	/**
 	 * Creates a new appropriate filesystem from the specified path.
@@ -144,7 +137,87 @@ public:
 	 * @param p Virtual path to use
 	 * @return FilesystemRef when the parsing was successful, otherwise nullptr
 	 */
-	FilesystemRef Create(std::string const& p);
+	FilesystemRef Create(const std::string& p);
+
+	// Helper functions for finding files in a case insensitive way
+	/**
+	 * Does a case insensitive search for the file.
+	 * The name may contain a path.
+	 *
+	 * @param name a path relative to the filesystem root
+	 * @param exts List of file extensions to probe (null-terminated)
+	 * @return Path to file or empty string when not found
+	 */
+	std::string FindFile(const std::string& name,
+						 char const* exts[]) const;
+
+	/**
+	 * Does a case insensitive search for the file.
+	 * The name may contain a path.
+	 *
+	 * @param name a path relative to the filesystem root
+	 * @return Path to file or empty string when not found
+	 */
+	std::string FindFile(const std::string& name) const;
+
+	/**
+	 * Does a case insensitive search for the file in a specific
+	 * directory.
+	 *
+	 * @param dir a path relative to the filesystem root
+	 * @param name Name of the file to search
+	 * @return Path to file or empty string when not found
+	 */
+	std::string FindFile(const std::string& dir,
+						 const std::string& name) const;
+
+	/**
+	 * Does a case insensitive search for the file in a specific
+	 * directory.
+	 *
+	 * @param dir a path relative to the filesystem root
+	 * @param name Name of the file to search
+	 * @param exts List of file extensions to probe (null-terminated)
+	 * @return Path to file or empty string when not found
+	 */
+	std::string FindFile(const std::string& dir,
+						 const std::string& name,
+						 char const* exts[]) const;
+
+	// Static helper functions
+	/**
+	 * Combines a directory path and an entry name to a concatenated Path
+	 */
+	static std::string CombinePath(const std::string& dir, const std::string& entry);
+
+	/**
+	 * Converts a path to the canonical equivalent.
+	 * This generates a path that does not contain ".." or "." directories.
+	 *
+	 * @param path Path to normalize
+	 * @param initial_deepness How deep the passed path is relative to the game root
+	 * @return canonical path
+	 */
+	static std::string MakePathCanonical(const std::string& path, int initial_deepness);
+
+	/**
+	 * Splits a path in it's components.
+	 *
+	 * @param path Path to split
+	 * @return Vector containing path components
+	 */
+	static std::vector<std::string> SplitPath(const std::string& path);
+
+	/**
+	 * Returns the part of "path_in" that is inside "path_to".
+	 * e.g. Input: /h/e/game, /h/e/game/Music/a.wav; Output: Music/a.wav
+	 *
+	 * @param path_to Path to a primary folder of path_in
+	 * @param path_in Absolute path to the file, must start with path_to
+	 *
+	 * @return The part of path_in that is inside path_to. path_in when the path is not in path_to
+	 */
+	static std::string GetPathInsidePath(const std::string& path_to, const std::string& path_in);
 
 private:
 	// lowered dir -> <map of> lowered file -> Entry

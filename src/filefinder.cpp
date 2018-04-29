@@ -83,65 +83,6 @@ const FilesystemRef FileFinder::CreateSaveFilesystem() {
 	return fs;
 }
 
-std::string FileFinder::MakePath(std::string const& dir, std::string const& name) {
-	return std::string(Filesystem::CombinePath(dir, name));
-}
-
-std::string FileFinder::MakeCanonical(const std::string& path, int initial_deepness) {
-	std::vector<std::string> path_components = SplitPath(path);
-	std::vector<std::string> path_can;
-
-	for (std::string path_comp : path_components) {
-		if (path_comp == "..") {
-			if (path_can.size() > 0) {
-				path_can.pop_back();
-			} else if (initial_deepness > 0) {
-				// Ignore, we are in root
-				--initial_deepness;
-			} else {
-				Output::Debug("Path traversal out of game directory: %s", path.c_str());
-			}
-		} else if (path_comp.empty() || path_comp == ".") {
-			// ignore
-		} else {
-			path_can.push_back(path_comp);
-		}
-	}
-
-	std::string ret;
-	for (std::string s : path_can) {
-		ret = Filesystem::CombinePath(ret, s);
-	}
-
-	return ret;
-}
-
-std::vector<std::string> FileFinder::SplitPath(const std::string& path) {
-	// Tokens are patch delimiters ("/" and encoding aware "\")
-	std::function<bool(char32_t)> f = [](char32_t t) {
-		char32_t escape_char_back = '\0';
-		if (!Player::escape_symbol.empty()) {
-			escape_char_back = Utils::DecodeUTF32(Player::escape_symbol).front();
-		}
-		char32_t escape_char_forward = Utils::DecodeUTF32("/").front();
-		return t == escape_char_back || t == escape_char_forward;
-	};
-	return Utils::Tokenize(path, f);
-}
-
-std::string FileFinder::GetPathInsidePath(const std::string& path_to, const std::string& path_in) {
-	if (!Utils::StartsWith(path_in, path_to)) {
-		return "";
-	}
-
-	std::string path_out = path_in.substr(path_to.size());
-	if (!path_out.empty() && (path_out[0] == '/' || path_out[0] == '\\')) {
-		path_out = path_out.substr(1);
-	}
-
-	return path_out;
-}
-
 std::string FileFinder::GetPathInsideGamePath(const std::string& path_in) {
 	// FIXME return FileFinder::GetPathInsidePath(GetDirectoryTree()->directory_path, path_in);
 	return path_in;

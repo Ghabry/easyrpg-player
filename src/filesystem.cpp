@@ -27,16 +27,6 @@
 #include "filesystem_zip.h"
 #include "filesystem_view.h"
 
-std::string Filesystem::CombinePath(const std::string& dir, const std::string& entry) {
-	std::string str = dir.empty() ? entry : dir + "/" + entry;
-#ifdef _WIN32
-	std::replace(str.begin(), str.end(), '/', '\\');
-#else
-	std::replace(str.begin(), str.end(), '\\', '/');
-#endif
-	return str;
-}
-
 bool Filesystem::IsValid() {
 	return Exists("");
 }
@@ -58,14 +48,53 @@ std::shared_ptr<std::ostream> Filesystem::OpenOutputStream(const std::string &na
 	return (*ret) ? ret : std::shared_ptr<std::ostream>();
 }
 
-#ifdef SUPPORT_MOVIES
-const char* const MOVIE_TYPES[] = { ".avi", ".mpg" };
-#endif
 
-typedef std::vector<FilesystemRef> search_path_list;
-FilesystemRef game_filesystem;
-search_path_list search_paths;
-std::string fonts_path;
+FilesystemRef Filesystem::Create(const std::string& path) {
+	// Determine the proper file system to use
+	FilesystemRef filesystem;
+
+	// When the path doesn't exist check if the path contains a file that can
+	// be handled by another filesystem
+	std::string path_prefix = "";
+
+	if (!IsDirectory(path)) {
+		std::vector<std::string> components = Filesystem::SplitPath(path);
+
+		// TODO this should probably move to a static function in the FS classes
+
+		// search until ".zip", "do magic"
+		std::string internal_path;
+		bool handle_internal = false;
+		for (std::string comp : components) {
+			if (handle_internal) {
+				internal_path += comp + "/";
+			} else {
+				path_prefix += comp + "/";
+				if (Utils::EndsWith(comp, ".zip")) {
+					path_prefix.pop_back();
+					handle_internal = true;
+				}
+			}
+		}
+
+		if (!internal_path.empty()) {
+			internal_path.pop_back();
+		}
+
+		filesystem = std::make_shared<ZIPFilesystem>(shared_from_this(), path_prefix, "windows-1252");
+		if (!filesystem->IsValid()) {
+			return FilesystemRef();
+		} else if (!internal_path.empty()) {
+			filesystem = filesystem->Create(internal_path);
+		}
+	} else {
+		// Handle as a normal path in the local filesystem
+		filesystem = std::make_shared<ViewFilesystem>(shared_from_this(), path);
+		if (!(filesystem->Exists(path) || !filesystem->IsDirectory(path))) { return FilesystemRef(); }
+	}
+
+	return filesystem;
+}
 
 std::string Filesystem::FindFile(const std::string& dir,
 					 const std::string& name,
@@ -86,7 +115,7 @@ std::string Filesystem::FindFile(const std::string& dir,
 	std::string corrected_name = Utils::LowerCase(name);
 
 	std::string combined_path = Filesystem::CombinePath(lower_dir, corrected_name);
-	std::string canon = MakeCanonical(combined_path, 1);
+	std::string canon = Filesystem::MakePathCanonical(combined_path, 1);
 	if (combined_path != canon) {
 		// Very few games (e.g. Yume2kki) use path traversal (..) in the filenames to point
 		// to files outside of the actual directory.
@@ -169,49 +198,67 @@ std::string Filesystem::FindFile(const std::string& dir,
 	return FindFile(dir, name, nullptr);
 }
 
-FilesystemRef Filesystem::Create(const std::string& path) {
-	// Determine the proper file system to use
-	FilesystemRef filesystem;
+std::string Filesystem::CombinePath(const std::string& dir, const std::string& entry) {
+	std::string str = dir.empty() ? entry : dir + "/" + entry;
+#ifdef _WIN32
+	std::replace(str.begin(), str.end(), '/', '\\');
+#else
+	std::replace(str.begin(), str.end(), '\\', '/');
+#endif
+	return str;
+}
 
-	// When the path doesn't exist check if the path contains a file that can
-	// be handled by another filesystem
-	std::string path_prefix = "";
+std::string Filesystem::MakePathCanonical(const std::string& path, int initial_deepness) {
+	std::vector<std::string> path_components = SplitPath(path);
+	std::vector<std::string> path_can;
 
-	if (!IsDirectory(path)) {
-		std::vector<std::string> components = FileFinder::SplitPath(path);
-
-		// TODO this should probably move to a static function in the FS classes
-
-		// search until ".zip", "do magic"
-		std::string internal_path;
-		bool handle_internal = false;
-		for (std::string comp : components) {
-			if (handle_internal) {
-				internal_path += comp + "/";
+	for (std::string path_comp : path_components) {
+		if (path_comp == "..") {
+			if (path_can.size() > 0) {
+				path_can.pop_back();
+			} else if (initial_deepness > 0) {
+				// Ignore, we are in root
+				--initial_deepness;
 			} else {
-				path_prefix += comp + "/";
-				if (Utils::EndsWith(comp, ".zip")) {
-					path_prefix.pop_back();
-					handle_internal = true;
-				}
+				Output::Debug("Path traversal out of game directory: %s", path.c_str());
 			}
+		} else if (path_comp.empty() || path_comp == ".") {
+			// ignore
+		} else {
+			path_can.push_back(path_comp);
 		}
-
-		if (!internal_path.empty()) {
-			internal_path.pop_back();
-		}
-
-		filesystem = std::make_shared<ZIPFilesystem>(shared_from_this(), path_prefix, "windows-1252");
-		if (!filesystem->IsValid()) {
-			return FilesystemRef();
-		} else if (!internal_path.empty()) {
-			filesystem = filesystem->Create(internal_path);
-		}
-	} else {
-		// Handle as a normal path in the local filesystem
-		filesystem = std::make_shared<ViewFilesystem>(shared_from_this(), path);
-		if (!(filesystem->Exists(path) || !filesystem->IsDirectory(path))) { return FilesystemRef(); }
 	}
 
-	return filesystem;
+	std::string ret;
+	for (std::string s : path_can) {
+		ret = Filesystem::CombinePath(ret, s);
+	}
+
+	return ret;
+}
+
+std::vector<std::string> Filesystem::SplitPath(const std::string& path) {
+	// Tokens are patch delimiters ("/" and encoding aware "\")
+	std::function<bool(char32_t)> f = [](char32_t t) {
+		char32_t escape_char_back = '\0';
+		if (!Player::escape_symbol.empty()) {
+			escape_char_back = Utils::DecodeUTF32(Player::escape_symbol).front();
+		}
+		char32_t escape_char_forward = Utils::DecodeUTF32("/").front();
+		return t == escape_char_back || t == escape_char_forward;
+	};
+	return Utils::Tokenize(path, f);
+}
+
+std::string Filesystem::GetPathInsidePath(const std::string& path_to, const std::string& path_in) {
+	if (!Utils::StartsWith(path_in, path_to)) {
+		return "";
+	}
+
+	std::string path_out = path_in.substr(path_to.size());
+	if (!path_out.empty() && (path_out[0] == '/' || path_out[0] == '\\')) {
+		path_out = path_out.substr(1);
+	}
+
+	return path_out;
 }

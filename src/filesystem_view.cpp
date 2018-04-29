@@ -24,69 +24,41 @@
 
 ViewFilesystem::ViewFilesystem(FilesystemRef wrapped_filesystem, const std::string& subpath) :
 	wrapped_fs(wrapped_filesystem), subpath(subpath) {
+	assert(wrapped_filesystem && "wrapped_fs arg is null");
 }
 
 static std::string translate_path(const std::string& first, const std::string& second) {
-	std::string second_c = FileFinder::MakeCanonical(second, 0);
+	std::string second_c = Filesystem::MakePathCanonical(second, 0);
 	if (second_c.empty()) {
 		return first;
 	}
-	return FileFinder::MakePath(first, second_c);
+	return Filesystem::CombinePath(first, second_c);
 }
 
 bool ViewFilesystem::IsFile(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->IsFile(translate_path(subpath, path));
-	}
-
-	return false;
+	return wrapped_fs->IsFile(translate_path(subpath, path));
 }
 
 bool ViewFilesystem::IsDirectory(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->IsDirectory(translate_path(subpath, path));
-	}
-
-	return false;
+	return wrapped_fs->IsDirectory(translate_path(subpath, path));
 }
 
 bool ViewFilesystem::Exists(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->Exists(translate_path(subpath, path));
-	}
-
-	return false;
+	return wrapped_fs->Exists(translate_path(subpath, path));
 }
 
 uint32_t ViewFilesystem::GetFilesize(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->GetFilesize(translate_path(subpath, path));
-	}
-
-	return 0;
+	return wrapped_fs->GetFilesize(translate_path(subpath, path));
 }
 
 std::streambuf* ViewFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
-	if (wrapped_fs) {
-		return wrapped_fs->CreateInputStreambuffer(translate_path(subpath, path), mode);
-	}
-
-	return nullptr;
+	return wrapped_fs->CreateInputStreambuffer(translate_path(subpath, path), mode);
 }
 
 std::streambuf* ViewFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
-	if (wrapped_fs) {
-		return wrapped_fs->CreateOutputStreambuffer(translate_path(subpath, path), mode);
-	}
-
-	return nullptr;
+	return wrapped_fs->CreateOutputStreambuffer(translate_path(subpath, path), mode);
 }
 
 std::vector<Filesystem::DirectoryEntry> ViewFilesystem::ListDirectory(const std::string &path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->ListDirectory(translate_path(subpath, path));
-	}
-
-	std::vector<Filesystem::DirectoryEntry> entries;
-	return entries;
+	return wrapped_fs->ListDirectory(translate_path(subpath, path));
 }

@@ -81,7 +81,7 @@ void AsyncHandler::CreateRequestMapping(const std::string& file) {
 }
 
 FileRequestAsync* AsyncHandler::RequestFile(const std::string& folder_name, const std::string& file_name) {
-	std::string path = FileFinder::MakePath(folder_name, file_name);
+	std::string path = Filesystem::CombinePath(folder_name, file_name);
 
 	FileRequestAsync* request = GetRequest(path);
 
@@ -120,7 +120,7 @@ bool AsyncHandler::IsImportantFilePending() {
 FileRequestAsync::FileRequestAsync(const std::string& folder_name, const std::string& file_name) :
 	directory(folder_name),
 	file(file_name) {
-	this->path = path = FileFinder::MakePath(folder_name, file_name);
+	this->path = path = Filesystem::CombinePath(folder_name, file_name);
 	this->important = false;
 
 	state = State_WaitForStart;

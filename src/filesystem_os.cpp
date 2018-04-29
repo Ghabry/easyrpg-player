@@ -67,12 +67,7 @@
 #include "utils.h"
 #include "output.h"
 
-OSFilesystem::OSFilesystem(const std::string& rootPath):m_rootPath(rootPath){
-
-}
-
-OSFilesystem::~OSFilesystem() {
-
+OSFilesystem::OSFilesystem(const std::string& rootPath):m_rootPath(rootPath) {
 }
 
 bool OSFilesystem::IsFile(const std::string& path) const {

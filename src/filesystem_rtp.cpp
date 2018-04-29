@@ -201,61 +201,33 @@ void RtpFilesystem::InitRtpPaths(bool warn_no_rtp_found) {
 }
 
 RtpFilesystem::RtpFilesystem(FilesystemRef wrapped_filesystem) : wrapped_fs(wrapped_filesystem) {
+	assert(wrapped_filesystem && "wrapped_fs arg is null");
 }
 
 bool RtpFilesystem::IsFile(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->IsFile(path);
-	}
-
-	return false;
+	return wrapped_fs->IsFile(path);
 }
 
 bool RtpFilesystem::IsDirectory(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->IsDirectory(path);
-	}
-
-	return false;
+	return wrapped_fs->IsDirectory(path);
 }
 
 bool RtpFilesystem::Exists(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->Exists(path);
-	}
-
-	return false;
+	return wrapped_fs->Exists(path);
 }
 
 uint32_t RtpFilesystem::GetFilesize(const std::string& path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->GetFilesize(path);
-	}
-
-	return false;
+	return wrapped_fs->GetFilesize(path);
 }
 
 std::streambuf* RtpFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
-	if (wrapped_fs) {
-		return wrapped_fs->CreateInputStreambuffer(path, mode);
-	}
-
-	return nullptr;
+	return wrapped_fs->CreateInputStreambuffer(path, mode);
 }
 
 std::streambuf* RtpFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
-	if (wrapped_fs) {
-		return wrapped_fs->CreateOutputStreambuffer(path, mode);
-	}
-
-	return nullptr;
+	return wrapped_fs->CreateOutputStreambuffer(path, mode);
 }
 
 std::vector<Filesystem::DirectoryEntry> RtpFilesystem::ListDirectory(const std::string &path) const {
-	if (wrapped_fs) {
-		return wrapped_fs->ListDirectory(path);
-	}
-
-	std::vector<Filesystem::DirectoryEntry> entries;
-	return entries;
+	return wrapped_fs->ListDirectory(path);
 }

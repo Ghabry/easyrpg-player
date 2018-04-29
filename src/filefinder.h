@@ -137,44 +137,6 @@ namespace FileFinder {
 	bool Exists(const std::string& file);
 
 	/**
-	 * Appends name to directory.
-	 *
-	 * @param dir base directory.
-	 * @param name file name to be appended to dir.
-	 * @return combined path
-	 */
-	std::string MakePath(const std::string& dir, const std::string& name);
-
-	/**
-	 * Converts a path to the canonical equivalent.
-	 * This generates a path that does not contain ".." or "." directories.
-	 *
-	 * @param path Path to normalize
-	 * @param initial_deepness How deep the passed path is relative to the game root
-	 * @return canonical path
-	 */
-	std::string MakeCanonical(const std::string& path, int initial_deepness);
-
-	/**
-	 * Splits a path in it's components.
-	 *
-	 * @param path Path to split
-	 * @return Vector containing path components
-	 */
-	std::vector<std::string> SplitPath(const std::string& path);
-
-	/**
-	 * Returns the part of "path_in" that is inside "path_to".
-	 * e.g. Input: /h/e/game, /h/e/game/Music/a.wav; Output: Music/a.wav
-	 *
-	 * @param path_to Path to a primary folder of path_in
-	 * @param path_in Absolute path to the file, must start with path_to
-	 *
-	 * @return The part of path_in that is inside path_to. path_in when the path is not in path_to
-	 */
-	std::string GetPathInsidePath(const std::string& path_to, const std::string& path_in);
-
-	/**
 	 * Return the part of "path_in" that is inside the current games directory.
 	 *
 	 * @see GetPathInsidePath
@@ -182,16 +144,6 @@ namespace FileFinder {
 	 * @return The part of path_in that is inside the game directory, path_in when it's not in the directory
 	 */
 	std::string GetPathInsideGamePath(const std::string& path_in);
-
-	/**
-	 * GetDirectoryMembers member listing mode.
-	 */
-	enum class Mode {
-		ALL, /**< list files and directory */
-		FILES, /**< list only non-directory files */
-		DIRECTORIES, /**< list only directories */
-		RECURSIVE /**< list non-directory files recursively */
-	};
 
 	/**
 	 * Sets the virtual filesystem used for executing the current RPG Maker
