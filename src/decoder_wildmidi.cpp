@@ -72,9 +72,8 @@ static void WildMidiDecoder_deinit(void) {
 	WildMidi_Shutdown();
 }
 
-WildMidiDecoder::WildMidiDecoder(const std::string file_name) {
+WildMidiDecoder::WildMidiDecoder() {
 	music_type = "midi";
-	filename = file_name;
 	std::string config_file = "";
 	bool found = false;
 
@@ -289,7 +288,9 @@ bool WildMidiDecoder::Open(std::shared_ptr<std::istream> stream) {
 		Output::Debug("WildMidi: Previous handle was not closed.");
 	}
 
-	handle = WildMidi_Open(filename.c_str());
+	file_buffer = Utils::ReadStream(*stream);
+
+	handle = WildMidi_OpenBuffer(file_buffer.data(), file_buffer.size());
 	if (!handle) {
 		error_message = "WildMidi: Error reading file";
 		return false;

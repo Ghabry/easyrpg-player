@@ -31,7 +31,7 @@
  */
 class WildMidiDecoder : public AudioDecoder {
 public:
-	WildMidiDecoder(const std::string file_name);
+	WildMidiDecoder();
 
 	~WildMidiDecoder();
 
@@ -50,10 +50,11 @@ public:
 private:
 	int FillBuffer(uint8_t* buffer, int length) override;
 
-	std::string filename;
 #ifdef HAVE_WILDMIDI
-	midi* handle = NULL;
+	midi* handle = nullptr;
 #endif
+
+	std::vector<uint8_t> file_buffer;
 };
 
 #endif

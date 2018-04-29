@@ -146,7 +146,7 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(std::shared_ptr<std::istream>
 #ifdef HAVE_WILDMIDI
 		static bool wildmidi_works = true;
 		if (wildmidi_works) {
-			auto mididec = std::unique_ptr<AudioDecoder>(new WildMidiDecoder(filename));
+			auto mididec = std::unique_ptr<AudioDecoder>(new WildMidiDecoder());
 			if (mididec->WasInited()) {
 #  ifdef USE_AUDIO_RESAMPLER
 				mididec = std::unique_ptr<AudioResampler>(new AudioResampler(std::move(mididec)));
