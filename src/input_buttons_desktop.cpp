@@ -85,9 +85,15 @@ void Input::InitButtons() {
 	buttons[FAST_FORWARD].push_back(Keys::F);
 
 #if defined(USE_MOUSE) && defined(SUPPORT_MOUSE)
-	buttons[DECISION].push_back(Keys::MOUSE_LEFT);
+	/*buttons[DECISION].push_back(Keys::MOUSE_LEFT);
 	buttons[CANCEL].push_back(Keys::MOUSE_RIGHT);
 	buttons[SHIFT].push_back(Keys::MOUSE_MIDDLE);
+	buttons[SCROLL_UP].push_back(Keys::MOUSE_SCROLLUP);
+	buttons[SCROLL_DOWN].push_back(Keys::MOUSE_SCROLLDOWN);*/
+
+	buttons[MOUSE_LEFT].push_back(Keys::MOUSE_LEFT);
+	buttons[MOUSE_RIGHT].push_back(Keys::MOUSE_RIGHT);
+	buttons[MOUSE_MIDDLE].push_back(Keys::MOUSE_MIDDLE);
 	buttons[SCROLL_UP].push_back(Keys::MOUSE_SCROLLUP);
 	buttons[SCROLL_DOWN].push_back(Keys::MOUSE_SCROLLDOWN);
 #endif

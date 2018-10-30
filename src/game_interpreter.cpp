@@ -2384,8 +2384,8 @@ bool Game_Interpreter::CommandKeyInputProc(RPG::EventCommand const& com) { // co
 	bool time = false;
 	int time_id = 0;
 
-	bool check_decision = com.parameters[3] != 0;
-	bool check_cancel = com.parameters[4] != 0;
+	bool check_decision = (com.parameters[3] & 1) != 0;
+	bool check_cancel = (com.parameters[4] & 1) != 0;
 	bool check_numbers = false;
 	bool check_arith = false;
 	bool check_shift = false;
@@ -2393,6 +2393,13 @@ bool Game_Interpreter::CommandKeyInputProc(RPG::EventCommand const& com) { // co
 	bool check_left = false;
 	bool check_right = false;
 	bool check_up = false;
+	// Maniac patch checks
+	bool check_wheel_down = false;
+	bool check_wheel_up = false;
+	bool check_mouse_left = false;
+	bool check_mouse_right = false;
+	bool check_mouse_middle = false;
+
 	int result = 0;
 	size_t param_size = com.parameters.size();
 
@@ -2419,11 +2426,17 @@ bool Game_Interpreter::CommandKeyInputProc(RPG::EventCommand const& com) { // co
 		check_arith = com.parameters[6] != 0;
 		time_id = com.parameters[7];
 		time = com.parameters[8] != 0;
-		check_shift = com.parameters[9] != 0;
-		check_down = com.parameters[10] != 0;
+		check_shift = (com.parameters[9] & 1) != 0;
+		check_down = (com.parameters[10] & 1) != 0;
 		check_left = param_size > 11 ? com.parameters[11] != 0 : false;
 		check_right = param_size > 12 ? com.parameters[12] != 0 : false;
-		check_up = param_size > 13 ? com.parameters[13] != 0 : false;
+		check_up = param_size > 13 ? (com.parameters[13] & 1) != 0 : false;
+		// Maniac patch checks
+		check_wheel_down = (com.parameters[10] & 2) != 0; // check_down
+		check_wheel_up = param_size > 13 ? (com.parameters[13] & 2) != 0 : false; // check_up
+		check_mouse_left = (com.parameters[3] & 2) != 0; // check_decision
+		check_mouse_right = (com.parameters[4] & 2) != 0; // check_cancel
+		check_mouse_middle = (com.parameters[9] & 2) != 0; // check_shift
 	}
 
 	if (check_down && check(Input::DOWN)) {
@@ -2460,6 +2473,21 @@ bool Game_Interpreter::CommandKeyInputProc(RPG::EventCommand const& com) { // co
 				result = 20 + i;
 			}
 		}
+	}
+	if (check_wheel_down && check(Input::SCROLL_DOWN)) {
+		result = 1001;
+	}
+	if (check_wheel_up && check(Input::SCROLL_UP)) {
+		result = 1004;
+	}
+	if (check_mouse_left && check(Input::MOUSE_LEFT)) {
+		result = 1005;
+	}
+	if (check_mouse_right && check(Input::MOUSE_RIGHT)) {
+		result = 1006;
+	}
+	if (check_mouse_middle && check(Input::MOUSE_MIDDLE)) {
+		result = 1007;
 	}
 
 	if (var_id > 0) {
