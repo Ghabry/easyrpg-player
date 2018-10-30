@@ -50,6 +50,7 @@
 #include "game_battle.h"
 #include "utils.h"
 #include "transition.h"
+#include "lsd_reader.h"
 
 namespace {
 	constexpr int max_var_size_2k3 = 9999999;
@@ -530,6 +531,12 @@ bool Game_Interpreter::ExecuteCommand() {
 			return CommandExitGame(com);
 		case Cmd::ToggleFullscreen:
 			return CommandToggleFullscreen(com);
+		case Cmd::GetSaveInfo:
+			return CommandGetSaveInfo(com);
+		case Cmd::GetMousePosition:
+			return CommandGetMousePosition(com);
+		case Cmd::SetMousePosition:
+			return CommandSetMousePosition(com);
 		default:
 			return true;
 	}
@@ -3072,6 +3079,89 @@ bool Game_Interpreter::CommandToggleFullscreen(RPG::EventCommand const& /* com *
 	DisplayUi->BeginDisplayModeChange();
 	DisplayUi->ToggleFullscreen();
 	DisplayUi->EndDisplayModeChange();
+	return true;
+}
+
+bool Game_Interpreter::CommandGetSaveInfo(RPG::EventCommand const& com) {
+	int save_number = ValueOrVariable(com.parameters[0], com.parameters[1]);
+
+	if (save_number <= 0) {
+		return true;
+	}
+
+	// TODO: this code could be in a helper function
+	auto tree = FileFinder::CreateSaveDirectoryTree();
+
+	std::string save_file = "Save";
+	if (save_number <= 9) {
+		save_file += std::to_string(0);
+	}
+	save_file += std::to_string(save_number) + ".lsd";
+
+	std::string save_name = FileFinder::FindDefault(*tree, save_file);
+	// todo end
+
+	if (save_name.empty()) {
+		return true;
+	}
+
+	std::unique_ptr<RPG::Save> save = LSD_Reader::Load(save_name, Player::encoding);
+
+	if (!save) {
+		return true;
+	}
+
+	// Todo: save->title.timestamp
+	// Game_Variables[com.parameters[2]] = YYMMDD
+	// Game_Variables[com.parameters[3]] = HHMMSS
+	Game_Variables[com.parameters[2]] = 1;
+	Game_Variables[com.parameters[3]] = 1;
+	Game_Variables[com.parameters[4]] = save->title.hero_level;
+	Game_Variables[com.parameters[5]] = save->title.hero_hp;
+	Game_Map::SetNeedRefresh(Game_Map::Refresh_Map);
+
+	std::array<int, 4> face_ids = {
+		save->title.face1_id,
+		save->title.face2_id,
+		save->title.face3_id,
+		save->title.face4_id
+	};
+
+	std::array<std::string, 4> face_names = {
+		save->title.face1_name,
+		save->title.face2_name,
+		save->title.face3_name,
+		save->title.face4_name
+	};
+
+	for (int i = 0; i <= 3; ++i) {
+		int param = 8 + i;
+
+		int pic_id = ValueOrVariable(com.parameters[7], com.parameters[param]);
+		Game_Picture* picture = Main_Data::game_screen->GetPicture(pic_id);
+		Game_Picture::ShowParams params = {};
+		// TODO: Must look in FaceSet, not in Picture
+		params.name = face_names[i];
+		params.spritesheet_cols = 4;
+		params.spritesheet_rows = 4;
+		// TODO: Displayed faces are wrong
+		params.spritesheet_frame = face_ids[i];
+		picture->Show(params);
+	}
+
+	return true;
+}
+
+bool Game_Interpreter::CommandGetMousePosition(RPG::EventCommand const& com) {
+	Game_Variables[com.parameters[0]] = DisplayUi->GetMousePosX();
+	Game_Variables[com.parameters[1]] = DisplayUi->GetMousePosY();
+	Game_Map::SetNeedRefresh(Game_Map::Refresh_Map);
+
+	return true;
+}
+
+bool Game_Interpreter::CommandSetMousePosition(RPG::EventCommand const& com) {
+	// TODO no-op (for now)
 	return true;
 }
 

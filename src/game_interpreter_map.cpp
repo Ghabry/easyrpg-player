@@ -22,6 +22,7 @@
 #include <iostream>
 #include <sstream>
 #include "audio.h"
+#include "filefinder.h"
 #include "game_map.h"
 #include "game_battle.h"
 #include "game_event.h"
@@ -185,6 +186,12 @@ bool Game_Interpreter_Map::ExecuteCommand() {
 		case Cmd::OpenVideoOptions:
 			Output::Warning("OpenVideoOptions: Command not supported");
 			return true;
+		case Cmd::Load:
+			return CommandLoad(com);
+		case Cmd::Save:
+			return CommandSave(com);
+		case Cmd::EndLoading:
+			return CommandEndLoading(com);
 		default:
 			return Game_Interpreter::ExecuteCommand();
 	}
@@ -715,5 +722,69 @@ bool Game_Interpreter_Map::CommandOpenLoadMenu(RPG::EventCommand const& /* com *
 
 bool Game_Interpreter_Map::CommandToggleAtbMode(RPG::EventCommand const& /* com */) {
 	Main_Data::game_data.system.atb_mode = !Main_Data::game_data.system.atb_mode;
+	return true;
+}
+
+bool Game_Interpreter_Map::CommandSave(RPG::EventCommand const& com) {
+	int save_number = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	bool error_check = com.parameters[2] > 0;
+
+	if (save_number > 0) {
+		auto tree = FileFinder::CreateSaveDirectoryTree();
+
+		std::string save_file = "Save";
+		if (save_number <= 9) {
+			save_file += std::to_string(0);
+		}
+		save_file += std::to_string(save_number) + ".lsd";
+
+		std::string save_name = FileFinder::FindDefault(*tree, save_file);
+
+		if (save_name.empty()) {
+			save_name = FileFinder::MakePath((*tree).directory_path, save_file);
+		}
+
+		Player::WriteSavegame(save_name, save_number);
+	}
+
+	if (error_check) {
+		Game_Variables[com.parameters[3]] = save_number > 0;
+		Game_Map::SetNeedRefresh(Game_Map::Refresh_Map);
+	}
+
+	return true;
+}
+
+bool Game_Interpreter_Map::CommandLoad(RPG::EventCommand const& com) {
+	int save_number = ValueOrVariable(com.parameters[0], com.parameters[1]);
+
+	if (save_number > 0) {
+		auto tree = FileFinder::CreateSaveDirectoryTree();
+
+		std::string save_file = "Save";
+		if (save_number <= 9) {
+			save_file += std::to_string(0);
+		}
+		save_file += std::to_string(save_number) + ".lsd";
+
+		std::string save_name = FileFinder::FindDefault(*tree, save_file);
+
+		if (save_name.empty()) {
+			return true;
+		}
+
+		// TODO: Calling this while in the interpreter crashes because the interpreter is deleted
+		Player::LoadSavegame(save_name);
+
+		Scene::Push(std::make_shared<Scene_Map>(true));
+
+		return false;
+	}
+
+	return true;
+}
+
+bool Game_Interpreter_Map::CommandEndLoading(RPG::EventCommand const& com) {
+	// TODO no-op (for now)
 	return true;
 }

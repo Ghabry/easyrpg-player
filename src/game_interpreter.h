@@ -212,6 +212,9 @@ protected:
 	bool CommandChangeBattleCommands(RPG::EventCommand const& com);
 	bool CommandExitGame(RPG::EventCommand const& com);
 	bool CommandToggleFullscreen(RPG::EventCommand const& com);
+	bool CommandGetSaveInfo(RPG::EventCommand const& com);
+	bool CommandGetMousePosition(RPG::EventCommand const& com);
+	bool CommandSetMousePosition(RPG::EventCommand const& com);
 	bool CommandEnd();
 
 	virtual bool DefaultContinuation(RPG::EventCommand const& com);
