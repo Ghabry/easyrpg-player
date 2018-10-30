@@ -54,61 +54,14 @@ void Scene_Save::Action(int index) {
 
 	Output::Debug("Saving to %s", ss.str().c_str());
 
-	// TODO: Maybe find a better place to setup the save file?
-	RPG::SaveTitle title;
-
-	int size = (int)Main_Data::game_party->GetActors().size();
-	Game_Actor* actor;
-
-	if (size > 3) {
-		actor = Main_Data::game_party->GetActors()[3];
-		title.face4_id = actor->GetFaceIndex();
-		title.face4_name = actor->GetFaceName();
-	}
-	if (size > 2) {
-		actor = Main_Data::game_party->GetActors()[2];
-		title.face3_id = actor->GetFaceIndex();
-		title.face3_name = actor->GetFaceName();
-	}
-	if (size > 1) {
-		actor = Main_Data::game_party->GetActors()[1];
-		title.face2_id = actor->GetFaceIndex();
-		title.face2_name = actor->GetFaceName();
-	}
-	if (size > 0) {
-		actor = Main_Data::game_party->GetActors()[0];
-		title.face1_id = actor->GetFaceIndex();
-		title.face1_name = actor->GetFaceName();
-		title.hero_hp = actor->GetHp();
-		title.hero_level = actor->GetLevel();
-		title.hero_name = actor->GetName();
-	}
-
-	Main_Data::game_data.title = title;
-
-	Main_Data::game_data.system.save_slot = index + 1;
-	Main_Data::game_data.system.save_count = Main_Data::game_data.system.save_count + 1;
-
-	Game_Map::PrepareSave();
-
 	std::string save_file = ss.str();
-	std::string filename = FileFinder::FindDefault(*tree, ss.str());
+	std::string save_name = FileFinder::FindDefault(*tree, ss.str());
 
-	if (filename.empty()) {
-		filename = FileFinder::MakePath((*tree).directory_path, save_file);
+	if (save_name.empty()) {
+		save_name = FileFinder::MakePath((*tree).directory_path, save_file);
 	}
 
-	Main_Data::game_data.title.timestamp = LSD_Reader::GenerateTimestamp();
-
-	LSD_Reader::Save(filename, Main_Data::game_data, Player::encoding);
-
-#ifdef EMSCRIPTEN
-	// Save changed file system
-	EM_ASM(
-		FS.syncfs(function(err) {
-		});
-	);
-#endif
+	Player::WriteSavegame(save_name, index + 1);
 
 	Scene::Pop();
 }

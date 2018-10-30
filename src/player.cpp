@@ -809,6 +809,57 @@ void Player::LoadSavegame(const std::string& save_name) {
 	system->Start();
 }
 
+void Player::WriteSavegame(const std::string& save_file, int slot) {
+
+	RPG::SaveTitle title;
+
+	int size = (int)Main_Data::game_party->GetActors().size();
+	Game_Actor* actor;
+
+	if (size > 3) {
+		actor = Main_Data::game_party->GetActors()[3];
+		title.face4_id = actor->GetFaceIndex();
+		title.face4_name = actor->GetFaceName();
+	}
+	if (size > 2) {
+		actor = Main_Data::game_party->GetActors()[2];
+		title.face3_id = actor->GetFaceIndex();
+		title.face3_name = actor->GetFaceName();
+	}
+	if (size > 1) {
+		actor = Main_Data::game_party->GetActors()[1];
+		title.face2_id = actor->GetFaceIndex();
+		title.face2_name = actor->GetFaceName();
+	}
+	if (size > 0) {
+		actor = Main_Data::game_party->GetActors()[0];
+		title.face1_id = actor->GetFaceIndex();
+		title.face1_name = actor->GetFaceName();
+		title.hero_hp = actor->GetHp();
+		title.hero_level = actor->GetLevel();
+		title.hero_name = actor->GetName();
+	}
+
+	Main_Data::game_data.title = title;
+
+	Main_Data::game_data.system.save_slot = slot;
+	Main_Data::game_data.system.save_count = Main_Data::game_data.system.save_count + 1;
+
+	Game_Map::PrepareSave();
+
+	Main_Data::game_data.title.timestamp = LSD_Reader::GenerateTimestamp();
+
+	LSD_Reader::Save(save_file, Main_Data::game_data, Player::encoding);
+
+#ifdef EMSCRIPTEN
+	// Save changed file system
+	EM_ASM(
+		FS.syncfs(function(err) {
+		});
+	);
+#endif
+}
+
 static void OnMapFileReady(FileRequestResult*) {
 	int map_id = Player::start_map_id == -1 ?
 		Data::treemap.start.party_map_id : Player::start_map_id;

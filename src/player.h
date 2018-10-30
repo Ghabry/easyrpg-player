@@ -120,6 +120,14 @@ namespace Player {
 	void LoadSavegame(const std::string& save_file);
 
 	/**
+	 * Writes savegame data.
+	 *
+	 * @param save_file Savegame file to write to
+	 * @param slot Savegame slot number
+	 */
+	void WriteSavegame(const std::string& save_file, int slot);
+
+	/**
 	 * Moves the player to the start map.
 	 */
 	void SetupPlayerSpawn();
