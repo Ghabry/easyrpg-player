@@ -23,6 +23,7 @@
 #include <sstream>
 #include <cassert>
 #include <algorithm>
+
 static const uint32_t endOfCentralDirectory = 0x06054b50;
 static const int32_t endOfCentralDirectorySize = 22;
 
@@ -483,6 +484,10 @@ ZIPFilesystem::~ZIPFilesystem() {
 		delete (*it)->filebuffer;
 		delete (*it);
 	}
+}
+
+std::string ZIPFilesystem::GetPath() const {
+	return fs_path;
 }
 
 bool ZIPFilesystem::IsFile(const std::string& path) const {

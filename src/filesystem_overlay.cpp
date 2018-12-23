@@ -20,6 +20,13 @@
 #include <cstring>
 #include <fstream>
 
+std::string OverlayFilesystem::GetPath() const {
+	if (file_systems.empty()) {
+		return "";
+	}
+
+	return file_systems.front().fs->GetPath();
+}
 bool OverlayFilesystem::IsFile(const std::string& path) const {
 	for (auto& entry : file_systems) {
 		if (entry.fs->IsFile(path)) {

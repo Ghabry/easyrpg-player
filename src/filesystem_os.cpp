@@ -67,11 +67,29 @@
 #include "utils.h"
 #include "output.h"
 
-OSFilesystem::OSFilesystem(const std::string& rootPath):m_rootPath(rootPath) {
+OSFilesystem::OSFilesystem(const std::string& rootPath): root_path(rootPath) {
+}
+
+std::string OSFilesystem::GetPath() const {
+	return root_path;
 }
 
 bool OSFilesystem::IsFile(const std::string& path) const {
+#if (defined(GEKKO) || defined(_3DS) || defined(SWITCH))
+	struct stat sb;
+	if (::stat(path.c_str(), &sb) == 0)
+		return S_ISREG(sb.st_mode);
 	return false;
+#else
+#  ifdef _WIN32
+	int attribs = ::GetFileAttributesW(Utils::ToWideString(path).c_str());
+	return (attribs & (FILE_ATTRIBUTE_NORMAL)) == FILE_ATTRIBUTE_NORMAL;
+#  else
+	struct stat sb;
+	::lstat(path.c_str(), &sb);
+	return S_ISREG(sb.st_mode);
+#  endif
+#endif
 }
 
 bool OSFilesystem::IsDirectory(const std::string& dir) const {
@@ -81,10 +99,6 @@ bool OSFilesystem::IsDirectory(const std::string& dir) const {
 		return S_ISDIR(sb.st_mode);
 	return false;
 #else
-	if (!Exists(dir)) {
-		return false;
-	}
-
 #  ifdef _WIN32
 	int attribs = ::GetFileAttributesW(Utils::ToWideString(dir).c_str());
 	return (attribs & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT))

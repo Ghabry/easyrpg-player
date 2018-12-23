@@ -113,8 +113,8 @@ std::string Filesystem::FindFile(const std::string& dir,
 	std::string const escape_symbol = Player::escape_symbol;
 	std::string corrected_name = Utils::LowerCase(name);
 
-	std::string combined_path = Filesystem::CombinePath(lower_dir, corrected_name);
-	std::string canon = Filesystem::MakePathCanonical(combined_path, 1);
+	std::string combined_path = CombinePath(lower_dir, corrected_name);
+	std::string canon = MakePathCanonical(combined_path, 1);
 	if (combined_path != canon) {
 		// Very few games (e.g. Yume2kki) use path traversal (..) in the filenames to point
 		// to files outside of the actual directory.

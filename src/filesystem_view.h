@@ -36,6 +36,7 @@ public:
  	 * Implementation of abstract methods
  	 */
 	/** @{ */
+	std::string GetPath() const override;
 	bool IsFile(const std::string& path) const override;
 	bool IsDirectory(const std::string& path) const override;
 	bool Exists(const std::string& path) const override;

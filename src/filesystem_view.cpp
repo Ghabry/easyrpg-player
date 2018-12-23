@@ -35,6 +35,10 @@ static std::string translate_path(const std::string& first, const std::string& s
 	return Filesystem::CombinePath(first, second_c);
 }
 
+std::string ViewFilesystem::GetPath() const {
+	return subpath;
+}
+
 bool ViewFilesystem::IsFile(const std::string& path) const {
 	return wrapped_fs->IsFile(translate_path(subpath, path));
 }

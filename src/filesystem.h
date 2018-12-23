@@ -57,6 +57,15 @@ public:
 	virtual bool IsValid();
 
 	/**
+	 * Return the path used to initialize the filesystem.
+	 * Passing this string to Create of the parent filesystem must result
+	 * in a filesystem pointing to the same folder/file as this filesystem.
+	 *
+	 * @return filesystem root path
+	 */
+	virtual std::string GetPath() const = 0;
+
+	/**
 	 * Checks whether the passed path is a file.
 	 * This function is case sensitive on some platforms.
 	 *

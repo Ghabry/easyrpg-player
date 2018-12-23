@@ -186,6 +186,13 @@ void Scene_GameBrowser::BootGame() {
 	}
 
 	FileFinder::SetGameFilesystem(fs);
+
+	std::string startup_path = "";
+	for (auto f : filesystems) {
+		startup_path = Filesystem::CombinePath(startup_path, f->GetPath());
+	}
+	Main_Data::SetProjectPath(Filesystem::CombinePath(startup_path, fs->GetPath()));
+
 	Player::CreateGameObjects();
 
 	Scene::Push(std::make_shared<Scene_Title>());

@@ -182,6 +182,10 @@ RtpFilesystem::RtpFilesystem(FilesystemRef wrapped_filesystem) : wrapped_fs(wrap
 	assert(wrapped_filesystem && "wrapped_fs arg is null");
 }
 
+std::string RtpFilesystem::GetPath() const {
+	return wrapped_fs->GetPath();
+}
+
 bool RtpFilesystem::IsFile(const std::string& path) const {
 	return wrapped_fs->IsFile(path);
 }
