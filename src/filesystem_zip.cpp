@@ -575,18 +575,17 @@ std::streambuf* ZIPFilesystem::CreateOutputStreambuffer(const std::string& path,
 	return nullptr;
 }
 
-std::vector<Filesystem::DirectoryEntry> ZIPFilesystem::ListDirectory(const std::string &path) const {
+std::vector<Filesystem::DirectoryEntry> ZIPFilesystem::ListDirectory(const std::string &path, bool* error) const {
 	std::vector<Filesystem::DirectoryEntry> entries;
 
-	DirectoryEntry entry;
-	entry.name = ".";
-	entry.type = Filesystem::FileType::Directory;
-	entries.push_back(entry);
-
 	if (!m_isValid) {
-		entries[0].type = Filesystem::FileType::Invalid;
+		if (error) {
+			*error = true;
+		}
 		return entries;
 	}
+
+	DirectoryEntry entry;
 
 	std::string path_lower = normalize_path(path);
 	if (path_lower.size() != 0 && path_lower.back() != '/') path_lower += "/";
@@ -594,11 +593,15 @@ std::vector<Filesystem::DirectoryEntry> ZIPFilesystem::ListDirectory(const std::
 	for (const auto &it : m_zipContent) {
 		if (Utils::BeginsWith(it.first,path_lower) &&
 			it.first.substr(path_lower.size(), it.first.size()- path_lower.size()).find_last_of('/')==std::string::npos) {
-			//Everything that starts with the path but isn't the path and does contain no slash
+			// Everything that starts with the path but isn't the path and does contain no slash
 			entry.name = it.first.substr(path_lower.size(), it.first.size()- path_lower.size());
 			entry.type = it.second.isDirectory ? Filesystem::FileType::Directory : Filesystem::FileType::Regular;
 			entries.push_back(entry);
 		}
+	}
+
+	if (error) {
+		*error = false;
 	}
 
 	return entries;

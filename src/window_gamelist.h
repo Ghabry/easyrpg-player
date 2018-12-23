@@ -38,11 +38,14 @@ public:
 
 	/**
 	 * Refreshes the item list.
+	 * When the filesystem access fails (return value false) the list is not
+	 * refreshed and the old filesystem is kept.
 	 *
 	 * @param filesystem_base Filesystem to traverse
 	 * @param show_dotdot When true renders .. as first item
+	 * @param true when the filesystem was readable, false otherwise
 	 */
-	void Refresh(FilesystemRef filesystem_base, bool show_dotdot);
+	bool Refresh(FilesystemRef filesystem_base, bool show_dotdot);
 
 	/**
 	 * Draws an item together with the quantity.

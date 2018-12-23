@@ -140,13 +140,14 @@ std::streambuf* OSFilesystem::CreateOutputStreambuffer(const std::string& path, 
 		mode);
 }
 
-std::vector<Filesystem::DirectoryEntry> OSFilesystem::ListDirectory(const std::string &path) const {
+std::vector<Filesystem::DirectoryEntry> OSFilesystem::ListDirectory(const std::string &path, bool* error) const {
 	std::vector<Filesystem::DirectoryEntry> entries;
 
+	if (error) {
+		*error = false;
+	}
+
 	DirectoryEntry result;
-	result.name = ".";
-	result.type = Filesystem::FileType::Directory;
-	entries.push_back(result);
 
 #ifdef _WIN32
 #  define DIR _WDIR
@@ -171,7 +172,9 @@ std::vector<Filesystem::DirectoryEntry> OSFilesystem::ListDirectory(const std::s
 #endif
 		Output::Debug("Error opening dir %s: %s", path.c_str(),
 					  ::strerror(errno));
-		entries[0].type = Filesystem::FileType::Invalid;
+		if (error) {
+			*error = true;
+		}
 		return entries;
 	}
 

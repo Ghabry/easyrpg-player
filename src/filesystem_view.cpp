@@ -59,6 +59,6 @@ std::streambuf* ViewFilesystem::CreateOutputStreambuffer(const std::string& path
 	return wrapped_fs->CreateOutputStreambuffer(translate_path(subpath, path), mode);
 }
 
-std::vector<Filesystem::DirectoryEntry> ViewFilesystem::ListDirectory(const std::string &path) const {
-	return wrapped_fs->ListDirectory(translate_path(subpath, path));
+std::vector<Filesystem::DirectoryEntry> ViewFilesystem::ListDirectory(const std::string &path, bool* error) const {
+	return wrapped_fs->ListDirectory(translate_path(subpath, path), error);
 }

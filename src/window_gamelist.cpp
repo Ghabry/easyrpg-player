@@ -28,7 +28,14 @@ Window_GameList::Window_GameList(int ix, int iy, int iwidth, int iheight) :
 	column_max = 1;
 }
 
-void Window_GameList::Refresh(FilesystemRef filesystem_base, bool show_dotdot) {
+bool Window_GameList::Refresh(FilesystemRef filesystem_base, bool show_dotdot) {
+	bool error;
+	auto entries = filesystem_base->ListDirectory("/", &error);
+
+	if (error) {
+		return false;
+	}
+
 	filesystem = filesystem_base;
 	game_directories.clear();
 	this->show_dotdot = show_dotdot;
@@ -38,9 +45,8 @@ void Window_GameList::Refresh(FilesystemRef filesystem_base, bool show_dotdot) {
 	}
 
 	// Find directories and zip files
-	for (auto entry : filesystem->ListDirectory("/")) {
+	for (const auto& entry : entries) {
 		if (entry.type == Filesystem::FileType::Directory && entry.name != "." && !entry.name.empty()) {
-			FilesystemRef subtree = filesystem->Create(entry.name);
 			game_directories.push_back(entry.name);
 		} else if (entry.type == Filesystem::FileType::Regular && Utils::EndsWith(entry.name, ".zip")) {
 			game_directories.push_back(entry.name);
@@ -75,6 +81,8 @@ void Window_GameList::Refresh(FilesystemRef filesystem_base, bool show_dotdot) {
 
 		DrawErrorText();
 	}
+
+	return true;
 }
 
 void Window_GameList::DrawItem(int index) {

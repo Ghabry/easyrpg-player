@@ -206,8 +206,8 @@ std::streambuf* RtpFilesystem::CreateOutputStreambuffer(const std::string& path,
 	return wrapped_fs->CreateOutputStreambuffer(path, mode);
 }
 
-std::vector<Filesystem::DirectoryEntry> RtpFilesystem::ListDirectory(const std::string &path) const {
-	return wrapped_fs->ListDirectory(path);
+std::vector<Filesystem::DirectoryEntry> RtpFilesystem::ListDirectory(const std::string &path, bool* error) const {
+	return wrapped_fs->ListDirectory(path, error);
 }
 
 static bool is_not_ascii_char(uint8_t c) { return c > 0x80; }

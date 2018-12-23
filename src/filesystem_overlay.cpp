@@ -80,15 +80,21 @@ std::streambuf* OverlayFilesystem::CreateOutputStreambuffer(const std::string& p
 	return nullptr;
 }
 
-std::vector<Filesystem::DirectoryEntry> OverlayFilesystem::ListDirectory(const std::string &path) const {
+std::vector<Filesystem::DirectoryEntry> OverlayFilesystem::ListDirectory(const std::string &path, bool* error) const {
 	std::vector<Filesystem::DirectoryEntry> entries;
+
+	bool err = false;
 
 	for (auto& entry : file_systems) {
 		if (entry.fs->Exists(path)) {
 			// TODO: Naive merge algorithm, duplicate entries should be filtered
-			auto fs_entries = entry.fs->ListDirectory(path);
+			auto fs_entries = entry.fs->ListDirectory(path, err ? nullptr : &err);
 			std::copy(fs_entries.begin(), fs_entries.end(), std::back_inserter(entries));
 		}
+	}
+
+	if (error) {
+		*error = err && entries.empty();
 	}
 
 	return entries;

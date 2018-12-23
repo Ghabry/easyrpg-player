@@ -36,8 +36,7 @@ public:
 	enum class FileType {
 		Regular,
 		Directory,
-		Other,
-		Invalid
+		Other
 	};
 
 	/**
@@ -126,9 +125,10 @@ public:
 	 * Returns a directory listing of the given path.
 	 *
 	 * @param path a path relative to the filesystems root
+	 * @param error When non-null receives true when reading failed, otherwise false
 	 * @return List of directory entries
 	 */
-	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path) const = 0;
+	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path, bool* error = nullptr) const = 0;
 
 	/**
 	 * Creates a new appropriate filesystem from the specified path.

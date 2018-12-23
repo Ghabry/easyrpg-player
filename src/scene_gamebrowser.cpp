@@ -165,7 +165,7 @@ void Scene_GameBrowser::BootGame() {
 	FilesystemRef fs = gamelist_window->GetGameFilesystem();
 
 	if (!fs) {
-		Output::Warning("The specified file or directory can't be opened");
+		Output::Warning("The selected file or directory can't be opened");
 		load_window->SetVisible(false);
 		game_loading = false;
 		return;
@@ -173,11 +173,15 @@ void Scene_GameBrowser::BootGame() {
 
 	if (!FileFinder::IsValidProject(fs)) {
 		// Not a game: Open as directory
-		filesystems.push_back(fs);
-		gamelist_window->Refresh(fs, true);
-		gamelist_window->SetIndex(0);
 		load_window->SetVisible(false);
 		game_loading = false;
+		if (!gamelist_window->Refresh(fs, true)) {
+			Output::Warning("The selected file or directory can't be opened");
+			return;
+		}
+		filesystems.push_back(fs);
+		gamelist_window->SetIndex(0);
+
 		return;
 	}
 
