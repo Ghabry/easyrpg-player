@@ -313,7 +313,7 @@ void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int
 		Output::Warning("Music not readable: %s", file.c_str());
 		return;
 	}
-	audio_decoder = AudioDecoder::Create(filestream, file);
+	audio_decoder = AudioDecoder::Create(filestream);
 	if (audio_decoder) {
 		SetupAudioDecoder(filestream, file, volume, pitch, fadein);
 		return;

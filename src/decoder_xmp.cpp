@@ -21,7 +21,7 @@
 
 // Headers
 #include <cassert>
-#include "xmp.h"
+#include <xmp.h>
 #include "audio_decoder.h"
 #include "output.h"
 #include "decoder_xmp.h"
@@ -49,7 +49,7 @@ bool XMPDecoder::Open(std::shared_ptr<std::istream> stream) {
 
 	file_buffer = Utils::ReadStream(*stream);
 
-	int res =  xmp_load_module_from_memory(ctx, file_buffer.data(), file_buffer.size());
+	int res = xmp_load_module_from_memory(ctx, file_buffer.data(), file_buffer.size());
 	if (res != 0) {
 		error_message = "XMP: Error loading file";
 		return false;
@@ -126,8 +126,29 @@ bool XMPDecoder::SetFormat(int freq, AudioDecoder::Format frmt, int chans) {
 	return xmp_start_player(ctx, frequency, player_flags) == 0;
 }
 
-bool XMPDecoder::IsModule(std::string filename) {
-	return xmp_test_module(const_cast<char *>(filename.c_str()), NULL) == 0;
+bool XMPDecoder::IsModule(std::shared_ptr<std::istream> stream) {
+	// Unfortunately can't use xmp_test_module here because this function only
+	// supports real filenames and no VIO and the API to reimplement this is
+	// not exported.
+	// Instead use xmp_load_module_from_memory with a 16kb buffer, is fast and
+	// enough for all format checks.
+	xmp_context ctx = xmp_create_context();
+	if (!ctx) {
+		return false;
+	}
+
+	std::array<uint8_t, 16*1024> test_buffer;
+	stream->read(reinterpret_cast<char*>(test_buffer.data()), test_buffer.size());
+	auto count = stream->gcount();
+	stream->seekg(0, std::ios_base::beg);
+
+	int res = xmp_load_module_from_memory(ctx, test_buffer.data(), count);
+	if (res == 0) {
+		xmp_release_module(ctx);
+	}
+	xmp_free_context(ctx);
+
+	return res == 0;
 }
 
 int XMPDecoder::FillBuffer(uint8_t* buffer, int length) {

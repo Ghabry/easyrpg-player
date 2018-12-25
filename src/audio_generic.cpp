@@ -189,7 +189,7 @@ bool GenericAudio::PlayOnChannel(BgmChannel& chan, const std::string& file, int 
 		return false;
 	}
 
-	chan.decoder = AudioDecoder::Create(filestream, file);
+	chan.decoder = AudioDecoder::Create(filestream);
 	if (chan.decoder && chan.decoder->Open(filestream)) {
 		chan.decoder->SetPitch(pitch);
 		chan.decoder->SetFormat(output_format.frequency, output_format.format, output_format.channels);

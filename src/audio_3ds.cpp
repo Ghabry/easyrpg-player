@@ -75,7 +75,7 @@ void CtrAudio::BGM_Play(std::string const& file, int volume, int pitch, int fade
 	}
 
 	LockMutex();
-	bgm_decoder = AudioDecoder::Create(filestream, file);
+	bgm_decoder = AudioDecoder::Create(filestream);
 	if (bgm_decoder && bgm_decoder->Open(filestream)) {
 		int frequency;
 		AudioDecoder::Format format, out_format;

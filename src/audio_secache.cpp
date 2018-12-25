@@ -77,7 +77,7 @@ std::unique_ptr<AudioSeCache> AudioSeCache::Create(const std::string& filename) 
 			return se;
 		}
 
-		se->audio_decoder = AudioDecoder::Create(f, filename);
+		se->audio_decoder = AudioDecoder::Create(f);
 
 		if (se->audio_decoder) {
 			if (!se->audio_decoder->Open(f)) {

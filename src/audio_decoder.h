@@ -83,16 +83,13 @@ public:
 	 * Parses the specified stream and open a proper audio decoder to handle
 	 * the audio file.
 	 * Upon success the stream is owned by the audio decoder and further
-	 * operations on it will be undefined! Upon failure the stream points at
-	 * the beginning.
-	 * The filename is used for debug purposes but should match the FILE handle.
-	 * Upon failure the FILE handle is valid and points at the beginning.
+	 * operations on it will be undefined! Upon failure the stream is valid and
+	 * points at the beginning.
 	 *
 	 * @param stream File handle to parse
-	 * @param filename Path to the file handle
 	 * @return An audio decoder instance when the format was detected, otherwise null
 	 */
-	static std::unique_ptr<AudioDecoder> Create(std::shared_ptr<std::istream> stream, const std::string& filename);
+	static std::unique_ptr<AudioDecoder> Create(std::shared_ptr<std::istream> stream);
 
 	/**
 	 * Updates the volume for the fade in/out effect.
