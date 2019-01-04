@@ -28,17 +28,22 @@ Window_GameList::Window_GameList(int ix, int iy, int iwidth, int iheight) :
 	column_max = 1;
 }
 
-void Window_GameList::Refresh() {
-	filesystem = FileFinder::GetNativeFilesystem()->Create(Main_Data::GetProjectPath());
+void Window_GameList::Refresh(FilesystemRef filesystem_base, bool show_dotdot) {
+	filesystem = filesystem_base;
 	game_directories.clear();
+	this->show_dotdot = show_dotdot;
 
-	// Find valid game diectories
+	if (show_dotdot) {
+		game_directories.push_back("..");
+	}
+
+	// Find directories and zip files
 	for (auto entry : filesystem->ListDirectory("/")) {
-		if (entry.type == Filesystem::FileType::Directory) {
+		if (entry.type == Filesystem::FileType::Directory && entry.name != "." && !entry.name.empty()) {
 			FilesystemRef subtree = filesystem->Create(entry.name);
-			if (FileFinder::IsValidProject(subtree)) {
-				game_directories.push_back(entry.name);
-			}
+			game_directories.push_back(entry.name);
+		} else if (entry.type == Filesystem::FileType::Regular && Utils::EndsWith(entry.name, ".zip")) {
+			game_directories.push_back(entry.name);
 		}
 	}
 
@@ -48,7 +53,7 @@ void Window_GameList::Refresh() {
 				  return strcmp(Utils::LowerCase(s).c_str(), Utils::LowerCase(s2).c_str()) <= 0;
 			  });
 
-	if (HasValidGames()) {
+	if (HasValidEntry()) {
 		item_max = game_directories.size();
 
 		CreateContents();
@@ -60,7 +65,13 @@ void Window_GameList::Refresh() {
 		}
 	}
 	else {
+		item_max = 1;
+
 		SetContents(Bitmap::Create(width - 16, height - 16));
+
+		if (show_dotdot) {
+			DrawItem(0);
+		}
 
 		DrawErrorText();
 	}
@@ -72,7 +83,7 @@ void Window_GameList::DrawItem(int index) {
 
 	std::string text;
 
-	if (HasValidGames()) {
+	if (HasValidEntry()) {
 		text = game_directories[index];
 	}
 
@@ -87,9 +98,9 @@ void Window_GameList::DrawErrorText() {
 		"If you followed a link and stranded here",
 		"please notify us (see About page)."
 #else
-		"Games must be in a direct subdirectory",
-		"and must have the files RPG_RT.ldb and",
-		"RPG_RT.lmt in their main directory.",
+		"Games must be in a subdirectory and are",
+		"recognized via the files RPG_RT.ldb and",
+		"RPG_RT.lmt in their game directory.",
 		"",
 		"This engine only supports RPG Maker 2000",
 		"and 2003 games.",
@@ -102,19 +113,19 @@ void Window_GameList::DrawErrorText() {
 #ifdef EMSCRIPTEN
 	contents->TextDraw(0, 0, Font::ColorKnockout, "The game was not found.");
 #else
-	contents->TextDraw(0, 0, Font::ColorKnockout, "No games found in the current directory.");
+	contents->TextDraw(0, 4 + 14, Font::ColorKnockout, "No games found in the current directory.");
 #endif
 
 	for (size_t i = 0; i < error_msg.size(); ++i) {
-		contents->TextDraw(0, 2 + 14 * (i + 2), Font::ColorCritical, error_msg[i]);
+		contents->TextDraw(0, 4 + 14 * (i + 3), Font::ColorCritical, error_msg[i]);
 	}
 }
 
-bool Window_GameList::HasValidGames()
-{
-	return !game_directories.empty();
+bool Window_GameList::HasValidEntry() {
+	size_t minval = show_dotdot ? 1 : 0;
+	return game_directories.size() > minval;
 }
 
 FilesystemRef Window_GameList::GetGameFilesystem() const {
-	return FileFinder::GetNativeFilesystem()->Create(Filesystem::CombinePath(Main_Data::GetProjectPath(), game_directories[GetIndex()]));
+	return filesystem->Create(game_directories[GetIndex()]);
 }

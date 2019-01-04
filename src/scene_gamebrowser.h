@@ -84,7 +84,11 @@ private:
 
 	bool game_loading = false;
 
+	bool full_fs_tree_generated = false;
+
 	int old_gamelist_index = 0;
+
+	std::vector<FilesystemRef> filesystems;
 };
 
 #endif

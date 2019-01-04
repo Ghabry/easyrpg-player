@@ -25,14 +25,7 @@
 #include "scene_title.h"
 #include "bitmap.h"
 #include "audio.h"
-
-#ifdef _WIN32
-	#include <Windows.h>
-#endif
-
-namespace {
-	std::string browser_dir;
-}
+#include "output.h"
 
 Scene_GameBrowser::Scene_GameBrowser() {
 	type = Scene::GameBrowser;
@@ -41,17 +34,12 @@ Scene_GameBrowser::Scene_GameBrowser() {
 void Scene_GameBrowser::Start() {
 	Game_System::SetSystemName(CACHE_DEFAULT_BITMAP);
 	Game_System::SetMessageStretch(RPG::System::Stretch_stretch);
+	filesystems.push_back(FileFinder::GetNativeFilesystem()->Create(Main_Data::GetProjectPath()));
 	CreateWindows();
 	Player::FrameReset();
 }
 
 void Scene_GameBrowser::Continue() {
-#ifdef _WIN32
-	SetCurrentDirectory(L"..");
-#endif
-
-	Main_Data::SetProjectPath(browser_dir);
-
 	Cache::Clear();
 	AudioSeCache::Clear();
 
@@ -94,9 +82,9 @@ void Scene_GameBrowser::CreateWindows() {
 	command_window->SetIndex(0);
 
 	gamelist_window.reset(new Window_GameList(60, 32, SCREEN_TARGET_WIDTH - 60, SCREEN_TARGET_HEIGHT - 32));
-	gamelist_window->Refresh();
+	gamelist_window->Refresh(filesystems.back(), false);
 
-	if (!gamelist_window->HasValidGames()) {
+	if (filesystems.size() == 1 && !gamelist_window->HasValidEntry()) {
 		command_window->DisableItem(0);
 	}
 
@@ -132,10 +120,9 @@ void Scene_GameBrowser::UpdateCommand() {
 		Game_System::SePlay(Game_System::GetSystemSE(Game_System::SFX_Cancel));
 		Scene::Pop();
 	} else if (Input::IsTriggered(Input::DECISION)) {
-
 		switch (menu_index) {
 			case GameList:
-				if (!gamelist_window->HasValidGames()) {
+				if (filesystems.size() == 1 && !gamelist_window->HasValidEntry()) {
 					return;
 				}
 				command_window->SetActive(false);
@@ -165,12 +152,36 @@ void Scene_GameBrowser::UpdateGameListSelection() {
 }
 
 void Scene_GameBrowser::BootGame() {
-	if (browser_dir.empty())
-		browser_dir = Main_Data::GetProjectPath();
-	//Main_Data::SetProjectPath(path); FIXME?
+	if (filesystems.size() > 1 && gamelist_window->GetIndex() == 0) {
+		// ".." -> Go one level up
+		filesystems.pop_back();
+		gamelist_window->Refresh(filesystems.back(), filesystems.size() > 1);
+		gamelist_window->SetIndex(0);
+		load_window->SetVisible(false);
+		game_loading = false;
+		return;
+	}
 
-	FileFinder::SetGameFilesystem(gamelist_window->GetGameFilesystem());
+	FilesystemRef fs = gamelist_window->GetGameFilesystem();
 
+	if (!fs) {
+		Output::Warning("The specified file or directory can't be opened");
+		load_window->SetVisible(false);
+		game_loading = false;
+		return;
+	}
+
+	if (!FileFinder::IsValidProject(fs)) {
+		// Not a game: Open as directory
+		filesystems.push_back(fs);
+		gamelist_window->Refresh(fs, true);
+		gamelist_window->SetIndex(0);
+		load_window->SetVisible(false);
+		game_loading = false;
+		return;
+	}
+
+	FileFinder::SetGameFilesystem(fs);
 	Player::CreateGameObjects();
 
 	Scene::Push(std::make_shared<Scene_Title>());

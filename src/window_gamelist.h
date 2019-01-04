@@ -38,8 +38,11 @@ public:
 
 	/**
 	 * Refreshes the item list.
+	 *
+	 * @param filesystem_base Filesystem to traverse
+	 * @param show_dotdot When true renders .. as first item
 	 */
-	void Refresh();
+	void Refresh(FilesystemRef filesystem_base, bool show_dotdot);
 
 	/**
 	 * Draws an item together with the quantity.
@@ -51,9 +54,9 @@ public:
 	void DrawErrorText();
 
 	/**
-	 * @return true if at least one valid game is in the directory
+	 * @return true if at least one directory or game archive is in the fs root
 	 */
-	bool HasValidGames();
+	bool HasValidEntry();
 
 	/**
 	 * @return filesystem of the selected game
@@ -63,6 +66,8 @@ public:
 private:
 	FilesystemRef filesystem;
 	std::vector<std::string> game_directories;
+
+	bool show_dotdot = false;
 };
 
 #endif
