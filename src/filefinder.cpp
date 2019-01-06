@@ -52,7 +52,10 @@ namespace {
 #endif
 
 	std::string fonts_path;
-} // anonymous namespace
+	FilesystemRef native_fs;
+	FilesystemRef game_filesystem;
+	FilesystemRef save_filesystem;
+}
 
 const FilesystemRef FileFinder::GetGameFilesystem() {
 	return game_filesystem;
@@ -62,25 +65,22 @@ void FileFinder::SetGameFilesystem(FilesystemRef filesystem) {
 	game_filesystem = filesystem;
 }
 
+const FilesystemRef FileFinder::GetSaveFilesystem() {
+	return save_filesystem;
+}
+
+void FileFinder::SetSaveFilesystem(FilesystemRef filesystem) {
+	save_filesystem = filesystem;
+}
+
 FilesystemRef FileFinder::GetNativeFilesystem() {
 	// ToDo: Support an optional path argument which support namespaces,
 	// e.g. apk:// for accessing the APK on Android
-
-	static FilesystemRef native_fs = std::make_shared<OSFilesystem>("");
-
-	return native_fs;
-}
-
-const FilesystemRef FileFinder::CreateSaveFilesystem() {
-	std::string save_path = Main_Data::GetSavePath();
-
-	FilesystemRef fs = FileFinder::GetNativeFilesystem()->Create(save_path);
-	if (!fs) {
-		Output::Warning("Save game directory %s is invalid. Saving will not work.", save_path.c_str());
-		return FilesystemRef();
+	if (!native_fs) {
+		native_fs = std::make_shared<OSFilesystem>("");
 	}
 
-	return fs;
+	return native_fs;
 }
 
 std::string FileFinder::GetPathInsideGamePath(const std::string& path_in) {
@@ -170,23 +170,13 @@ std::string FileFinder::FindFont(const std::string& name) {
 
 void FileFinder::Quit() {
 	game_filesystem.reset();
+	save_filesystem.reset();
+	native_fs.reset();
 }
 
 std::shared_ptr<std::istream> FileFinder::OpenInputStream(const std::string &name,
 														  std::ios_base::openmode m) {
-	std::streambuf* buf = game_filesystem->CreateInputStreambuffer(name, m);
-
-	std::shared_ptr<std::istream> ret(new std::istream(buf));
-
-	return (*ret) ? ret : std::shared_ptr<std::istream>();
-}
-
-std::shared_ptr<std::ostream> FileFinder::OpenOutputStream(const std::string &name, std::ios_base::openmode m) {
-	std::streambuf* buf = game_filesystem->CreateOutputStreambuffer(name, m);
-
-	std::shared_ptr<std::ostream> ret(new std::ostream(buf));
-
-	return (*ret) ? ret : std::shared_ptr<std::ofstream>();
+	return game_filesystem->OpenInputStream(name, m);
 }
 
 std::string FileFinder::FindImage(const std::string& dir, const std::string& name) {
@@ -208,7 +198,7 @@ std::string FileFinder::FindDefault(const std::string& name) {
 }
 
 bool FileFinder::HasSavegame() {
-	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+	FilesystemRef fs = FileFinder::GetSaveFilesystem();
 	if (!fs) {
 		return false;
 	}

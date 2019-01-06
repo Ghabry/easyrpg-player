@@ -107,16 +107,7 @@ namespace FileFinder {
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m);
-
-	/**
-	 * Creates stream from UTF-8 file name for writing.
-	 *
-	 * @param name UTF-8 string file name.
-	 * @param m stream mode.
-	 * @return NULL if open failed.
-	 */
-	std::shared_ptr<std::ostream> OpenOutputStream(const std::string &name, std::ios_base::openmode m);
+	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m = (std::ios_base::openmode)0);
 
 	/**
 	 * Checks whether passed file is directory.
@@ -146,30 +137,42 @@ namespace FileFinder {
 	std::string GetPathInsideGamePath(const std::string& path_in);
 
 	/**
+	 * Gets the virtual filesystem that is used by the current game.
+	 *
+	 * @return Handle to the game filesystem
+	 */
+	const FilesystemRef GetGameFilesystem();
+
+	/**
 	 * Sets the virtual filesystem used for executing the current RPG Maker
 	 * game.
 	 *
-	 * @param directory_tree Directory tree to use.
+	 * @param filesystem game filesystem
 	 */
 	void SetGameFilesystem(FilesystemRef filesystem);
 
 	/**
-	 * Gets the virtual filesystem tree that is used by the current game.
+	 * Gets the virtual filesystem used for all write operations.
 	 *
-	 * @return directory tree
+	 * @return Handle to the save filesystem
 	 */
-	const FilesystemRef GetGameFilesystem();
+	const FilesystemRef GetSaveFilesystem();
+
+	/**
+	 * Sets the virtual filesystem used for all write operations.
+	 *
+	 * @param filesystem save filesystem
+	 */
+	void SetSaveFilesystem(FilesystemRef filesystem);
 
 	/**
 	 * Returns a filesystem which can access any path on the host.
 	 * Any file access is passed through which means any global and
 	 * local path will work as expected.
 	 *
-	 * @return FilesystemRef Handle to the host filesystem
+	 * @return Handle to the host filesystem
 	 */
 	FilesystemRef GetNativeFilesystem();
-
-	const FilesystemRef CreateSaveFilesystem();
 
 	/**
 	 * Checks whether the save directory contains any savegame with name

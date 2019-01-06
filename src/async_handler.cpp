@@ -71,7 +71,7 @@ namespace {
 }
 
 void AsyncHandler::CreateRequestMapping(const std::string& file) {
-	std::shared_ptr<std::istream> f = FileFinder::OpenInputStream(file, std::ios_base::in | std::ios_base::binary);
+	std::shared_ptr<std::istream> f = FileFinder::OpenInputStream(file, std::ios_base::binary);
 	picojson::value v;
 	picojson::parse(v, *f);
 
@@ -255,8 +255,8 @@ void FileRequestAsync::DownloadDone(bool success) {
 
 #ifdef EMSCRIPTEN
 		if (state == State_Pending) {
-			// Update directory structure (new file was added)
-			FileFinder::SetDirectoryTree(FileFinder::CreateDirectoryTree(Main_Data::GetProjectPath()));
+			// Flush project filesystem cache (new file was added)
+			FileFinder::GetGameFilesystem()->ClearCache();
 		}
 #endif
 

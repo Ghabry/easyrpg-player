@@ -53,12 +53,12 @@ namespace {
 
 	std::ostream& output_time() {
 		if (!init) {
-			FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+			FilesystemRef fs = FileFinder::GetSaveFilesystem();
 			if (fs) {
-				LOG_FILE = fs->OpenOutputStream(OUTPUT_FILENAME, std::ios_base::out | std::ios_base::app);
+				LOG_FILE = fs->OpenOutputStream(OUTPUT_FILENAME, std::ios_base::app);
 			}
 
-			if (!fs || !LOG_FILE) {
+			if (!LOG_FILE) {
 				// Create a bad ofstream as a fake handle for logfile output
 				LOG_FILE.reset(new std::ofstream());
 			}
@@ -136,7 +136,7 @@ void Output::IgnorePause(bool const val) {
 static void WriteLog(std::string const& type, std::string const& msg, Color const& c = Color()) {
 // Skip logging to file in the browser
 #ifndef EMSCRIPTEN
-	if (!Main_Data::GetSavePath().empty()) {
+	if (FileFinder::GetSaveFilesystem()) {
 		// Only write to file when project path is initialized
 		// (happens after parsing the command line)
 		for (std::string& log : log_buffer) {
@@ -216,7 +216,7 @@ void Output::Quit() {
 	}
 
 	// Truncate the logfile
-	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+	FilesystemRef fs = FileFinder::GetSaveFilesystem();
 	if (!fs) {
 		return;
 	}
@@ -226,7 +226,7 @@ void Output::Quit() {
 	char* buf = new char[log_size];
 
 	std::shared_ptr<std::istream> in;
-	in = fs->OpenInputStream(OUTPUT_FILENAME, std::ios_base::in);
+	in = fs->OpenInputStream(OUTPUT_FILENAME);
 
 	if (in && !in->bad()) {
 		in->seekg(0, std::ios_base::end);
@@ -239,7 +239,7 @@ void Output::Quit() {
 			in.reset();
 
 			std::shared_ptr<std::ostream> out;
-			out = fs->OpenOutputStream(OUTPUT_FILENAME, std::ios_base::out);
+			out = fs->OpenOutputStream(OUTPUT_FILENAME);
 			out->write(buf, read);
 			out.reset();
 		}
@@ -249,7 +249,7 @@ void Output::Quit() {
 }
 
 bool Output::TakeScreenshot() {
-	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+	FilesystemRef fs = FileFinder::GetSaveFilesystem();
 	if (!fs) {
 		return false;
 	}
@@ -264,13 +264,13 @@ bool Output::TakeScreenshot() {
 }
 
 bool Output::TakeScreenshot(const std::string& file) {
-	FilesystemRef fs = FileFinder::CreateSaveFilesystem();
+	FilesystemRef fs = FileFinder::GetSaveFilesystem();
 	if (!fs) {
 		return false;
 	}
 
 	std::shared_ptr<std::ostream> ret =
-			fs->OpenOutputStream(file, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
+			fs->OpenOutputStream(file, std::ios_base::binary);
 
 	if (ret) {
 		Output::Debug("Saving Screenshot %s", file.c_str());

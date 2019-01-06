@@ -58,7 +58,7 @@ void Scene_File::Start() {
 	border_top = makeBorderSprite(32);
 
 	// Refresh File Finder Save Folder
-	filesystem = FileFinder::CreateSaveFilesystem();
+	filesystem = FileFinder::GetSaveFilesystem();
 
 	for (int i = 0; i < 15; i++) {
 		std::shared_ptr<Window_SaveFile>
@@ -77,7 +77,7 @@ void Scene_File::Start() {
 
 		if (!file.empty()) {
 			// File found
-			auto save_stream = FileFinder::OpenInputStream(file, std::ios_base::in | std::ios_base::binary);
+			auto save_stream = filesystem->OpenInputStream(file, std::ios_base::binary);
 			std::unique_ptr<RPG::Save> savegame =
 				LSD_Reader::Load(*save_stream, Player::encoding);
 

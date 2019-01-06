@@ -27,10 +27,6 @@
 
 #include "memory_management.h"
 
-namespace {
-	FilesystemRef game_filesystem;
-}
-
 class Filesystem : public std::enable_shared_from_this<Filesystem> {
 public:
 	enum class FileType {
@@ -103,7 +99,7 @@ public:
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m) const;
+	std::shared_ptr<std::istream> OpenInputStream(const std::string &name, std::ios_base::openmode m = (std::ios_base::openmode)0);
 
 	/**
 	 * Allocates a streambuffer with input capabilities on the given path.
@@ -111,7 +107,7 @@ public:
 	 * @param path a path relative to the filesystems root
 	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	 */
-	virtual std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const = 0;
+	virtual std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) = 0;
 
 	/**
 	 * Creates stream from UTF-8 file name for writing.
@@ -120,7 +116,7 @@ public:
 	 * @param m stream mode.
 	 * @return NULL if open failed.
 	 */
-	std::shared_ptr<std::ostream> OpenOutputStream(const std::string &name, std::ios_base::openmode m) const;
+	std::shared_ptr<std::ostream> OpenOutputStream(const std::string &name, std::ios_base::openmode m = (std::ios_base::openmode)0);
 
 	/**
 	 * Allocates a streambuffer with output capabilities on the given path.
@@ -128,7 +124,7 @@ public:
 	 * @param path a path relative to the filesystems root
 	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	 */
-	virtual std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const = 0;
+	virtual std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) = 0;
 
 	/**
 	 * Returns a directory listing of the given path.
@@ -138,6 +134,13 @@ public:
 	 * @return List of directory entries
 	 */
 	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path, bool* error = nullptr) const = 0;
+
+	/**
+	 * Clears the filesystem cache. Changes in the filesystem become visible
+	 * to the FindFile functions.
+	 * This is automatically called when an output stream is closed.
+	 */
+	void ClearCache();
 
 	/**
 	 * Creates a new appropriate filesystem from the specified path.

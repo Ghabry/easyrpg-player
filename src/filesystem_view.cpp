@@ -55,11 +55,11 @@ uint32_t ViewFilesystem::GetFilesize(const std::string& path) const {
 	return wrapped_fs->GetFilesize(translate_path(subpath, path));
 }
 
-std::streambuf* ViewFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* ViewFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	return wrapped_fs->CreateInputStreambuffer(translate_path(subpath, path), mode);
 }
 
-std::streambuf* ViewFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* ViewFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	return wrapped_fs->CreateOutputStreambuffer(translate_path(subpath, path), mode);
 }
 

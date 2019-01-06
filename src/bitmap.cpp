@@ -94,7 +94,7 @@ Bitmap::Bitmap(const std::string& filename, bool transparent, uint32_t flags) {
 	format = (transparent ? pixel_format : opaque_pixel_format);
 	pixman_format = find_format(format);
 
-	auto stream = FileFinder::OpenInputStream(filename, std::ios_base::binary | std::ios_base::in);
+	auto stream = FileFinder::OpenInputStream(filename);
 	if (!stream) {
 		Output::Error("Couldn't open image file %s", filename.c_str());
 		return;
@@ -981,7 +981,7 @@ void Bitmap::ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, con
 		}
 
 	}
-	
+
 }
 
 void Bitmap::BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color& color, Opacity const& opacity) {

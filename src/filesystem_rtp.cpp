@@ -202,11 +202,11 @@ uint32_t RtpFilesystem::GetFilesize(const std::string& path) const {
 	return wrapped_fs->GetFilesize(path);
 }
 
-std::streambuf* RtpFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* RtpFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	return wrapped_fs->CreateInputStreambuffer(path, mode);
 }
 
-std::streambuf* RtpFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* RtpFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	return wrapped_fs->CreateOutputStreambuffer(path, mode);
 }
 

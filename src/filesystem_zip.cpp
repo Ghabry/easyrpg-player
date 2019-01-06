@@ -530,7 +530,7 @@ uint32_t ZIPFilesystem::GetFilesize(const std::string& path) const {
 	}
 }
 
-std::streambuf* ZIPFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* ZIPFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	if (!m_isValid) return nullptr;
 
 	std::string path_lower = normalize_path(path);
@@ -576,7 +576,7 @@ std::streambuf* ZIPFilesystem::CreateInputStreambuffer(const std::string& path, 
 	return nullptr;
 }
 
-std::streambuf* ZIPFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* ZIPFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	return nullptr;
 }
 

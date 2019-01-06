@@ -68,7 +68,7 @@ void CtrAudio::BGM_Play(std::string const& file, int volume, int pitch, int fade
 	if (!dsp_inited)
 		return;
 
-	auto filestream = FileFinder::openUTF8Input(file, std::ios_base::in | std::ios_base::binary);
+	auto filestream = FileFinder::OpenInputStream(file, std::ios_base::binary);
 	if (!filestream) {
 		Output::Warning("Couldn't play BGM %s: File not readable", file.c_str());
 		return;

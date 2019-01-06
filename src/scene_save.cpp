@@ -50,6 +50,7 @@ void Scene_Save::Start() {
 
 void Scene_Save::Action(int index) {
 	if (!filesystem) {
+		Scene::Pop();
 		return;
 	}
 
@@ -98,9 +99,8 @@ void Scene_Save::Action(int index) {
 	std::string filename = filesystem->FindFile(ss.str());
 
 	if (filename.empty()) {
-		filename = save_file; // FIXME? Is this correct
+		filename = save_file;
 	}
-
 
 	LSD_Reader::PrepareSave(Main_Data::game_data);
 	auto data_copy = LSD_Reader::ClearDefaults(Main_Data::game_data, Game_Map::GetMapInfo(), Game_Map::GetMap());
@@ -111,7 +111,7 @@ void Scene_Save::Action(int index) {
 		sme.map_id = 0;
 	}
 
-	auto save_stream = FileFinder::OpenOutputStream(filename, std::ios::ios_base::out | std::ios::ios_base::binary);
+	auto save_stream = filesystem->OpenOutputStream(filename, std::ios_base::binary);
 	LSD_Reader::Save(*save_stream, data_copy, Player::encoding);
 
 #ifdef EMSCRIPTEN

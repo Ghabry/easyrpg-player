@@ -131,7 +131,7 @@ uint32_t OSFilesystem::GetFilesize(const std::string& path) const {
 	return (result == 0) ? sb.st_size : -1;
 }
 
-std::streambuf* OSFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* OSFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	std::filebuf *buf = new std::filebuf();
 
 	return buf->open(
@@ -143,7 +143,7 @@ std::streambuf* OSFilesystem::CreateInputStreambuffer(const std::string& path, s
 		mode);
 }
 
-std::streambuf* OSFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* OSFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
 	std::filebuf *buf = new std::filebuf();
 	return buf->open(
 #ifdef _MSC_VER

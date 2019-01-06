@@ -31,23 +31,52 @@ bool Filesystem::IsValid() {
 	return Exists("");
 }
 
-std::shared_ptr<std::istream> Filesystem::OpenInputStream(const std::string &name, std::ios_base::openmode m) const {
-	std::streambuf* buf = CreateInputStreambuffer(name, m);
+class vfs_istream : public std::istream {
+public:
+	explicit vfs_istream(std::streambuf* sb) :
+		std::istream(sb) {
+	}
 
-	std::shared_ptr<std::istream> ret(new std::istream(buf));
+	virtual ~vfs_istream() {
+		delete rdbuf();
+	}
+};
+
+class vfs_ostream : public std::ostream {
+public:
+	explicit vfs_ostream(std::streambuf* sb, FilesystemRef fs) :
+		std::ostream(sb), fs(fs) {
+	}
+
+	virtual ~vfs_ostream() {
+		delete rdbuf();
+		fs->ClearCache();
+	}
+
+private:
+	FilesystemRef fs;
+};
+
+std::shared_ptr<std::istream> Filesystem::OpenInputStream(const std::string &name, std::ios_base::openmode m) {
+	std::streambuf* buf = CreateInputStreambuffer(name, m | std::ios_base::in);
+
+	std::shared_ptr<std::istream> ret(new vfs_istream(buf));
 
 	return (*ret) ? ret : std::shared_ptr<std::istream>();
 }
 
-std::shared_ptr<std::ostream> Filesystem::OpenOutputStream(const std::string &name, std::ios_base::openmode m) const {
-	//std::streamsize size = GetFilesize(name);
-	std::streambuf* buf = CreateOutputStreambuffer(name, m);
+std::shared_ptr<std::ostream> Filesystem::OpenOutputStream(const std::string &name, std::ios_base::openmode m) {
+	std::streambuf* buf = CreateOutputStreambuffer(name, m | std::ios_base::out);
 
-	std::shared_ptr<std::ostream> ret(new std::ostream(buf));
+	std::shared_ptr<std::ostream> ret(new vfs_ostream(buf, shared_from_this()));
 
 	return (*ret) ? ret : std::shared_ptr<std::ostream>();
 }
 
+void Filesystem::ClearCache() {
+	dir_cache.clear();
+	fs_cache.clear();
+}
 
 FilesystemRef Filesystem::Create(const std::string& path) {
 	// Determine the proper file system to use
