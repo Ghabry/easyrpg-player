@@ -110,7 +110,7 @@ FilesystemRef Filesystem::Create(const std::string& path) {
 			internal_path.pop_back();
 		}
 
-		filesystem = std::make_shared<ZIPFilesystem>(shared_from_this(), path_prefix, "windows-1252");
+		filesystem = std::make_shared<ZIPFilesystem>(shared_from_this(), path_prefix);
 		if (!filesystem->IsValid()) {
 			return FilesystemRef();
 		} else if (!internal_path.empty()) {

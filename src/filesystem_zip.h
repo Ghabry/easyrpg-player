@@ -31,11 +31,13 @@ class ZIPFilesystem : public Filesystem {
 public:
 
 	/**
-	 * Initializes a OS Filesystem inside the given ZIP File
-	 * If you don't know the encoding, or want to know which sub path contains a certain file
-	 * use the static function CheckIfContains
+	 * Initializes a filesystem inside the given ZIP File
+	 *
+	 * @param source_fs Filesystem used to create handles on the zip file
+	 * @param fs_path Path passed to source_fs to open the zip file
+	 * @param encoding Encoding to use, use empty string for autodetection
 	 */
-	ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, const std::string& encoding);
+	ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, const std::string& encoding = "");
 
 	~ZIPFilesystem();
 
