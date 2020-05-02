@@ -711,7 +711,7 @@ void Player::CreateGameObjects() {
 	bool no_rtp_warning_flag = false;
 	{ // Scope lifetime of variables for ini parsing
 		std::string ini_file = FileFinder::FindDefault(INI_NAME);
-		auto ini_stream = FileFinder::openUTF8Input(ini_file, std::ios::ios_base::in);
+		auto ini_stream = FileFinder::OpenInputStream(ini_file, std::ios::ios_base::in);
 		INIReader ini(*ini_stream);
 		if (ini.ParseError() != -1) {
 			std::string title = ini.Get("RPG_RT", "GameTitle", GAME_TITLE);
@@ -787,7 +787,7 @@ void Player::CreateGameObjects() {
 		// a ExFont can be manually bundled there)
 		std::string exep = FileFinder::FindDefault(EXE_NAME);
 		if (!exep.empty()) {
-			auto exesp = FileFinder::openUTF8(exep, std::ios::binary | std::ios::in);
+			auto exesp = FileFinder::OpenInputStream(exep, std::ios::binary | std::ios::in);
 			if (exesp) {
 				Output::Debug("Loading ExFont from %s", exep.c_str());
 				EXEReader exe_reader = EXEReader(*exesp);
@@ -801,7 +801,7 @@ void Player::CreateGameObjects() {
 	}
 #endif
 	if (!exfont_file.empty()) {
-		auto exfont_stream = FileFinder::openUTF8(exfont_file, std::ios::binary | std::ios::in);
+		auto exfont_stream = FileFinder::OpenInputStream(exfont_file, std::ios::binary | std::ios::in);
 		if (exfont_stream) {
 			Output::Debug("Using custom ExFont: %s", exfont_file.c_str());
 			Cache::exfont_custom = Utils::ReadStream(*exfont_stream);
@@ -869,12 +869,12 @@ void Player::LoadDatabase() {
 	bool easyrpg_project = !edb.empty() && !emt.empty();
 
 	if (easyrpg_project) {
-		auto edb_stream = FileFinder::openUTF8Input(edb, std::ios::ios_base::in );
+		auto edb_stream = FileFinder::OpenInputStream(edb, std::ios::ios_base::in );
 		if (!LDB_Reader::LoadXml(*edb_stream)) {
 			Output::ErrorStr(LcfReader::GetError());
 		}
 
-		auto emt_stream = FileFinder::openUTF8Input(emt, std::ios::ios_base::in);
+		auto emt_stream = FileFinder::OpenInputStream(emt, std::ios::ios_base::in);
 		if (!LMT_Reader::LoadXml(*emt_stream)) {
 			Output::ErrorStr(LcfReader::GetError());
 		}
@@ -883,12 +883,12 @@ void Player::LoadDatabase() {
 		std::string ldb = FileFinder::FindDefault(DATABASE_NAME);
 		std::string lmt = FileFinder::FindDefault(TREEMAP_NAME);
 
-		auto ldb_stream = FileFinder::openUTF8Input(ldb, std::ios::ios_base::in| std::ios::ios_base::binary);
+		auto ldb_stream = FileFinder::OpenInputStream(ldb, std::ios::ios_base::in| std::ios::ios_base::binary);
 		if (!LDB_Reader::Load(*ldb_stream, encoding)) {
 			Output::ErrorStr(LcfReader::GetError());
 		}
 
-		auto lmt_stream = FileFinder::openUTF8Input(lmt, std::ios::ios_base::in | std::ios::ios_base::binary);
+		auto lmt_stream = FileFinder::OpenInputStream(lmt, std::ios::ios_base::in | std::ios::ios_base::binary);
 		if (!LMT_Reader::Load(*lmt_stream, encoding)) {
 			Output::ErrorStr(LcfReader::GetError());
 		}
@@ -935,7 +935,7 @@ void Player::LoadSavegame(const std::string& save_name) {
 		static_cast<Scene_Title*>(title_scene.get())->OnGameStart();
 	}
 
-	auto save_stream = FileFinder::openUTF8Input(save_name, std::ios::ios_base::in | std::ios::ios_base::binary);
+	auto save_stream = FileFinder::OpenInputStream(save_name, std::ios::ios_base::in | std::ios::ios_base::binary);
 	std::unique_ptr<RPG::Save> save = LSD_Reader::Load(*save_stream, encoding);
 
 	if (!save.get()) {
@@ -1040,7 +1040,7 @@ std::string Player::GetEncoding() {
 	// command line > ini > detection > current locale
 	if (encoding.empty()) {
 		std::string ini = FileFinder::FindDefault(INI_NAME);
-		auto ini_stream = FileFinder::openUTF8Input(ini, std::ios::ios_base::in );
+		auto ini_stream = FileFinder::OpenInputStream(ini, std::ios::ios_base::in );
 		encoding = ReaderUtil::GetEncoding(*ini_stream);
 	}
 
@@ -1048,7 +1048,7 @@ std::string Player::GetEncoding() {
 		encoding = "";
 
 		std::string ldb = FileFinder::FindDefault(DATABASE_NAME);
-		auto ldb_stream = FileFinder::openUTF8Input(ldb, std::ios::ios_base::in | std::ios::ios_base::binary);
+		auto ldb_stream = FileFinder::OpenInputStream(ldb, std::ios::ios_base::in | std::ios::ios_base::binary);
 		std::vector<std::string> encodings = ReaderUtil::DetectEncodings(*ldb_stream);
 
 #ifndef EMSCRIPTEN

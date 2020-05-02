@@ -285,10 +285,10 @@ void Game_Map::SetupCommon(int _id, bool is_load_savegame) {
 			Output::Error("Loading of Map %s failed.\nThe map was not found.", ss.str().c_str());
 		}
 
-		auto map_stream = FileFinder::openUTF8Input(map_file, std::ios::ios_base::in| std::ios::ios_base::binary);
+		auto map_stream = FileFinder::OpenInputStream(map_file, std::ios::ios_base::in| std::ios::ios_base::binary);
 		map = LMU_Reader::Load(*map_stream, Player::encoding);
 	} else {
-		auto map_stream = FileFinder::openUTF8Input(map_file, std::ios::ios_base::in);
+		auto map_stream = FileFinder::OpenInputStream(map_file, std::ios::ios_base::in);
 		map = LMU_Reader::LoadXml(*map_stream);
 	}
 	Output::Debug("Loading Map %s", ss.str().c_str());
