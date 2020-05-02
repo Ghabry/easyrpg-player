@@ -45,11 +45,11 @@ void Input::UiSource::UpdateSystem() {
 }
 
 Input::LogSource::LogSource(const char* log_path) :
-	log_file(log_path, std::ios::in)
+	log_file(FileFinder::OpenInputStream(log_path, std::ios::in))
 {}
 
 void Input::LogSource::Update() {
-	log_file >> pressed_buttons;
+	*log_file >> pressed_buttons;
 
 	if (!log_file) {
 		Player::exit_flag = true;

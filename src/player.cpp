@@ -790,7 +790,7 @@ void Player::CreateGameObjects() {
 			auto exesp = FileFinder::OpenInputStream(exep, std::ios::binary | std::ios::in);
 			if (exesp) {
 				Output::Debug("Loading ExFont from %s", exep.c_str());
-				EXEReader exe_reader = EXEReader(*exesp);
+				EXEReader exe_reader = EXEReader(exesp);
 				Cache::exfont_custom = exe_reader.GetExFont();
 			} else {
 				Output::Debug("ExFont loading failed: %s not readable", exep.c_str());

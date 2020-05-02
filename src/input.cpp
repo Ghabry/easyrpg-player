@@ -45,7 +45,7 @@ namespace Input {
 
 namespace {
 	bool recording_input;
-	std::ofstream record_log;
+	Filesystem::OutputStream record_log;
 }
 
 bool Input::IsWaitingInput() { return wait_input; }
@@ -55,14 +55,16 @@ static bool InitRecording(const std::string& record_to_path) {
 	if (!record_to_path.empty()) {
 		auto path = record_to_path.c_str();
 
-		record_log.open(path, std::ios::out|std::ios::trunc);
+		record_log = FileFinder::OpenOutputStream(path, std::ios::out|std::ios::trunc);
 
 		if (!record_log) {
 			Output::Warning("Failed to open file for input recording: %s", path);
 			return false;
 		}
+
+		return true;
 	}
-	return true;
+	return false;
 }
 
 static std::unique_ptr<Input::Source> InitSource(const std::string& replay_from_path) {
@@ -132,7 +134,7 @@ void Input::Update() {
 	auto& pressed_buttons = source->GetPressedButtons();
 
 	if (recording_input) {
-		record_log << source->GetPressedNonSystemButtons() << '\n';
+		*record_log << source->GetPressedNonSystemButtons() << '\n';
 	}
 
 	// Check button states

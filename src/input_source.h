@@ -21,6 +21,7 @@
 #include <bitset>
 #include <fstream>
 #include <memory>
+#include "filesystem.h"
 #include "input_buttons.h"
 
 namespace Input {
@@ -86,7 +87,7 @@ namespace Input {
 
 		operator bool() const { return bool(log_file); }
 	private:
-		std::ifstream log_file;
+		Filesystem::InputStream log_file;
 	};
 
 	extern std::unique_ptr<Source> source;

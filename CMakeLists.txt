@@ -79,6 +79,8 @@ add_library(${PROJECT_NAME}
 	src/exfont.h
 	src/filefinder.cpp
 	src/filefinder.h
+	src/filesystem.cpp
+	src/filesystem.h
 	src/flash.h
 	src/font.cpp
 	src/font.h
