@@ -60,7 +60,16 @@ namespace {
 
 	std::ostream& output_time() {
 		if (!init) {
-			LOG_FILE=FileFinder::OpenOutputStream(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(), std::ios_base::out | std::ios_base::app);
+			FilesystemRef fs = FileFinder::GetSaveFilesystem();
+			if (fs) {
+				LOG_FILE = fs->OpenOutputStream(OUTPUT_FILENAME, std::ios_base::app);
+			}
+
+			if (!LOG_FILE) {
+				// Create a bad ofstream as a fake handle for logfile output
+				LOG_FILE.reset();
+			}
+
 			init = true;
 		}
 		std::time_t t = std::time(NULL);
@@ -214,7 +223,7 @@ void Output::Quit() {
 
 	char* buf = new char[log_size];
 
-	auto in = FileFinder::OpenInputStream(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(),std::ios::ios_base::in);
+	auto in = FileFinder::GetSaveFilesystem()->OpenInputStream(OUTPUT_FILENAME, std::ios::ios_base::in);
 	if (in&&!in->bad()) {
 		in->seekg(0, std::ios_base::end);
 		if (in->tellg() > log_size) {
@@ -225,7 +234,7 @@ void Output::Quit() {
 			size_t read = in->gcount();
 			in.reset();
 
-			auto out = FileFinder::OpenOutputStream(FileFinder::MakePath(Main_Data::GetSavePath(), OUTPUT_FILENAME).c_str(), std::ios::ios_base::out);
+			auto out = FileFinder::GetSaveFilesystem()->OpenOutputStream(OUTPUT_FILENAME, std::ios::ios_base::out);
 			out->write(buf, read);
 			out.reset();
 		}
@@ -235,19 +244,27 @@ void Output::Quit() {
 }
 
 bool Output::TakeScreenshot() {
+	FilesystemRef fs = FileFinder::GetSaveFilesystem();
+	if (!fs) {
+		return false;
+	}
+
 	int index = 0;
 	std::string p;
 	do {
-		p = FileFinder::MakePath(Main_Data::GetSavePath(),
-								 "screenshot_"
-								 + std::to_string(index++)
-								 + ".png");
-	} while(FileFinder::Exists(p));
+		p = "screenshot_" + std::to_string(index++) + ".png";
+	} while (fs->Exists(p));
+
 	return TakeScreenshot(p);
 }
 
-bool Output::TakeScreenshot(std::string const& file) {
-	auto ret = FileFinder::OpenOutputStream(file, std::ios_base::binary | std::ios_base::out | std::ios_base::trunc);
+bool Output::TakeScreenshot(const std::string& file) {
+	FilesystemRef fs = FileFinder::GetSaveFilesystem();
+	if (!fs) {
+		return false;
+	}
+
+	auto ret = fs->OpenOutputStream(file, std::ios_base::binary);
 
 	if (ret) {
 		Output::Debug("Saving Screenshot %s", file.c_str());

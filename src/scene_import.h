@@ -29,11 +29,11 @@
 /**
  * Scene_Item class.
  */
-class Scene_Import : public Scene_File {
+class Scene_Import /*: public Scene_File */{
 
 public:
-	Scene_Import();
-
+	Scene_Import() {}
+#if 0
 	void Start() override;
 	void Update() override;
 
@@ -61,6 +61,7 @@ private:
 
 	/** Final file list; used for the Import windows */
 	std::vector<Meta::FileItem> files;
+#endif
 };
 
 #endif

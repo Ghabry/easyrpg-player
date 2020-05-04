@@ -99,10 +99,10 @@ void Scene_Save::Action(int index) {
 	Game_Map::PrepareSave();
 
 	std::string save_file = ss.str();
-	std::string filename = FileFinder::FindDefault(*tree, ss.str());
+	std::string filename = filesystem->FindFile(ss.str());
 
 	if (filename.empty()) {
-		filename = FileFinder::MakePath((*tree).directory_path, save_file);
+		filename = save_file;
 	}
 
 	LSD_Reader::PrepareSave(Main_Data::game_data, PLAYER_SAVEGAME_VERSION);
@@ -134,7 +134,7 @@ void Scene_Save::Action(int index) {
 		}
 	}
 
-	auto save_stream = FileFinder::OpenOutputStream(filename);
+	auto save_stream = FileFinder::GetSaveFilesystem()->OpenOutputStream(filename);
 	LSD_Reader::Save(*save_stream, data_copy, Player::encoding);
 
 #ifdef EMSCRIPTEN

@@ -37,8 +37,9 @@ public:
 
 	/**
 	 * Refreshes the item list.
+	 * @param filesystem_base Filesystem to traverse
 	 */
-	void Refresh();
+	void Refresh(FilesystemRef filesystem_base);
 
 	/**
 	 * Draws an item together with the quantity.
@@ -55,12 +56,12 @@ public:
 	bool HasValidGames();
 
 	/**
-	 * @return path to the selected game
+	 * @return filesystem of the selected game
 	 */
-	std::string GetGamePath();
+	FilesystemRef GetGameFilesystem() const;
 
 private:
-	std::shared_ptr<FileFinder::DirectoryTree> tree;
+	FilesystemRef filesystem;
 	std::vector<std::string> game_directories;
 };
 

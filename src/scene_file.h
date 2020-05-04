@@ -20,13 +20,12 @@
 
 // Headers
 #include <vector>
-#include "filefinder.h"
+#include "filesystem.h"
 #include "rpg_save.h"
 #include "scene.h"
 #include "window_help.h"
 #include "window_savefile.h"
 #include "sprite.h"
-
 
 /**
  * Base class used by the save and load scenes.
@@ -68,7 +67,7 @@ protected:
 	std::unique_ptr<Sprite> border_bottom;
 	std::string message;
 
-	std::shared_ptr<FileFinder::DirectoryTree> tree;
+	FilesystemRef filesystem;
 
 	double latest_time = 0;
 	int latest_slot = 0;

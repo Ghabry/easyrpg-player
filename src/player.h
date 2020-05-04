@@ -310,7 +310,7 @@ namespace Player {
 	extern std::string game_title;
 
 	/** Meta class containing additional external data for this game. */
-	extern std::shared_ptr<Meta> meta;
+	//extern std::shared_ptr<Meta> meta;
 
 	/**
 	 * The default speed modifier applied when the speed up button is pressed

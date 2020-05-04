@@ -61,14 +61,21 @@ void Scene_Logo::Update() {
 		}
 #endif
 
-		std::shared_ptr<FileFinder::DirectoryTree> tree = FileFinder::CreateDirectoryTree(Main_Data::GetProjectPath(), FileFinder::FILES);
+		FilesystemRef fs = FileFinder::GetNativeFilesystem()->Create(Main_Data::GetProjectPath());
+		FilesystemRef save_fs = FileFinder::GetNativeFilesystem()->Create(Main_Data::GetSavePath());
 
-		if (!tree) {
+		if (!save_fs) {
+			Output::Warning("Save game directory %s is invalid. Saving will not work.", Main_Data::GetSavePath().c_str());
+		} else {
+			FileFinder::SetSaveFilesystem(save_fs);
+		}
+
+		if (!fs) {
 			Output::Error("%s is not a valid path", Main_Data::GetProjectPath().c_str());
 		}
 
-		if (FileFinder::IsValidProject(*tree)) {
-			FileFinder::SetDirectoryTree(FileFinder::CreateDirectoryTree(Main_Data::GetProjectPath()));
+		if (FileFinder::IsValidProject(fs)) {
+			FileFinder::SetGameFilesystem(fs);
 			Player::CreateGameObjects();
 			is_valid = true;
 		}
@@ -85,14 +92,17 @@ void Scene_Logo::Update() {
 		if (is_valid) {
 			Scene::Push(std::make_shared<Scene_Title>(), true);
 			if (Player::load_game_id > 0) {
-				std::shared_ptr<FileFinder::DirectoryTree> tree = FileFinder::CreateSaveDirectoryTree();
+				FilesystemRef fs = FileFinder::GetSaveFilesystem();
+				if (!fs) {
+					Output::Error("Invalid save directory:\n%s", Main_Data::GetSavePath().c_str());
+				}
 
 				std::stringstream ss;
 				ss << "Save" << (Player::load_game_id <= 9 ? "0" : "") << Player::load_game_id << ".lsd";
 
 				Output::Debug("Loading Save %s", ss.str().c_str());
 
-				std::string save_name = FileFinder::FindDefault(*tree, ss.str());
+				std::string save_name = fs->FindFile(ss.str());
 				Player::LoadSavegame(save_name);
 			}
 		}

@@ -26,6 +26,7 @@
 #include "scene_file.h"
 #include "scene_import.h"
 
+#if 0
 Scene_Import::Scene_Import() :
 	Scene_File(Player::meta->GetExVocabImportSaveHelpText()) {
 	Scene::type = Scene::Load;  // For all intents and purposes, treat Import as an extension of Load
@@ -142,3 +143,4 @@ void Scene_Import::Action(int index) {
 bool Scene_Import::IsSlotValid(int index) {
 	return index < static_cast<int>(files.size());
 }
+#endif

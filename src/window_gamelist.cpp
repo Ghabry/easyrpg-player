@@ -28,15 +28,24 @@ Window_GameList::Window_GameList(int ix, int iy, int iwidth, int iheight) :
 	column_max = 1;
 }
 
-void Window_GameList::Refresh() {
-	tree = FileFinder::CreateDirectoryTree(Main_Data::GetProjectPath(), FileFinder::DIRECTORIES);
+void Window_GameList::Refresh(FilesystemRef filesystem_base) {
+	bool error;
+	auto entries = filesystem_base->ListDirectory("/", &error);
+
+	if (error) {
+		return;
+	}
+
+	filesystem = filesystem_base;
 	game_directories.clear();
 
 	// Find valid game diectories
-	for (auto dir : tree.get()->directories) {
-		std::shared_ptr<FileFinder::DirectoryTree> subtree = FileFinder::CreateDirectoryTree(FileFinder::MakePath(Main_Data::GetProjectPath(), dir.second), FileFinder::FILES);
-		if (FileFinder::IsValidProject(*subtree)) {
-			game_directories.push_back(dir.second);
+	for (const auto& entry : entries) {
+		if (entry.type == Filesystem::FileType::Directory) {
+			auto fs = filesystem_base->Create(entry.name);
+			if (FileFinder::IsValidProject(fs)) {
+				game_directories.push_back(entry.name);
+			}
 		}
 	}
 
@@ -113,6 +122,6 @@ bool Window_GameList::HasValidGames()
 	return !game_directories.empty();
 }
 
-std::string Window_GameList::GetGamePath() {
-	return FileFinder::MakePath(tree.get()->directory_path, game_directories[GetIndex()]);
+FilesystemRef Window_GameList::GetGameFilesystem() const {
+	return filesystem->Create(game_directories[GetIndex()]);
 }

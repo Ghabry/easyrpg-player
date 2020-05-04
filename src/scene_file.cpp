@@ -69,7 +69,7 @@ void Scene_File::PopulateSaveWindow(Window_SaveFile& win, int id) {
 	std::stringstream ss;
 	ss << "Save" << (id <= 8 ? "0" : "") << (id + 1) << ".lsd";
 
-	std::string file = FileFinder::FindDefault(*tree, ss.str());
+	std::string file = filesystem->FindFile(ss.str());
 
 	if (!file.empty()) {
 		// File found
@@ -90,7 +90,7 @@ void Scene_File::Start() {
 	border_top = Scene_File::MakeBorderSprite(32);
 
 	// Refresh File Finder Save Folder
-	tree = FileFinder::CreateSaveDirectoryTree();
+	filesystem = FileFinder::GetSaveFilesystem();
 
 	for (int i = 0; i < 15; i++) {
 		std::shared_ptr<Window_SaveFile>

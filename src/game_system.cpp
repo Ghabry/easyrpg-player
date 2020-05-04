@@ -486,7 +486,7 @@ void Game_System::OnBgmReady(FileRequestResult* result) {
 		Output::Warning("Ineluki MP3 patch unsupported in the web player");
 		return;
 		#else
-		std::string line_canonical = FileFinder::MakeCanonical(line, 1);
+		std::string line_canonical = Filesystem::MakePathCanonical(line, 1);
 
 		std::string ineluki_path = FileFinder::FindDefault(line_canonical);
 		if (ineluki_path.empty()) {

@@ -25,7 +25,7 @@
 #include "filefinder.h"
 #include "inireader.h"
 
-
+#if 0
 /**
  * The Meta class loads from a file (easyrpg.ini) and contains 
  * additional information on a per-game basis.
@@ -139,5 +139,5 @@ private:
 	 */
 	std::string canon_ini_lookup;
 };
-
+#endif
 #endif  // EP_META_H

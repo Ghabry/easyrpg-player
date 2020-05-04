@@ -146,11 +146,11 @@ void Scene_Title::CreateCommandWindow() {
 	options.push_back(Data::terms.load_game);
 
 	// Set "Import" based on metadata
-	if (Player::meta->IsImportEnabled()) {
+	/*if (Player::meta->IsImportEnabled()) {
 		options.push_back(Player::meta->GetExVocabImportSaveTitleText());
 		import_index = 2;
 		exit_index = 3;
-	}
+	}*/
 
 	options.push_back(Data::terms.exit_game);
 
@@ -254,7 +254,7 @@ void Scene_Title::CommandContinue() {
 void Scene_Title::CommandImport() {
 	Game_System::SePlay(Game_System::GetSystemSE(Game_System::SFX_Decision));
 
-	Scene::Push(std::make_shared<Scene_Import>());
+	//Scene::Push(std::make_shared<Scene_Import>());
 }
 
 void Scene_Title::CommandShutdown() {

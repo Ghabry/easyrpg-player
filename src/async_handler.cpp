@@ -95,7 +95,7 @@ void AsyncHandler::CreateRequestMapping(const std::string& file) {
 }
 
 FileRequestAsync* AsyncHandler::RequestFile(const std::string& folder_name, const std::string& file_name) {
-	auto path = FileFinder::MakePath(folder_name, file_name);
+	auto path = Filesystem::CombinePath(folder_name, file_name);
 
 	auto* request = GetRequest(path);
 

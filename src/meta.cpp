@@ -16,7 +16,7 @@
  */
 
 #include <iostream>
-
+#if 0
 // Headers
 #include <fstream>
 #include <iomanip>
@@ -214,3 +214,4 @@ void Meta::IdentifyCanonName() {
 bool Meta::Empty() const {
 	return ini == nullptr || ini->ParseError() == -1;
 }
+#endif

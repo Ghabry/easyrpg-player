@@ -35,33 +35,9 @@
  */
 namespace FileFinder {
 	/**
-	 * Adds RTP paths to the file finder
-	 *
-	 * @param disable_rtp When true disables RTP handling in the FileFinder
-	 * @param disable_warnings When true disables warnings about missing RTP files
-	 */
-	void InitRtpPaths(bool disable_rtp = false, bool disable_warnings = false);
-
-	/**
 	 * Quits FileFinder.
 	 */
 	void Quit();
-
-	/**
-	 * { case lowered path, real path }
-	 */
-	typedef std::unordered_map<std::string, std::string> string_map;
-
-	/**
-	 * { case lowered directory name, non directory file list }
-	 */
-	typedef std::unordered_map<std::string, string_map> sub_members_type;
-
-	struct DirectoryTree {
-		std::string directory_path;
-		string_map files, directories;
-		sub_members_type sub_members;
-	}; // struct DirectoryTree
 
 	/**
 	 * Finds an image file.
@@ -93,36 +69,6 @@ namespace FileFinder {
 	std::string FindDefault(const std::string& name);
 
 	/**
-	 * Finds a file in a subdirectory of a custom directory tree.
-	 *
-	 * @param tree Project tree to search
-	 * @param dir directory to check
-	 * @param name the path and name
-	 * @return path to file.
-	 */
-	std::string FindDefault(const DirectoryTree& tree, const std::string& dir, const std::string& name);
-
-	/**
-	 * Finds a file from the root of a custom project tree.
-	 *
-	 * @param tree Project tree to search
-	 * @param name the path and name
-	 * @return path to file.
-	 */
-	std::string FindDefault(const DirectoryTree& tree, const std::string& name);
-
-	/**
-	 * Finds a file with different extensions in a subdirectory of a custom directory tree.
-	 *
-	 * @param tree Project tree to search
-	 * @param dir directory to check
-	 * @param name the path and name
-	 * @param exts list of extensions
-	 * @return path to file.
-	 */
-	std::string FindDefault(FileFinder::DirectoryTree const& tree, const std::string& dir, const std::string& name, char const* exts[]);
-
-	/**
 	 * Finds a music file.
 	 * Searches through the Music folder of the current RPG Maker game and
 	 * the RTP directories.
@@ -152,34 +98,17 @@ namespace FileFinder {
 	std::string FindFont(const std::string& name);
 
 	/**
-	* Creates stream from UTF-8 file name.
-	*
-	* @param name UTF-8 string file name.
-	* @param m stream mode.
-	* @return NULL if open failed.
-	*/
-	Filesystem::InputStream OpenInputStream(const std::string& name,
-			std::ios_base::openmode m = std::ios_base::in | std::ios_base::binary);
-
-	/**
-	* Creates stream from UTF-8 file name.
-	*
-	* @param name UTF-8 string file name.
-	* @param m stream mode.
-	* @return NULL if open failed.
-	*/
-	Filesystem::OutputStream OpenOutputStream(const std::string& name,
-			std::ios_base::openmode m = std::ios_base::out | std::ios_base::binary);
-
-	struct Directory {
-		std::string base;
-		string_map files;
-		string_map directories;
-	}; // struct Directory
+	 * Creates stream from UTF-8 file name for reading.
+	 *
+	 * @param name UTF-8 string file name.
+	 * @param m stream mode.
+	 * @return NULL if open failed.
+	 */
+	Filesystem::InputStream OpenInputStream(const std::string &name, std::ios_base::openmode m = (std::ios_base::openmode)0);
 
 	/**
 	 * Checks whether passed file is directory.
-	 * This function is case sensitve on some platform.
+	 * This function is case sensitive on some platforms.
 	 *
 	 * @param file file to check.
 	 * @param follow_symlinks if true, follow symlinks and report about the target.
@@ -189,50 +118,12 @@ namespace FileFinder {
 
 	/**
 	 * Checks whether passed file exists.
-	 * This function is case sensitve on some platform.
+	 * This function is case sensitive on some platforms.
 	 *
 	 * @param file file to check
 	 * @return true if file exists, otherwise false.
 	 */
 	bool Exists(const std::string& file);
-
-	/**
-	 * Appends name to directory.
-	 *
-	 * @param dir base directory.
-	 * @param name file name to be appended to dir.
-	 * @return combined path
-	 */
-	std::string MakePath(const std::string& dir, const std::string& name);
-
-	/**
-	 * Converts a path to the canonical equivalent.
-	 * This generates a path that does not contain ".." or "." directories.
-	 *
-	 * @param path Path to normalize
-	 * @param initial_deepness How deep the passed path is relative to the game root
-	 * @return canonical path
-	 */
-	std::string MakeCanonical(const std::string& path, int initial_deepness);
-
-	/**
-	 * Splits a path in it's components.
-	 *
-	 * @param path Path to split
-	 * @return Vector containing path components
-	 */
-	std::vector<std::string> SplitPath(const std::string& path);
-
-	/**
-	 * Returns the part of "path_in" that is inside "path_to".
-	 * e.g. Input: /h/e/game, /h/e/game/Music/a.wav; Output: Music/a.wav
-	 *
-	 * @param path_to Path to a primary folder of path_in
-	 * @param path_in Absolute path to the file, must start with path_to
-	 *
-	 * @return The part of path_in that is inside path_to. path_in when the path is not in path_to
-	 */
-	std::string GetPathInsidePath(const std::string& path_to, const std::string& path_in);
 
 	/**
 	 * Return the part of "path_in" that is inside the current games directory.
@@ -244,45 +135,42 @@ namespace FileFinder {
 	std::string GetPathInsideGamePath(const std::string& path_in);
 
 	/**
-	 * GetDirectoryMembers member listing mode.
-	 */
-	enum Mode {
-		ALL, /**< list files and directory */
-		FILES, /**< list only non-directory files */
-		DIRECTORIES, /**< list only directories */
-		RECURSIVE /**< list non-directory files recursively */
-	};
-
-	/**
-	 * Lists directory members.
+	 * Gets the virtual filesystem that is used by the current game.
 	 *
-	 * @param dir directory to list members.
-	 * @param m member listing mode.
-	 * @param parent name of current relative folder (used if m is RECURSIVE)
-	 * @return member list.
+	 * @return Handle to the game filesystem
 	 */
-	Directory GetDirectoryMembers(const std::string& dir, Mode m = ALL, const std::string& parent = "");
+	FilesystemRef GetGameFilesystem();
 
 	/**
-	 * Sets the directory tree that is used for executing the current RPG Maker
+	 * Sets the virtual filesystem used for executing the current RPG Maker
 	 * game.
 	 *
-	 * @param directory_tree Directory tree to use.
+	 * @param filesystem game filesystem
 	 */
-	void SetDirectoryTree(std::shared_ptr<DirectoryTree> directory_tree);
+	void SetGameFilesystem(FilesystemRef filesystem);
 
 	/**
-	 * Gets the directory tree that is used by the current game.
+	 * Gets the virtual filesystem used for all write operations.
 	 *
-	 * @return directory tree
+	 * @return Handle to the save filesystem
 	 */
-	const std::shared_ptr<DirectoryTree> GetDirectoryTree();
-	const std::shared_ptr<DirectoryTree> CreateSaveDirectoryTree();
-	std::shared_ptr<DirectoryTree> CreateDirectoryTree(std::string const& p, Mode mode = RECURSIVE);
+	FilesystemRef GetSaveFilesystem();
 
-	bool IsValidProject(DirectoryTree const& dir);
-	bool IsRPG2kProject(DirectoryTree const& dir);
-	bool IsEasyRpgProject(DirectoryTree const& dir);
+	/**
+	 * Sets the virtual filesystem used for all write operations.
+	 *
+	 * @param filesystem save filesystem
+	 */
+	void SetSaveFilesystem(FilesystemRef filesystem);
+
+	/**
+	 * Returns a filesystem which can access any path on the host.
+	 * Any file access is passed through which means any global and
+	 * local path will work as expected.
+	 *
+	 * @return Handle to the host filesystem
+	 */
+	FilesystemRef GetNativeFilesystem();
 
 	/**
 	 * Checks whether the save directory contains any savegame with name
@@ -306,6 +194,11 @@ namespace FileFinder {
 	enum KnownFileSize {
 		OFFICIAL_HARMONY_DLL = 473600,
 	};
+
+	bool IsValidProject();
+	bool IsValidProject(FilesystemRef fs);
+	bool IsRPG2kProject(FilesystemRef fs);
+	bool IsEasyRpgProject(FilesystemRef fs);
 
 	/**
 	 * Checks whether the game is created with RPG2k >= 1.50 or RPG2k3 >= 1.05.
@@ -331,6 +224,6 @@ namespace FileFinder {
 		RPG2K = 735000,
 		RPG2K3 = 927000,
 	};
-} // namespace FileFinder
+}
 
 #endif

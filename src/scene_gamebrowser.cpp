@@ -25,6 +25,7 @@
 #include "scene_title.h"
 #include "bitmap.h"
 #include "audio.h"
+#include "output.h"
 
 #ifdef _WIN32
 	#include <Windows.h>
@@ -94,7 +95,7 @@ void Scene_GameBrowser::CreateWindows() {
 	command_window->SetIndex(0);
 
 	gamelist_window.reset(new Window_GameList(60, 32, SCREEN_TARGET_WIDTH - 60, SCREEN_TARGET_HEIGHT - 32));
-	gamelist_window->Refresh();
+	gamelist_window->Refresh(FileFinder::GetNativeFilesystem()->Create(Main_Data::GetProjectPath()));
 
 	if (!gamelist_window->HasValidGames()) {
 		command_window->DisableItem(0);
@@ -165,19 +166,21 @@ void Scene_GameBrowser::UpdateGameListSelection() {
 }
 
 void Scene_GameBrowser::BootGame() {
-#ifdef _WIN32
-	SetCurrentDirectory(Utils::ToWideString(gamelist_window->GetGamePath()).c_str());
-	const std::string& path = ".";
-#else
-	const std::string& path = gamelist_window->GetGamePath();
-#endif
+	FilesystemRef fs = gamelist_window->GetGameFilesystem();
+
+	if (!fs) {
+		Output::Warning("The selected file or directory can't be opened");
+		load_window->SetVisible(false);
+		game_loading = false;
+		return;
+	}
 
 	if (browser_dir.empty())
 		browser_dir = Main_Data::GetProjectPath();
-	Main_Data::SetProjectPath(path);
 
-	std::shared_ptr<FileFinder::DirectoryTree> tree = FileFinder::CreateDirectoryTree(path);
-	FileFinder::SetDirectoryTree(tree);
+	FileFinder::SetGameFilesystem(fs);
+
+	Main_Data::SetProjectPath(fs->GetPath());
 
 	Player::CreateGameObjects();
 

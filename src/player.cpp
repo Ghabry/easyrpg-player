@@ -45,6 +45,7 @@
 #include "audio.h"
 #include "cache.h"
 #include "filefinder.h"
+#include "filesystem_rtp.h"
 #include "game_actors.h"
 #include "game_battle.h"
 #include "game_map.h"
@@ -110,7 +111,7 @@ namespace Player {
 	uint32_t escape_char;
 	int engine;
 	std::string game_title;
-	std::shared_ptr<Meta> meta;
+	//std::shared_ptr<Meta> meta;
 	int frames;
 	std::string replay_input_path;
 	std::string record_input_path;
@@ -706,7 +707,7 @@ void Player::CreateGameObjects() {
 	// Load the meta information file.
 	// Note: This should eventually be split across multiple folders as described in Issue #1210
 	std::string meta_file = FileFinder::FindDefault(META_NAME);
-	meta.reset(new Meta(meta_file));
+	//meta.reset(new Meta(meta_file));
 
 	bool no_rtp_warning_flag = false;
 	{ // Scope lifetime of variables for ini parsing
@@ -775,7 +776,7 @@ void Player::CreateGameObjects() {
 	}
 	Output::Debug("Engine configured as: 2k=%d 2k3=%d MajorUpdated=%d Eng=%d", Player::IsRPG2k(), Player::IsRPG2k3(), Player::IsMajorUpdatedVersion(), Player::IsEnglish());
 
-	FileFinder::InitRtpPaths(no_rtp_flag, no_rtp_warning_flag);
+	RtpFilesystem::InitRtpPaths(no_rtp_flag, no_rtp_warning_flag);
 
 	// ExFont parsing
 	Cache::exfont_custom.clear();
@@ -850,8 +851,8 @@ void Player::LoadDatabase() {
 	// Load Database
 	Data::Clear();
 
-	if (!FileFinder::IsRPG2kProject(*FileFinder::GetDirectoryTree()) &&
-		!FileFinder::IsEasyRpgProject(*FileFinder::GetDirectoryTree())) {
+	if (!FileFinder::IsRPG2kProject(FileFinder::GetGameFilesystem()) &&
+		!FileFinder::IsEasyRpgProject(FileFinder::GetGameFilesystem())) {
 		// Unlikely to happen because of the game browser only launches valid games
 
 		Output::Debug("%s is not a supported project", Main_Data::GetProjectPath().c_str());
@@ -922,7 +923,7 @@ static void OnMapSaveFileReady(FileRequestResult*) {
 }
 
 void Player::LoadSavegame(const std::string& save_name) {
-	Output::Debug("Loading Save %s", FileFinder::GetPathInsidePath(Main_Data::GetSavePath(), save_name).c_str());
+	Output::Debug("Loading Save %s", Filesystem::GetPathInsidePath(Main_Data::GetSavePath(), save_name).c_str());
 	Game_System::BgmStop();
 
 	// We erase the screen now before loading the saved game. This prevents an issue where

@@ -55,7 +55,7 @@ static bool InitRecording(const std::string& record_to_path) {
 	if (!record_to_path.empty()) {
 		auto path = record_to_path.c_str();
 
-		record_log = FileFinder::OpenOutputStream(path, std::ios::out|std::ios::trunc);
+		record_log = FileFinder::GetNativeFilesystem()->OpenOutputStream(path, std::ios::out|std::ios::trunc);
 
 		if (!record_log) {
 			Output::Warning("Failed to open file for input recording: %s", path);
