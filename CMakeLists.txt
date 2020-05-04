@@ -85,6 +85,8 @@ add_library(${PROJECT_NAME}
 	src/filesystem_native.h
 	src/filesystem_rtp.cpp
 	src/filesystem_rtp.h
+	src/filesystem_zip.cpp
+	src/filesystem_zip.h
 	src/flash.h
 	src/font.cpp
 	src/font.h
