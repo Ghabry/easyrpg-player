@@ -38,20 +38,20 @@ public:
 	/**
 	 * Initializes a RTP filesystem.
 	 */
-	RtpFilesystem(FilesystemRef wrapped_filesystem);
+	RtpFilesystem(const std::string& base_path, FilesystemRef wrapped_filesystem);
 
+protected:
 	/**
  	 * Implementation of abstract methods
  	 */
 	/** @{ */
-	std::string GetPath() const override;
-	bool IsFile(const std::string& path) const override;
-	bool IsDirectory(const std::string& path, bool follow_symlinks) const override;
-	bool Exists(const std::string& path) const override;
-	int64_t GetFilesize(const std::string& path) const override;
-	std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) override;
-	std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) override;
-	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path, bool* error = nullptr) const override;
+	bool IsFileImpl(const std::string& path) const override;
+	bool IsDirectoryImpl(const std::string& path, bool follow_symlinks) const override;
+	bool ExistsImpl(const std::string& path) const override;
+	int64_t GetFilesizeImpl(const std::string& path) const override;
+	std::streambuf* CreateInputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) override;
+	std::streambuf* CreateOutputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) override;
+	std::vector<Filesystem::DirectoryEntry> ListDirectoryImpl(const std::string& path, bool* error = nullptr) const override;
 	std::string FindFile(const std::string& dir,
 						 const std::string& name,
 						 char const* exts[]) const override;

@@ -53,30 +53,26 @@
 #include "platform/libretro/libretro_ui.h"
 #endif
 
-NativeFilesystem::NativeFilesystem(const std::string& rootPath): root_path(rootPath) {
+NativeFilesystem::NativeFilesystem(const std::string& base_path): Filesystem(base_path) {
 }
 
-std::string NativeFilesystem::GetPath() const {
-	return root_path;
-}
-
-bool NativeFilesystem::IsFile(const std::string& path) const {
+bool NativeFilesystem::IsFileImpl(const std::string& path) const {
 	return Platform::File(path).IsFile(false);
 }
 
-bool NativeFilesystem::IsDirectory(const std::string& dir, bool follow_symlinks) const {
+bool NativeFilesystem::IsDirectoryImpl(const std::string& dir, bool follow_symlinks) const {
 	return Platform::File(dir).IsDirectory(follow_symlinks);
 }
 
-bool NativeFilesystem::Exists(const std::string& filename) const {
+bool NativeFilesystem::ExistsImpl(const std::string& filename) const {
 	return Platform::File(filename).Exists();
 }
 
-int64_t NativeFilesystem::GetFilesize(const std::string& path) const {
+int64_t NativeFilesystem::GetFilesizeImpl(const std::string& path) const {
 	return Platform::File(path).GetSize();
 }
 
-std::streambuf* NativeFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
+std::streambuf* NativeFilesystem::CreateInputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) {
 	std::filebuf *buf = new std::filebuf();
 
 	return buf->open(
@@ -88,7 +84,7 @@ std::streambuf* NativeFilesystem::CreateInputStreambuffer(const std::string& pat
 			mode);
 }
 
-std::streambuf* NativeFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
+std::streambuf* NativeFilesystem::CreateOutputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) {
 	std::filebuf *buf = new std::filebuf();
 	return buf->open(
 #ifdef _MSC_VER
@@ -99,7 +95,7 @@ std::streambuf* NativeFilesystem::CreateOutputStreambuffer(const std::string& pa
 			mode);
 }
 
-std::vector<Filesystem::DirectoryEntry> NativeFilesystem::ListDirectory(const std::string &path, bool* error) const {
+std::vector<Filesystem::DirectoryEntry> NativeFilesystem::ListDirectoryImpl(const std::string &path, bool* error) const {
 	std::vector<Filesystem::DirectoryEntry> entries;
 
 	if (error) {
@@ -163,3 +159,6 @@ std::vector<Filesystem::DirectoryEntry> NativeFilesystem::ListDirectory(const st
 	return entries;
 }
 
+FilesystemRef NativeFilesystem::CloneImpl() const {
+	return std::make_shared<NativeFilesystem>(GetPath());
+}

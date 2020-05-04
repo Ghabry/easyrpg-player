@@ -23,6 +23,7 @@
 #include <ostream>
 #include <unordered_map>
 #include <vector>
+#include <cassert>
 #include "system.h"
 
 class Filesystem;
@@ -82,7 +83,7 @@ public:
 	 *
 	 * @return If the filesystem is valid
 	 */
-	virtual bool IsValid();
+	bool IsValid();
 
 	/**
 	 * Return the path used to initialize the filesystem.
@@ -91,7 +92,7 @@ public:
 	 *
 	 * @return filesystem root path
 	 */
-	virtual std::string GetPath() const = 0;
+	std::string GetPath() const;
 
 	/**
 	 * Checks whether the passed path is a file.
@@ -99,7 +100,7 @@ public:
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
-	virtual bool IsFile(const std::string& path) const = 0;
+	bool IsFile(const std::string& path) const;
 
 	/**
 	 * Checks whether the passed path is a directory.
@@ -107,7 +108,7 @@ public:
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
-	virtual bool IsDirectory(const std::string& path, bool follow_symlinks) const = 0;
+	bool IsDirectory(const std::string& path, bool follow_symlinks) const;
 
 	/**
 	 * Checks whether the passed path is an existant file.
@@ -115,14 +116,14 @@ public:
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
-	virtual bool Exists(const std::string& path) const = 0;
+	bool Exists(const std::string& path) const;
 
 	/**
 	 * Retrieves the size of the file on the given path.
 	 *
 	 * @param path a path relative to the filesystems root
 	 */
-	virtual int64_t GetFilesize(const std::string& path) const = 0;
+	int64_t GetFilesize(const std::string& path) const;
 
 	/**
 	 * Creates stream from UTF-8 file name for reading.
@@ -139,7 +140,7 @@ public:
 	 * @param path a path relative to the filesystems root
 	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	 */
-	virtual std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) = 0;
+	std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode);
 
 	/**
 	 * Creates stream from UTF-8 file name for writing.
@@ -156,7 +157,7 @@ public:
 	 * @param path a path relative to the filesystems root
 	 * @return A valid pointer to a streambuffer or a nullptr in case of failure.
 	 */
-	virtual std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) = 0;
+	std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode);
 
 	/**
 	 * Returns a directory listing of the given path.
@@ -165,7 +166,7 @@ public:
 	 * @param error When non-null receives true when reading failed, otherwise false
 	 * @return List of directory entries
 	 */
-	virtual std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path, bool* error = nullptr) const = 0;
+	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path, bool* error = nullptr) const;
 
 	/**
 	 * Clears the filesystem cache. Changes in the filesystem become visible
@@ -179,9 +180,12 @@ public:
 	 * The path is processed to initialize the proper virtual filesystem handler.
 	 *
 	 * @param p Virtual path to use
+	 * @param need_copy
 	 * @return FilesystemRef when the parsing was successful, otherwise nullptr
 	 */
 	FilesystemRef Create(const std::string& p);
+
+	bool ChangeDirectory(const std::string& new_dir);
 
 	// Helper functions for finding files in a case insensitive way
 	/**
@@ -265,11 +269,71 @@ public:
 	static std::string GetPathInsidePath(const std::string& path_to, const std::string& path_in);
 
 protected:
+	Filesystem(const std::string& base_path);
+
+	/**
+ 	 * Abstract methods to be implemented by filesystems.
+ 	 * The path is already adjusted to the filesystem base.
+ 	 */
+	/** @{ */
+	virtual bool IsFileImpl(const std::string& path) const = 0;
+	virtual bool IsDirectoryImpl(const std::string& path, bool follow_symlinks) const = 0;
+	virtual bool ExistsImpl(const std::string& path) const = 0;
+	virtual int64_t GetFilesizeImpl(const std::string& path) const = 0;
+	virtual std::streambuf* CreateInputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) = 0;
+	virtual std::streambuf* CreateOutputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) = 0;
+	virtual std::vector<Filesystem::DirectoryEntry> ListDirectoryImpl(const std::string& path, bool* error = nullptr) const = 0;
+	virtual FilesystemRef CloneImpl() const;
+	/** @} */
+
 	// lowered dir -> <map of> lowered file -> Entry
 	mutable std::unordered_map<std::string, std::unordered_map<std::string, DirectoryEntry>> fs_cache;
 	// lowered dir -> real dir
 	mutable std::unordered_map<std::string, std::string> dir_cache;
+
+private:
+	FilesystemRef CreateImpl(const std::string& p, bool need_copy);
+
+	std::string base_path;
+	std::string sub_dir;
 };
+
+inline std::string Filesystem::GetPath() const {
+	return base_path;
+}
+
+inline bool Filesystem::IsFile(const std::string& path) const {
+	return IsFileImpl(CombinePath(sub_dir, path));
+}
+
+inline bool Filesystem::IsDirectory(const std::string& path, bool follow_symlinks) const {
+	return IsDirectoryImpl(CombinePath(sub_dir, path), follow_symlinks);
+}
+
+inline bool Filesystem::Exists(const std::string& path) const {
+	return ExistsImpl(CombinePath(sub_dir, path));
+}
+
+inline int64_t Filesystem::GetFilesize(const std::string& path) const {
+	return GetFilesizeImpl(CombinePath(sub_dir, path));
+}
+
+inline std::streambuf* Filesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
+	return CreateInputStreambufferImpl(CombinePath(sub_dir, path), mode);
+}
+
+inline std::streambuf* Filesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
+	return CreateOutputStreambufferImpl(CombinePath(sub_dir, path), mode);
+}
+
+inline std::vector<Filesystem::DirectoryEntry> Filesystem::ListDirectory(const std::string& path, bool* error) const {
+	return ListDirectoryImpl(CombinePath(sub_dir, path), error);
+}
+
+inline FilesystemRef Filesystem::CloneImpl() const {
+	assert(false && "Filesystem does not implement CloneImpl!");
+	return nullptr;
+}
 
 #endif
 

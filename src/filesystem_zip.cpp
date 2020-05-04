@@ -317,14 +317,14 @@ static std::string normalize_path(const std::string& path) {
 	return inner_path;
 }
 
-ZIPFilesystem::ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, const std::string& encoding) :
-	source_fs(source_fs), fs_path(fs_path) {
+ZIPFilesystem::ZIPFilesystem(const FilesystemRef source_fs, const std::string& base_path, const std::string& encoding) :
+	Filesystem(base_path), source_fs(source_fs) {
 	// Open first entry of the input filebuffer pool
 	m_isValid = false;
 	StreamPoolEntry* initialEntry = new StreamPoolEntry();
 	initialEntry->filebuffer = new std::filebuf();
 	initialEntry->used = true;
-	initialEntry->filebuffer = source_fs->CreateInputStreambuffer(fs_path, std::ios_base::in | std::ios_base::binary);
+	initialEntry->filebuffer = source_fs->CreateInputStreambuffer(GetPath(), std::ios_base::in | std::ios_base::binary);
 
 	uint16_t centralDirectoryEntries = 0;
 	uint32_t centralDirectorySize = 0;
@@ -352,7 +352,7 @@ ZIPFilesystem::ZIPFilesystem(const FilesystemRef source_fs, const std::string& f
 				}
 
 				filepath = filepath_arr.data();
-				if (filepath.size() != inner_path.size() && Utils::BeginsWith(filepath, inner_path)) {
+				if (filepath.size() != inner_path.size() && Utils::StartsWith(filepath, inner_path)) {
 					// remove the offset directory from the front of the path
 					filepath = filepath.substr(inner_path.size(), filepath.size() - inner_path.size());
 
@@ -532,11 +532,7 @@ ZIPFilesystem::~ZIPFilesystem() {
 	}
 }
 
-std::string ZIPFilesystem::GetPath() const {
-	return fs_path;
-}
-
-bool ZIPFilesystem::IsFile(const std::string& path) const {
+bool ZIPFilesystem::IsFileImpl(const std::string& path) const {
 	std::string path_normalized = normalize_path(path);
 	auto it = m_zipContent.find(path_normalized);
 	if (it != m_zipContent.end()) {
@@ -547,7 +543,7 @@ bool ZIPFilesystem::IsFile(const std::string& path) const {
 	}
 }
 
-bool ZIPFilesystem::IsDirectory(const std::string& path) const {
+bool ZIPFilesystem::IsDirectoryImpl(const std::string& path, bool) const {
 	std::string path_normalized = normalize_path(path);
 	auto it = m_zipContent.find(path_normalized);
 	if (it != m_zipContent.end()) {
@@ -558,13 +554,13 @@ bool ZIPFilesystem::IsDirectory(const std::string& path) const {
 	}
 }
 
-bool ZIPFilesystem::Exists(const std::string& path) const {
+bool ZIPFilesystem::ExistsImpl(const std::string& path) const {
 	std::string path_normalized = normalize_path(path);
 	auto it = m_zipContent.find(path_normalized);
 	return (it != m_zipContent.end());
 }
 
-uint32_t ZIPFilesystem::GetFilesize(const std::string& path) const {
+int64_t ZIPFilesystem::GetFilesizeImpl(const std::string& path) const {
 	std::string path_normalized = normalize_path(path);
 
 	auto it = m_zipContent.find(path_normalized);
@@ -576,7 +572,7 @@ uint32_t ZIPFilesystem::GetFilesize(const std::string& path) const {
 	}
 }
 
-std::streambuf* ZIPFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* ZIPFilesystem::CreateInputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) {
 	if (!m_isValid) return nullptr;
 
 	std::string path_normalized = normalize_path(path);
@@ -594,7 +590,7 @@ std::streambuf* ZIPFilesystem::CreateInputStreambuffer(const std::string& path, 
 		if (inputStream == nullptr) {
 			StreamPoolEntry* newEntry = new StreamPoolEntry();
 			newEntry->filebuffer = new std::filebuf();
-			newEntry->filebuffer = source_fs->CreateInputStreambuffer(fs_path, std::ios_base::in | std::ios_base::binary);
+			newEntry->filebuffer = source_fs->CreateInputStreambuffer(GetPath(), std::ios_base::in | std::ios_base::binary);
 			newEntry->used = false;
 			m_InputPool.push_back(newEntry);
 			inputStream = m_InputPool.back();
@@ -622,11 +618,11 @@ std::streambuf* ZIPFilesystem::CreateInputStreambuffer(const std::string& path, 
 	return nullptr;
 }
 
-std::streambuf* ZIPFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const {
+std::streambuf* ZIPFilesystem::CreateOutputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) {
 	return nullptr;
 }
 
-std::vector<Filesystem::DirectoryEntry> ZIPFilesystem::ListDirectory(const std::string &path, bool* error) const {
+std::vector<Filesystem::DirectoryEntry> ZIPFilesystem::ListDirectoryImpl(const std::string &path, bool* error) const {
 	std::vector<Filesystem::DirectoryEntry> entries;
 
 	if (!m_isValid) {
@@ -644,7 +640,7 @@ std::vector<Filesystem::DirectoryEntry> ZIPFilesystem::ListDirectory(const std::
 	}
 
 	for (const auto &it : m_zipContent) {
-		if (Utils::BeginsWith(it.first, path_normalized) &&
+		if (Utils::StartsWith(it.first, path_normalized) &&
 			it.first.substr(path_normalized.size(), it.first.size() - path_normalized.size()).find_last_of('/') == std::string::npos) {
 			// Everything that starts with the path but isn't the path and does contain no slash
 			entry.name = it.first.substr(path_normalized.size(), it.first.size() - path_normalized.size());

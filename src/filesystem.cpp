@@ -16,6 +16,8 @@
  */
 
 #include "filesystem.h"
+#include "filesystem_native.h"
+#include "filesystem_zip.h"
 #include "filefinder.h"
 #include "utils.h"
 #include "output.h"
@@ -23,8 +25,6 @@
 #include "reader_util.h"
 #include <algorithm>
 #include <cassert>
-
-#include "filesystem_native.h"
 
 Filesystem::vfs_istream::vfs_istream(std::streambuf *sb, FilesystemRef fs, std::streamsize size) :
 	std::istream(sb), fs(fs), size(size) {
@@ -47,6 +47,10 @@ Filesystem::vfs_ostream::~vfs_ostream() {
 	delete rdbuf();
 	fs->ClearCache();
 }
+
+Filesystem::Filesystem(const std::string& base_path) : base_path(base_path) {
+	// no-op
+};
 
 Filesystem::InputStream Filesystem::OpenInputStream(const std::string &name, std::ios_base::openmode m) {
 	std::streambuf* buf = CreateInputStreambuffer(name, m | std::ios_base::in);
@@ -71,6 +75,10 @@ void Filesystem::ClearCache() {
 }
 
 FilesystemRef Filesystem::Create(const std::string& path) {
+	return CreateImpl(path, true);
+}
+
+FilesystemRef Filesystem::CreateImpl(const std::string& path, bool need_copy) {
 	// Determine the proper file system to use
 	FilesystemRef filesystem;
 
@@ -79,18 +87,60 @@ FilesystemRef Filesystem::Create(const std::string& path) {
 	std::string path_prefix = "";
 
 	if (!IsDirectory(path, true)) {
-		// TODO when not a directory handle as archive
-		//std::vector<std::string> components = Filesystem::SplitPath(path);
+		std::vector<std::string> components = Filesystem::SplitPath(path);
 
 		// TODO this should probably move to a static function in the FS classes
-		return FilesystemRef();
+
+		// search until ".zip", "do magic"
+		std::string internal_path;
+		bool handle_internal = false;
+		for (std::string comp : components) {
+			if (handle_internal) {
+				internal_path += comp + "/";
+			} else {
+				path_prefix += comp + "/";
+				if (Utils::EndsWith(comp, ".zip")) {
+					path_prefix.pop_back();
+					handle_internal = true;
+				}
+			}
+		}
+
+		if (!internal_path.empty()) {
+			internal_path.pop_back();
+		}
+
+		filesystem = std::make_shared<ZIPFilesystem>(shared_from_this(), path_prefix);
+		if (!filesystem->IsValid()) {
+			return FilesystemRef();
+		} else if (!internal_path.empty()) {
+			filesystem = filesystem->CreateImpl(internal_path, false);
+		}
 	} else {
-		// Handle as a normal path in the local filesystem
-		filesystem = std::make_shared<NativeFilesystem>(path);
-		if (!(filesystem->Exists(path) || !filesystem->IsDirectory(path, true))) { return FilesystemRef(); }
+		if (!(Exists(path) || !IsDirectory(path, true))) {
+			return FilesystemRef();
+		}
+
+		// Handle as a normal path in the current filesystem
+		if (need_copy) {
+			filesystem = CloneImpl();
+		} else {
+			filesystem = shared_from_this();
+		}
+		if (!filesystem->ChangeDirectory(path)) {
+			return FilesystemRef();
+		}
 	}
 
 	return filesystem;
+}
+
+bool Filesystem::ChangeDirectory(const std::string &new_dir) {
+	if (!IsDirectoryImpl(new_dir, false)) {
+		return false;
+	}
+	sub_dir = new_dir;
+	return true;
 }
 
 bool Filesystem::IsValid() {

@@ -55,7 +55,7 @@
 using namespace std::chrono_literals;
 
 namespace {
-	Filesystem::OutputStream LOG_FILE;
+	std::shared_ptr<std::ostream> LOG_FILE;
 	bool init = false;
 
 	std::ostream& output_time() {
@@ -67,7 +67,7 @@ namespace {
 
 			if (!LOG_FILE) {
 				// Create a bad ofstream as a fake handle for logfile output
-				LOG_FILE.reset();
+				LOG_FILE.reset(new std::ofstream());
 			}
 
 			init = true;

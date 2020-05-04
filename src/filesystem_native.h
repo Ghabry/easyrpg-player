@@ -28,24 +28,22 @@ public:
 	/**
 	 * Initializes a OS Filesystem on the given os path
 	 */
-	NativeFilesystem(const std::string& rootPath);
+	NativeFilesystem(const std::string& base_path);
 
+protected:
 	/**
  	 * Implementation of abstract methods
  	 */
 	/** @{ */
-	std::string GetPath() const override;
-	bool IsFile(const std::string& path) const override;
-	bool IsDirectory(const std::string& path, bool follow_symlinks) const override;
-	bool Exists(const std::string& path) const override;
-	int64_t GetFilesize(const std::string& path) const override;
-	std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) override;
-	std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) override;
-	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path, bool* error = nullptr) const override;
+	bool IsFileImpl(const std::string& path) const override;
+	bool IsDirectoryImpl(const std::string& path, bool follow_symlinks) const override;
+	bool ExistsImpl(const std::string& path) const override;
+	int64_t GetFilesizeImpl(const std::string& path) const override;
+	std::streambuf* CreateInputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) override;
+	std::streambuf* CreateOutputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) override;
+	std::vector<Filesystem::DirectoryEntry> ListDirectoryImpl(const std::string& path, bool* error = nullptr) const override;
+	FilesystemRef CloneImpl() const override;
 	/** @} */
-
-private:
-	std::string root_path;
 };
 
 

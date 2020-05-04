@@ -94,7 +94,7 @@ FilesystemRef FileFinder::GetNativeFilesystem() {
 		native_fs = std::make_shared<NativeFilesystem>("");
 	}
 
-	return native_fs;
+	return std::make_shared<NativeFilesystem>("");
 }
 
 std::string FileFinder::GetPathInsideGamePath(const std::string& path_in) {

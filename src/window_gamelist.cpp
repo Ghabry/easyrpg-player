@@ -42,10 +42,11 @@ void Window_GameList::Refresh(FilesystemRef filesystem_base) {
 	// Find valid game diectories
 	for (const auto& entry : entries) {
 		if (entry.type == Filesystem::FileType::Directory) {
-			auto fs = filesystem_base->Create(entry.name);
-			if (FileFinder::IsValidProject(fs)) {
+			bool success = filesystem_base->ChangeDirectory(entry.name);
+			if (success && FileFinder::IsValidProject(filesystem_base)) {
 				game_directories.push_back(entry.name);
 			}
+			filesystem_base->ChangeDirectory("");
 		}
 	}
 

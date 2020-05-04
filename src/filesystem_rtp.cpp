@@ -335,39 +335,36 @@ void RtpFilesystem::InitRtpPaths(bool disable_rtp, bool no_rtp_warnings) {
 	}
 }
 
-RtpFilesystem::RtpFilesystem(FilesystemRef wrapped_filesystem) : wrapped_fs(wrapped_filesystem) {
+RtpFilesystem::RtpFilesystem(const std::string& base_path, FilesystemRef wrapped_filesystem) :
+		Filesystem(base_path), wrapped_fs(wrapped_filesystem) {
 	assert(wrapped_filesystem && "wrapped_fs arg is null");
 }
 
-std::string RtpFilesystem::GetPath() const {
-	return wrapped_fs->GetPath();
-}
-
-bool RtpFilesystem::IsFile(const std::string& path) const {
+bool RtpFilesystem::IsFileImpl(const std::string& path) const {
 	return wrapped_fs->IsFile(path);
 }
 
-bool RtpFilesystem::IsDirectory(const std::string& path, bool follow_symlinks) const {
+bool RtpFilesystem::IsDirectoryImpl(const std::string& path, bool follow_symlinks) const {
 	return wrapped_fs->IsDirectory(path, follow_symlinks);
 }
 
-bool RtpFilesystem::Exists(const std::string& path) const {
+bool RtpFilesystem::ExistsImpl(const std::string& path) const {
 	return wrapped_fs->Exists(path);
 }
 
-int64_t RtpFilesystem::GetFilesize(const std::string& path) const {
+int64_t RtpFilesystem::GetFilesizeImpl(const std::string& path) const {
 	return wrapped_fs->GetFilesize(path);
 }
 
-std::streambuf* RtpFilesystem::CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
+std::streambuf* RtpFilesystem::CreateInputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) {
 	return wrapped_fs->CreateInputStreambuffer(path, mode);
 }
 
-std::streambuf* RtpFilesystem::CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) {
+std::streambuf* RtpFilesystem::CreateOutputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) {
 	return wrapped_fs->CreateOutputStreambuffer(path, mode);
 }
 
-std::vector<Filesystem::DirectoryEntry> RtpFilesystem::ListDirectory(const std::string &path, bool* error) const {
+std::vector<Filesystem::DirectoryEntry> RtpFilesystem::ListDirectoryImpl(const std::string &path, bool* error) const {
 	return wrapped_fs->ListDirectory(path, error);
 }
 

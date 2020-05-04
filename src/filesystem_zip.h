@@ -34,25 +34,25 @@ public:
 	 * Initializes a filesystem inside the given ZIP File
 	 *
 	 * @param source_fs Filesystem used to create handles on the zip file
-	 * @param fs_path Path passed to source_fs to open the zip file
+	 * @param base_path Path passed to source_fs to open the zip file
 	 * @param encoding Encoding to use, use empty string for autodetection
 	 */
-	ZIPFilesystem(const FilesystemRef source_fs, const std::string& fs_path, const std::string& encoding = "");
+	ZIPFilesystem(const FilesystemRef source_fs, const std::string& base_path, const std::string& encoding = "");
 
 	~ZIPFilesystem();
 
+protected:
 	/**
  	 * Implementation of abstract methods
  	 */
 	/** @{ */
-	std::string GetPath() const override;
-	bool IsFile(const std::string& path) const override;
-	bool IsDirectory(const std::string& path) const override;
-	bool Exists(const std::string& path) const override;
-	uint32_t GetFilesize(const std::string& path) const override;
-	std::streambuf* CreateInputStreambuffer(const std::string& path, std::ios_base::openmode mode) const override;
-	std::streambuf* CreateOutputStreambuffer(const std::string& path, std::ios_base::openmode mode) const override;
-	std::vector<Filesystem::DirectoryEntry> ListDirectory(const std::string& path, bool* error = nullptr) const override;
+	bool IsFileImpl(const std::string& path) const override;
+	bool IsDirectoryImpl(const std::string& path, bool follow_symlinks) const override;
+	bool ExistsImpl(const std::string& path) const override;
+	int64_t GetFilesizeImpl(const std::string& path) const override;
+	std::streambuf* CreateInputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) override;
+	std::streambuf* CreateOutputStreambufferImpl(const std::string& path, std::ios_base::openmode mode) override;
+	std::vector<Filesystem::DirectoryEntry> ListDirectoryImpl(const std::string& path, bool* error = nullptr) const override;
 	/** @} */
 
 private:
