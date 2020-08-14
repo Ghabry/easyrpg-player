@@ -90,7 +90,7 @@ private:
 
 	void ProcessEvent(SDL_Event &sdl_event);
 
-	void ProcessActiveEvent(SDL_Event &evnt);
+	void ProcessWindowEvent(SDL_Event &evnt);
 	void ProcessKeyDownEvent(SDL_Event &evnt);
 	void ProcessKeyUpEvent(SDL_Event &evnt);
 	void ProcessMouseMotionEvent(SDL_Event &evnt);
@@ -119,9 +119,31 @@ private:
 	DisplayMode last_display_mode;
 
 	/** Main SDL window. */
-	SDL_Texture* sdl_texture = nullptr;
+	SDL_Texture* sdl_texture_scaled = nullptr;
+	SDL_Texture* sdl_texture_game = nullptr;
 	SDL_Window* sdl_window = nullptr;
 	SDL_Renderer* sdl_renderer = nullptr;
+
+	int window_width = 0;
+	int window_height = 0;
+	bool window_size_changed = true;
+
+	struct {
+		// Offset for rendering into the window
+		int x;
+		int y;
+		// w_int/h_int contain full integer scaling that fits into window
+		int w_int;
+		int h_int;
+		// w_float/h_float contain fractional scaling that fully fit the window
+		float w_float;
+		float h_float;
+
+		int texture_width;
+		int texture_height;
+	} window_attributes = {};
+
+	uint32_t texture_format = SDL_PIXELFORMAT_UNKNOWN;
 
 	std::unique_ptr<AudioInterface> audio_;
 };
