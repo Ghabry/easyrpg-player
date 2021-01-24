@@ -69,11 +69,11 @@ static void detect_helper(const FileFinder::DirectoryTree& tree, std::vector<str
 	}
 }
 
-std::vector<RTP::RtpHitInfo> RTP::Detect(std::shared_ptr<FileFinder::DirectoryTree> tree, int version) {
+std::vector<RTP::RtpHitInfo> RTP::Detect(std::unique_ptr<Filesystem> fs, int version) {
 	std::vector<struct RTP::RtpHitInfo> hit_list = {{
-		{RTP::Type::RPG2000_OfficialJapanese, Names[0], 2000, 0, 465, tree},
-		{RTP::Type::RPG2000_OfficialEnglish, Names[1], 2000, 0, 465, tree},
-		{RTP::Type::RPG2000_DonMiguelEnglish, Names[2], 2000, 0, 500, tree},
+		{RTP::Type::RPG2000_OfficialJapanese, Names[0], 2000, 0, 465, fs},
+		{RTP::Type::RPG2000_OfficialEnglish, Names[1], 2000, 0, 465, fs},
+		{RTP::Type::RPG2000_DonMiguelEnglish, Names[2], 2000, 0, 500, fs},
 		{RTP::Type::RPG2000_DonMiguelAddon, Names[3], 2000, 0, 503, tree},
 		{RTP::Type::RPG2003_OfficialJapanese, Names[4], 2003, 0, 675, tree},
 		{RTP::Type::RPG2003_OfficialEnglish, Names[5], 2003, 0, 675, tree},

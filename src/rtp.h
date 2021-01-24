@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "filefinder.h"
+#include "filesystem.h"
 
 /**
  * The RTP namespace contains functions for working with the Runtime Package
@@ -60,7 +61,7 @@ namespace RTP {
 		int version;
 		int hits;
 		int max;
-		std::shared_ptr<FileFinder::DirectoryTree> tree;
+		std::unique_ptr<Filesystem> fs;
 	};
 
 	/**
@@ -71,7 +72,7 @@ namespace RTP {
 	 * @param version RTP version in the folder (2000 or 2003), use 0 to detect all
 	 * @return List of detected RTP types
 	 */
-	std::vector<RtpHitInfo> Detect(std::shared_ptr<FileFinder::DirectoryTree> tree, int version);
+	std::vector<RtpHitInfo> Detect(std::unique_ptr<Filesystem> fs, int version);
 
 	/**
 	 * Takes an asset name and returns all RTP that match
