@@ -307,7 +307,7 @@ void SdlMixerAudio::BGM_OnPlayedOnce() {
 }
 
 void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int fadein) {
-	auto filestream = FileFinder::OpenInputStream(file);
+	auto filestream = FileFinder::Game().OpenInputStream(file);
 	if (!filestream) {
 		Output::Warning("Music not readable: {}", FileFinder::GetPathInsideGamePath(file));
 		return;
@@ -318,7 +318,7 @@ void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int
 		return;
 	}
 
-	filestream = FileFinder::OpenInputStream(file);
+	filestream = FileFinder::Game().OpenInputStream(file);
 	SDL_RWops* rw = create_StreamRWOps(std::move(filestream));
 
 	bgm_stop = false;
@@ -342,7 +342,7 @@ void SdlMixerAudio::BGM_Play(std::string const& file, int volume, int pitch, int
 #if WANT_FMMIDI == 2
 		// Fallback to FMMIDI when SDL Midi failed
 		char magic[4] = { 0 };
-		auto filestream = FileFinder::OpenInputStream(file);
+		auto filestream = FileFinder::Game().OpenInputStream(file);
 		if (!filestream) {
 			Output::Warning("Music not readable: {}", FileFinder::GetPathInsideGamePath(file));
 			return;
@@ -654,7 +654,7 @@ void SdlMixerAudio::SE_Play(std::string const& file, int volume, int pitch) {
 	}
 
 	if (!snd_data.chunk) {
-		SDL_RWops* rw = create_StreamRWOps(FileFinder::OpenInputStream(file));
+		SDL_RWops* rw = create_StreamRWOps(FileFinder::Game().OpenInputStream(file));
 
 		snd_data.chunk.reset(Mix_LoadWAV_RW(rw, 1), &Mix_FreeChunk);
 		if (!snd_data.chunk) {

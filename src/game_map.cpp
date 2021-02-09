@@ -275,7 +275,7 @@ std::unique_ptr<lcf::rpg::Map> Game_Map::loadMapFile(int map_id) {
 			return nullptr;
 		}
 
-		auto map_stream = FileFinder::OpenInputStream(map_file);
+		auto map_stream = FileFinder::Game().OpenInputStream(map_file);
 		map = lcf::LMU_Reader::Load(map_stream, Player::encoding);
 
 		if (Input::IsRecording()) {
@@ -285,7 +285,7 @@ std::unique_ptr<lcf::rpg::Map> Game_Map::loadMapFile(int map_id) {
 						   fmt::format("map{} {:#08x}", Utils::CRC32(map_stream)));
 		}
 	} else {
-		auto map_stream = FileFinder::OpenInputStream(map_file);
+		auto map_stream = FileFinder::Game().OpenInputStream(map_file);
 		map = lcf::LMU_Reader::LoadXml(map_stream);
 	}
 

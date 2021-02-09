@@ -77,7 +77,7 @@ std::string Scene_Save::GetSaveFilename(const FilesystemView& fs, int slot_id) {
 
 void Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save) {
 	const auto filename = GetSaveFilename(fs, slot_id);
-	auto save_stream = FileFinder::OpenOutputStream(filename);
+	auto save_stream = FileFinder::Save().OpenOutputStream(filename);
 	Save(save_stream, slot_id, prepare_save);
 }
 

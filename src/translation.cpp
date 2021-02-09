@@ -105,7 +105,7 @@ void Translation::InitTranslations()
 	}
 }
 
-std::string Translation::GetCurrentLanguageId() const 
+std::string Translation::GetCurrentLanguageId() const
 {
 	return current_language;
 }
@@ -115,7 +115,7 @@ FilesystemView Translation::GetRootTree() const
 	return translation_root_fs;
 }
 
-bool Translation::HasTranslations() const 
+bool Translation::HasTranslations() const
 {
 	return !languages.empty();
 }
@@ -139,7 +139,7 @@ void Translation::SelectLanguage(const std::string& lang_id)
 	Player::LoadDatabase();
 
 	// Rewrite our database+messages (unless we are on the Default language).
-	// Note that map Message boxes are changed on map load, to avoid slowdown here.	
+	// Note that map Message boxes are changed on map load, to avoid slowdown here.
 	if (!current_language.empty()) {
 		RewriteDatabase();
 		RewriteTreemapNames();
@@ -179,7 +179,7 @@ bool Translation::ParseLanguageFiles(const std::string& lang_id)
 			continue;
 		}
 
-		auto is = FileFinder::OpenInputStream(language_tree.FindFile(tr_name.first));
+		auto is = FileFinder::Game().OpenInputStream(language_tree.FindFile(tr_name.first));
 
 		if (tr_name.first == TRFILE_RPG_RT_LDB) {
 			sys = std::make_unique<Dictionary>();
@@ -341,7 +341,7 @@ namespace {
 		/**
 		 * Add each line of a [ShowMessage,ShowMessage_2,...] chain to "msg_str" (followed by a newline)
 		 * and save to "indexes" the index of each ShowMessage(2) command that was used to populate this
-		 * (for rewriting later). 
+		 * (for rewriting later).
 		 * Advances the index until after the last ShowMessage(2) command
 		 */
 		void BuildMessageString(std::stringstream& msg_str, std::vector<size_t>& indexes) {
@@ -501,7 +501,7 @@ std::vector<std::vector<std::string>> Translation::TranslateMessageStream(const 
 			if (line == TRCUST_REMOVEMSG) {
 				break;
 			}
-		} 
+		}
 
 		// Ensure we never get an empty vector (force using the REMMSG command)
 		for (std::vector<std::string>& msgbox : res) {
@@ -582,7 +582,7 @@ void Translation::RewriteEventCommandMessage(const Dictionary& dict, std::vector
 			std::vector<size_t> choice_indexes; // Number of entries == number of choices
 			commands.BuildChoiceString(choice_str, choice_indexes);
 
-			// Go through choices. 
+			// Go through choices.
 			if (choice_indexes.size()>0) {
 				// Translate, break back into lines.
 				std::vector<std::vector<std::string>> msgs = TranslateMessageStream(dict, choice_str, '\n');

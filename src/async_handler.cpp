@@ -86,7 +86,7 @@ namespace {
 
 void AsyncHandler::CreateRequestMapping(const std::string& file) {
 #ifdef EMSCRIPTEN
-	auto f = FileFinder::OpenInputStream(file);
+	auto f = FileFinder::Game().OpenInputStream(file);
 	picojson::value v;
 	picojson::parse(v, f);
 

@@ -700,7 +700,7 @@ void Player::CreateGameObjects() {
 	bool no_rtp_warning_flag = false;
 	{ // Scope lifetime of variables for ini parsing
 		std::string ini_file = FileFinder::FindDefault(INI_NAME);
-		auto ini_stream = FileFinder::OpenInputStream(ini_file, std::ios::ios_base::in);
+		auto ini_stream = FileFinder::Game().OpenInputStream(ini_file, std::ios::ios_base::in);
 		lcf::INIReader ini(ini_stream);
 		if (ini.ParseError() != -1) {
 			std::string title = ini.Get("RPG_RT", "GameTitle", GAME_TITLE);
@@ -789,7 +789,7 @@ void Player::CreateGameObjects() {
 		// a ExFont can be manually bundled there)
 		std::string exep = FileFinder::FindDefault(EXE_NAME);
 		if (!exep.empty()) {
-			auto exesp = FileFinder::OpenInputStream(exep);
+			auto exesp = FileFinder::Game().OpenInputStream(exep);
 			if (exesp) {
 				Output::Debug("Loading ExFont from {}", exep);
 				EXEReader exe_reader = EXEReader(exesp);
@@ -803,7 +803,7 @@ void Player::CreateGameObjects() {
 	}
 #endif
 	if (!exfont_file.empty()) {
-		auto exfont_stream = FileFinder::OpenInputStream(exfont_file);
+		auto exfont_stream = FileFinder::Game().OpenInputStream(exfont_file);
 		if (exfont_stream) {
 			Output::Debug("Using custom ExFont: {}", exfont_file);
 			Cache::exfont_custom = Utils::ReadStream(exfont_stream);
@@ -902,7 +902,7 @@ void Player::LoadDatabase() {
 
 	if (is_easyrpg_project) {
 		std::string edb = FileFinder::FindDefault(DATABASE_NAME_EASYRPG);
-		auto edb_stream = FileFinder::OpenInputStream(edb, std::ios::ios_base::in );
+		auto edb_stream = FileFinder::Game().OpenInputStream(edb, std::ios::ios_base::in );
 		auto db = lcf::LDB_Reader::LoadXml(edb_stream);
 		if (!db) {
 			Output::ErrorStr(lcf::LcfReader::GetError());
@@ -911,7 +911,7 @@ void Player::LoadDatabase() {
 		}
 
 		std::string emt = FileFinder::FindDefault(TREEMAP_NAME_EASYRPG);
-		auto emt_stream = FileFinder::OpenInputStream(emt, std::ios::ios_base::in);
+		auto emt_stream = FileFinder::Game().OpenInputStream(emt, std::ios::ios_base::in);
 		auto treemap = lcf::LMT_Reader::LoadXml(emt_stream);
 		if (!treemap) {
 			Output::ErrorStr(lcf::LcfReader::GetError());
@@ -923,7 +923,7 @@ void Player::LoadDatabase() {
 		std::string ldb = FileFinder::FindDefault(fileext_map.MakeFilename(RPG_RT_PREFIX, SUFFIX_LDB));
 		std::string lmt = FileFinder::FindDefault(fileext_map.MakeFilename(RPG_RT_PREFIX, SUFFIX_LMT));
 
-		auto ldb_stream = FileFinder::OpenInputStream(ldb);
+		auto ldb_stream = FileFinder::Game().OpenInputStream(ldb);
 		auto db = lcf::LDB_Reader::Load(ldb_stream, encoding);
 		if (!db) {
 			Output::ErrorStr(lcf::LcfReader::GetError());
@@ -931,7 +931,7 @@ void Player::LoadDatabase() {
 			lcf::Data::data = std::move(*db);
 		}
 
-		auto lmt_stream = FileFinder::OpenInputStream(lmt);
+		auto lmt_stream = FileFinder::Game().OpenInputStream(lmt);
 		auto treemap = lcf::LMT_Reader::Load(lmt_stream, encoding);
 		if (!treemap) {
 			Output::ErrorStr(lcf::LcfReader::GetError());
@@ -984,7 +984,7 @@ void Player::LoadSavegame(const std::string& save_name, int save_id) {
 		static_cast<Scene_Title*>(title_scene.get())->OnGameStart();
 	}
 
-	auto save_stream = FileFinder::OpenInputStream(save_name);
+	auto save_stream = FileFinder::Save().OpenInputStream(save_name);
 	std::unique_ptr<lcf::rpg::Save> save = lcf::LSD_Reader::Load(save_stream, encoding);
 
 	if (!save.get()) {
@@ -1128,7 +1128,7 @@ std::string Player::GetEncoding() {
 	// command line > ini > detection > current locale
 	if (encoding.empty()) {
 		std::string ini = FileFinder::FindDefault(INI_NAME);
-		auto ini_stream = FileFinder::OpenInputStream(ini);
+		auto ini_stream = FileFinder::Game().OpenInputStream(ini);
 		encoding = lcf::ReaderUtil::GetEncoding(ini_stream);
 	}
 
@@ -1136,7 +1136,7 @@ std::string Player::GetEncoding() {
 		encoding = "";
 
 		std::string ldb = FileFinder::FindDefault(fileext_map.MakeFilename(RPG_RT_PREFIX, SUFFIX_LDB));
-		auto ldb_stream = FileFinder::OpenInputStream(ldb);
+		auto ldb_stream = FileFinder::Game().OpenInputStream(ldb);
 		std::vector<std::string> encodings = lcf::ReaderUtil::DetectEncodings(ldb_stream);
 
 #ifndef EMSCRIPTEN

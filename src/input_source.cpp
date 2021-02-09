@@ -80,7 +80,7 @@ void Input::UiSource::UpdateSystem() {
 
 Input::LogSource::LogSource(const char* log_path, ButtonMappingArray buttons, DirectionMappingArray directions)
 	: Source(std::move(buttons), std::move(directions)),
-	log_file(FileFinder::OpenInputStream(log_path, std::ios::in))
+	log_file(FileFinder::Root().OpenInputStream(log_path, std::ios::in))
 {
 	std::string header = Utils::ReadLine(log_file);
 	if (StringView(header).starts_with("H EasyRPG")) {
@@ -140,7 +140,7 @@ bool Input::Source::InitRecording(const std::string& record_to_path) {
 	if (!record_to_path.empty()) {
 		auto path = record_to_path.c_str();
 
-		record_log = std::make_unique<Filesystem_Stream::OutputStream>(FileFinder::OpenOutputStream(path, std::ios::out | std::ios::trunc));
+		record_log = std::make_unique<Filesystem_Stream::OutputStream>(FileFinder::Root().OpenOutputStream(path, std::ios::out | std::ios::trunc));
 
 		if (!record_log) {
 			Output::Warning("Failed to open file {} for input recording : {}", path, strerror(errno));
