@@ -534,12 +534,14 @@ check_PROGRAMS = test_runner
 test_runner_SOURCES = \
 	tests/doctest.h \
 	tests/test_main.cpp \
+	tests/algo.cpp \
+	tests/attroni.cpp \
 	tests/bitmapfont.cpp \
 	tests/config_param.cpp \
-	tests/directorytree.cpp \
 	tests/drawable_list.cpp \
 	tests/drawable_mgr.cpp \
 	tests/filefinder.cpp \
+	tests/filesystem.cpp \
 	tests/font.cpp \
 	tests/output.cpp \
 	tests/parse.cpp \
@@ -551,6 +553,7 @@ test_runner_SOURCES = \
 	tests/utf.cpp \
 	tests/variables.cpp \
 	tests/wordwrap.cpp
+	
 test_runner_CXXFLAGS = \
 	$(libeasyrpg_player_a_CXXFLAGS) -DEP_TEST_PATH=\"$(srcdir)/tests\"
 test_runner_LDADD = \
