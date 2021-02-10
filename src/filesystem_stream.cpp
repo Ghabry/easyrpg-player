@@ -58,3 +58,38 @@ Filesystem_Stream::OutputStream& Filesystem_Stream::OutputStream::operator=(Outp
 	os.set_rdbuf(nullptr);
 	return os;
 }
+
+void Filesystem_Stream::InputStreamBuf::EmptyBuffer() {
+	setg(eback(), egptr(), egptr());
+}
+
+void Filesystem_Stream::InputStreamBuf::Filled(size_t bytes) {
+
+}
+
+std::size_t Filesystem_Stream::InputStreamBuf::Size() {
+	return egptr() - eback();
+}
+
+std::size_t Filesystem_Stream::InputStreamBuf::Remaining() {
+	return egptr() - gptr();
+}
+
+std::streambuf::pos_type Filesystem_Stream::InputStreamBuf::seekoff(std::streambuf::off_type offset, std::ios_base::seekdir dir, std::ios_base::openmode mode) {
+	bool empty = (gptr() == egptr());
+
+	if (dir == std::ios_base::cur) {
+		gbump(offset);
+	} else if (dir == std::ios_base::end) {
+		setg(eback(), egptr() + offset, egptr());
+	} else if (dir == std::ios_base::beg) {
+		setg(eback(), eback() + offset, egptr());
+	}
+
+	auto ret = gptr() - eback();
+	if (empty) {
+		EmptyBuffer();
+	}
+
+	return ret;
+}

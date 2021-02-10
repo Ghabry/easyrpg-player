@@ -36,41 +36,34 @@ static const uint32_t localHeader = 0x04034b50;
 static const uint32_t localHeaderSize = 30;
 
 // Streambuffer for storage method
-class ZIPFilesystem::StorageIStreambuf : public std::streambuf {
+class ZIPFilesystem::StorageIStreambuf : public Filesystem_Stream::InputStreamBuf {
 	public:
-		StorageIStreambuf(StreamPoolEntry *backingStream, uint32_t fileoffset, uint32_t filelength):
-		m_fileoffset(fileoffset),m_filelength(filelength),m_buffer(bufsize),m_remaining(filelength){
-			assert(backingStream);
-			assert(!backingStream->used);
+		StorageIStreambuf(StreamPoolEntry* backing_stream, uint32_t fileoffset, uint32_t filelength):
+				Filesystem_Stream::InputStreamBuf(), fileoffset(fileoffset), filelength(filelength) {
+			assert(backing_stream);
+			assert(!backing_stream->used);
 			// Use the provided buffer
-			m_backingStream = backingStream;
-			m_backingStream->used = true;
+			this->backing_stream = backing_stream;
+			backing_stream->used = true;
 			// seek to the beginning of the file
-			m_backingStream->stream.rdbuf()->pubseekpos(fileoffset, std::ios_base::in);
+			backing_stream->stream.rdbuf()->pubseekpos(fileoffset, std::ios_base::in);
 			// the buffer is empty at the start
-			setg(&m_buffer[0], &m_buffer[0] + bufsize, &m_buffer[0] + bufsize);
+			EmptyBuffer();
 		}
 		virtual ~StorageIStreambuf() {
 			// unuse the provided buffer (free for another zipstream to use)
-			m_backingStream->used = false;
+			backing_stream->used = false;
 		}
 		StorageIStreambuf(StorageIStreambuf const& other) = delete;
 		StorageIStreambuf const& operator=(StorageIStreambuf const& other) = delete;
 
 protected:
+	virtual std::streambuf::int_type underflow() override {
+		int to_read = std::min<int>((fileoffset + filelength) - backing_stream->stream.tellg(), buffer.size());
 
-	virtual std::streambuf::int_type  underflow() override {
-		// either fill the buffer full, or with what is remaining
-		size_t numberOfBytes = bufsize;
-		if (m_remaining < bufsize) {
-			numberOfBytes = m_remaining;
-		}
-		size_t bytesRead = m_backingStream->stream.rdbuf()->sgetn(&m_buffer[0], numberOfBytes);
-		if (bytesRead > 0) {
-			// Now there are some bytes less remaining
-			m_remaining = m_remaining - bytesRead;
-			// And reset the bufferpositions
-			setg(&m_buffer[0], &m_buffer[0], &m_buffer[0] + bytesRead);
+		size_t bytes_read = backing_stream->stream.rdbuf()->sgetn(&buffer[0], to_read);
+		if (bytes_read > 0) {
+			setg(&buffer[0], &buffer[0], &buffer[0] + bytes_read);
 			return traits_type::to_int_type(*gptr());
 		}
 		else {
@@ -78,75 +71,33 @@ protected:
 		}
 	}
 
-	virtual std::streambuf::pos_type seekoff(std::streambuf::off_type offset, std::ios_base::seekdir way, std::ios_base::openmode mode) override{
-		std::streambuf::off_type position = 0;
-		switch (way) {
-			case std::ios_base::cur:
-				position = (m_filelength - (m_remaining + (egptr() - gptr()))) + offset;
-				break;
-			case std::ios_base::beg:
-				position = offset;
-				break;
-			case std::ios_base::end:
-				position = m_filelength + offset;
-				break;
-			default:
-				// Fixes clang warning "enumeration value '_S_ios_seekdir_end' not handled in switch"
-				assert(false);
-				break;
-		}
-		if (position < 0) {
-			position = 0;
-		}
-		else if (position >m_filelength) {
-			position = m_filelength;
-		}
+	virtual std::streambuf::pos_type seekpos(std::streambuf::pos_type pos, std::ios_base::openmode mode) override {
+		std::streambuf::pos_type position = Utils::Clamp<std::streambuf::pos_type>(fileoffset, fileoffset + pos, fileoffset + filelength);
 
-		return seekpos(position, mode);
+		EmptyBuffer();
+
+		return backing_stream->stream.rdbuf()->pubseekpos(position, mode) - fileoffset;
 	}
 
-	virtual std::streambuf::pos_type seekpos(std::streambuf::pos_type pos,  std::ios_base::openmode mode) override {
-		std::streambuf::pos_type position = m_fileoffset+pos;
-
-		if (position < m_fileoffset) {
-			position = m_fileoffset;
-		}
-		else if (position > m_fileoffset + m_filelength) {
-			position = m_fileoffset + m_filelength;
-		}
-
-		m_remaining = (m_fileoffset + m_filelength) - position;
-		// empty buffer
-		setg(&m_buffer[0], &m_buffer[0] + bufsize, &m_buffer[0] + bufsize);
-
-		return m_backingStream->stream.rdbuf()->pubseekpos(position, mode)- m_fileoffset;
-	}
-
-	StreamPoolEntry *m_backingStream;
-	std::streampos m_fileoffset;
-	std::streamoff m_filelength;
-private:
-	static const int bufsize = 128;
-	std::vector<char> m_buffer;
-	std::streamoff m_remaining;
-
+	StreamPoolEntry* backing_stream;
+	std::streampos fileoffset;
+	std::streamoff filelength;
 };
-
 
 // Streambuffer for deflate method
 class ZIPFilesystem::DeflateIStreambuf : public std::streambuf {
 public:
 	DeflateIStreambuf(StreamPoolEntry *backingStream, uint32_t fileoffset, uint32_t filelength, uint32_t compressedLength) :
-		m_fileoffset(fileoffset), m_filelength(filelength), m_compressedFilelength(compressedLength),
+		fileoffset(fileoffset), filelength(filelength), m_compressedFilelength(compressedLength),
 		m_inbuffer(bufsize), m_outbuffer(bufsize),
-		m_remaining(filelength), m_remainingCompressed(compressedLength) {
+		remaining(filelength), remainingCompressed(compressedLength) {
 		assert(backingStream);
 		assert(!backingStream->used);
 		// Use the provided buffer
-		m_backingStream = backingStream;
-		m_backingStream->used = true;
+		backing_stream = backingStream;
+		backing_stream->used = true;
 		// seek to the beginning of the file
-		m_backingStream->stream.rdbuf()->pubseekpos(fileoffset);
+		backing_stream->stream.rdbuf()->pubseekpos(fileoffset);
 		zlibstream.zalloc = Z_NULL;
 		zlibstream.zfree = Z_NULL;
 		zlibstream.opaque = Z_NULL;
@@ -159,7 +110,7 @@ public:
 	virtual ~DeflateIStreambuf() {
 		// unuse the provided buffer (free for another zipstream to use)
 		inflateEnd(&zlibstream);
-		m_backingStream->used = false;
+		backing_stream->used = false;
 	}
 	DeflateIStreambuf(DeflateIStreambuf const& other) = delete;
 	DeflateIStreambuf const& operator=(StorageIStreambuf const& other) = delete;
@@ -169,8 +120,8 @@ protected:
 	virtual std::streambuf::int_type underflow() override {
 		// either fill the buffer full, or with what is remaining
 		size_t numberOfBytes = bufsize;
-		if (m_remaining < bufsize) {
-			numberOfBytes = m_remaining;
+		if (remaining < bufsize) {
+			numberOfBytes = remaining;
 		}
 		zlibstream.avail_out = numberOfBytes; // We want to decompress bufsize bytes
 		zlibstream.next_out = reinterpret_cast<Bytef *>(&m_outbuffer[0]); // Where to store decompressed data
@@ -179,12 +130,12 @@ protected:
 		while (zlibstream.avail_out > 0 && zlib_error == Z_OK) {
 			if (zlibstream.avail_in==0) { // if there is no data to decompress
 				size_t numberOfInBytes = bufsize;
-				if (m_remainingCompressed < bufsize) {
-					numberOfInBytes = m_remainingCompressed;
+				if (remainingCompressed < bufsize) {
+					numberOfInBytes = remainingCompressed;
 				}
 				// fill the complete inbuffer
-				size_t bytesRead = m_backingStream->stream.rdbuf()->sgetn(&m_inbuffer[0], numberOfInBytes);
-				m_remainingCompressed -= bytesRead;
+				size_t bytesRead = backing_stream->stream.rdbuf()->sgetn(&m_inbuffer[0], numberOfInBytes);
+				remainingCompressed -= bytesRead;
 				// see how much we really filled
 				zlibstream.avail_in = bytesRead;
 				zlibstream.next_in = reinterpret_cast<Bytef*>(&m_inbuffer[0]);
@@ -201,7 +152,7 @@ protected:
 
 		if (bytesRead > 0) {
 			// Now there are some bytes less remaining
-			m_remaining = m_remaining - bytesRead;
+			remaining = remaining - bytesRead;
 			// And reset the bufferpositions
 			setg(&m_outbuffer[0], &m_outbuffer[0], &m_outbuffer[0] + bytesRead);
 			return traits_type::to_int_type(*gptr());
@@ -219,13 +170,13 @@ protected:
 		std::streambuf::off_type position = 0;
 		switch (way) {
 			case std::ios_base::cur:
-				position = ( m_filelength - (m_remaining+(egptr()-gptr()))) + offset;
+				position = ( filelength - (remaining+(egptr()-gptr()))) + offset;
 				break;
 			case std::ios_base::beg:
 				position = offset;
 				break;
 			case std::ios_base::end:
-				position = m_filelength + offset;
+				position = filelength + offset;
 				break;
 			default:
 				// Fixes clang warning "enumeration value '_S_ios_seekdir_end' not handled in switch"
@@ -235,8 +186,8 @@ protected:
 		if (position < 0) {
 			position = 0;
 		}
-		else if (position >m_filelength) {
-			position = m_filelength;
+		else if (position >filelength) {
+			position = filelength;
 		}
 
 		return seekpos(position,mode);
@@ -244,18 +195,18 @@ protected:
 
 	virtual std::streambuf::pos_type seekpos(std::streambuf::pos_type pos, std::ios_base::openmode) override {
 		// Random access won't work on compressed files -> we must decompress from the beginning to the absolute position
-		std::streambuf::pos_type position = m_fileoffset + pos;
+		std::streambuf::pos_type position = fileoffset + pos;
 
-		if (position < m_fileoffset) {
-			position = m_fileoffset;
+		if (position < fileoffset) {
+			position = fileoffset;
 		}
-		else if (position > m_fileoffset + m_filelength) {
-			position = m_fileoffset + m_filelength;
+		else if (position > fileoffset + filelength) {
+			position = fileoffset + filelength;
 		}
 
-		std::streamoff new_offset = position - m_fileoffset;
-		std::streamoff old_offset = (m_filelength - (m_remaining + (egptr() - gptr())));
-		std::streamoff first_buffer_entry = (m_filelength - (m_remaining + (egptr() - eback())));
+		std::streamoff new_offset = position - fileoffset;
+		std::streamoff old_offset = (filelength - (remaining + (egptr() - gptr())));
+		std::streamoff first_buffer_entry = (filelength - (remaining + (egptr() - eback())));
 
 		if (new_offset < old_offset) {
 			if (new_offset >= first_buffer_entry) {
@@ -269,27 +220,27 @@ protected:
 		}
 
 		// now underflow till the position we want to reach is inside the outbuffer
-		while ((new_offset  ) >= (m_filelength - m_remaining) && !(m_remaining==0&& new_offset== m_filelength) ) {
+		while ((new_offset  ) >= (filelength - remaining) && !(remaining==0&& new_offset== filelength) ) {
 			underflow();
 		}
-		first_buffer_entry = (m_filelength - (m_remaining + (egptr() - eback())));
+		first_buffer_entry = (filelength - (remaining + (egptr() - eback())));
 
 		// Now set the current pointer to that position
 		setg(&m_outbuffer[0], &m_outbuffer[0] + (new_offset - first_buffer_entry), egptr());
 
-		return position - m_fileoffset;
+		return position - fileoffset;
 	}
 
-	StreamPoolEntry *m_backingStream;
-	std::streampos m_fileoffset;
-	std::streamoff m_filelength;
+	StreamPoolEntry *backing_stream;
+	std::streampos fileoffset;
+	std::streamoff filelength;
 	std::streamoff m_compressedFilelength;
 private:
 
 	void resetStream() {
-		m_remaining = m_filelength;
-		m_remainingCompressed = m_compressedFilelength;
-		m_backingStream->stream.rdbuf()->pubseekpos(m_fileoffset);
+		remaining = filelength;
+		remainingCompressed = m_compressedFilelength;
+		backing_stream->stream.rdbuf()->pubseekpos(fileoffset);
 		zlibstream.next_in = reinterpret_cast<Bytef*>(&m_inbuffer[0]);
 		zlibstream.avail_in = 0;
 		inflateReset(&zlibstream);
@@ -299,8 +250,8 @@ private:
 	static const int bufsize = 128;
 	std::vector<char> m_inbuffer;
 	std::vector<char> m_outbuffer;
-	std::streamoff m_remaining;
-	std::streamoff m_remainingCompressed;
+	std::streamoff remaining;
+	std::streamoff remainingCompressed;
 
 	z_stream zlibstream;
 
