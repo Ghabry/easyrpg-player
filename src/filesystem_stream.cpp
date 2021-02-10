@@ -59,37 +59,64 @@ Filesystem_Stream::OutputStream& Filesystem_Stream::OutputStream::operator=(Outp
 	return os;
 }
 
-void Filesystem_Stream::InputStreamBuf::EmptyBuffer() {
-	setg(eback(), egptr(), egptr());
+Filesystem_Stream::InputStreamBuf::InputStreamBuf() : std::streambuf() {
+	buffer.resize(4096);
+}
+
+void Filesystem_Stream::InputStreamBuf::Invalidate() {
+	char* char_buffer = reinterpret_cast<char*>(buffer.data());
+	setg(char_buffer, char_buffer + buffer.size(), char_buffer + buffer.size());
 }
 
 void Filesystem_Stream::InputStreamBuf::Filled(size_t bytes) {
-
+	char* char_buffer = reinterpret_cast<char*>(buffer.data());
+	setg(char_buffer, char_buffer, char_buffer + bytes);
 }
 
-std::size_t Filesystem_Stream::InputStreamBuf::Size() {
-	return egptr() - eback();
+std::streambuf::int_type Filesystem_Stream::InputStreamBuf::underflow() {
+	auto bytes_read = FillBuffer(buffer.data(), buffer.size());
+	char* char_buffer = reinterpret_cast<char*>(buffer.data());
+	assert(bytes_read <= buffer.size());
+	if (bytes_read == 0) {
+		return traits_type::eof();
+	} else if (bytes_read > 0) {
+		Filled(bytes_read);
+	}
+	else {
+		Invalidate();
+	}
+	return bytes_read;
 }
 
-std::size_t Filesystem_Stream::InputStreamBuf::Remaining() {
-	return egptr() - gptr();
-}
-
-std::streambuf::pos_type Filesystem_Stream::InputStreamBuf::seekoff(std::streambuf::off_type offset, std::ios_base::seekdir dir, std::ios_base::openmode mode) {
-	bool empty = (gptr() == egptr());
-
+std::streambuf::pos_type Filesystem_Stream::InputStreamBuf::seekoff(std::streambuf::off_type offset, std::ios_base::seekdir dir, std::ios_base::openmode) {
 	if (dir == std::ios_base::cur) {
-		gbump(offset);
+		int after = gptr() - egptr() + offset;
+		int before = gptr() - eback() + offset;
+
+		if (after > 0) {
+			Invalidate();
+			cur_pos = Seek(after, dir);
+		}
+		else if (before > 0) {
+			Invalidate();
+			cur_pos = Seek(-before, dir);
+		} else {
+			gbump(offset);
+			cur_pos += offset;
+		}
 	} else if (dir == std::ios_base::end) {
-		setg(eback(), egptr() + offset, egptr());
+		// FIXME: Seek end can be buffered
+		Invalidate();
+		cur_pos = Seek(offset, dir);
 	} else if (dir == std::ios_base::beg) {
-		setg(eback(), eback() + offset, egptr());
+		// FIXME: Seek beg can be buffered
+		Invalidate();
+		cur_pos = Seek(offset, dir);
 	}
 
-	auto ret = gptr() - eback();
-	if (empty) {
-		EmptyBuffer();
-	}
+	return cur_pos;
+}
 
-	return ret;
+std::streambuf::pos_type Filesystem_Stream::InputStreamBuf::seekpos(std::streambuf::pos_type pos, std::ios_base::openmode mode) {
+	return seekoff(pos, std::ios_base::beg, mode);
 }

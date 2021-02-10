@@ -60,19 +60,26 @@ namespace Filesystem_Stream {
 
 	class InputStreamBuf : public std::streambuf {
 	public:
-		explicit InputStreamBuf() : std::streambuf() {}
+		explicit InputStreamBuf();
 		InputStreamBuf(InputStreamBuf const& other) = delete;
 		InputStreamBuf const& operator=(InputStreamBuf const& other) = delete;
 
 	protected:
-		void Empty();
+		std::streambuf::int_type underflow() override;
+		std::streambuf::pos_type seekoff(std::streambuf::off_type offset, std::ios_base::seekdir dir, std::ios_base::openmode mode) override;
+		std::streambuf::pos_type seekpos(std::streambuf::pos_type pos, std::ios_base::openmode mode) override;
+
+		void Invalidate();
 		void Filled(size_t bytes);
-		std::size_t Size();
-		std::size_t Remaining();
 
-		virtual std::streambuf::pos_type seekoff(std::streambuf::off_type offset, std::ios_base::seekdir dir, std::ios_base::openmode mode) override;
+		virtual std::streambuf::int_type FillBuffer(uint8_t* buffer, int size) = 0;
+		virtual std::streambuf::pos_type Seek(std::streamoff offset, std::ios_base::seekdir dir) = 0;
 
-		std::array<char, 4096> buffer;
+		std::vector<uint8_t> buffer;
+
+	private:
+		std::streambuf::pos_type cur_pos = 0;
+		bool initial_fill = false;
 	};
 
 	static constexpr std::ios_base::seekdir CSeekdirToCppSeekdir(int origin);

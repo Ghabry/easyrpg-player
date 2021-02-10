@@ -46,37 +46,38 @@ class ZIPFilesystem::StorageIStreambuf : public Filesystem_Stream::InputStreamBu
 			this->backing_stream = backing_stream;
 			backing_stream->used = true;
 			// seek to the beginning of the file
-			backing_stream->stream.rdbuf()->pubseekpos(fileoffset, std::ios_base::in);
-			// the buffer is empty at the start
-			EmptyBuffer();
+			backing_stream->stream.seekg(fileoffset, std::ios_base::beg);
+
+			auto count = FillBuffer(buffer.data(), buffer.size());
+			Filled(count);
 		}
 		virtual ~StorageIStreambuf() {
 			// unuse the provided buffer (free for another zipstream to use)
+			Invalidate();
 			backing_stream->used = false;
 		}
 		StorageIStreambuf(StorageIStreambuf const& other) = delete;
 		StorageIStreambuf const& operator=(StorageIStreambuf const& other) = delete;
 
 protected:
-	virtual std::streambuf::int_type underflow() override {
-		int to_read = std::min<int>((fileoffset + filelength) - backing_stream->stream.tellg(), buffer.size());
-
-		size_t bytes_read = backing_stream->stream.rdbuf()->sgetn(&buffer[0], to_read);
-		if (bytes_read > 0) {
-			setg(&buffer[0], &buffer[0], &buffer[0] + bytes_read);
-			return traits_type::to_int_type(*gptr());
-		}
-		else {
-			return traits_type::eof();
-		}
+	std::streambuf::int_type FillBuffer(uint8_t* buffer, int size) override {
+		int remaining = fileoffset - backing_stream->stream.tellg() + filelength;
+		backing_stream->stream.read(reinterpret_cast<char*>(buffer), std::min<int>(size, remaining));
+		return backing_stream->stream.gcount();
 	}
 
-	virtual std::streambuf::pos_type seekpos(std::streambuf::pos_type pos, std::ios_base::openmode mode) override {
-		std::streambuf::pos_type position = Utils::Clamp<std::streambuf::pos_type>(fileoffset, fileoffset + pos, fileoffset + filelength);
-
-		EmptyBuffer();
-
-		return backing_stream->stream.rdbuf()->pubseekpos(position, mode) - fileoffset;
+	virtual std::streambuf::pos_type Seek(std::streamoff offset, std::ios_base::seekdir dir) override {
+		std::streamoff off;
+		if (dir == std::ios_base::beg) {
+			off = Utils::Clamp<std::streamoff>(0, offset, filelength);
+			backing_stream->stream.seekg(off, dir);
+		} else if (dir == std::ios_base::cur) {
+			off = Utils::Clamp<std::streamoff>(0, backing_stream->stream.tellg() - fileoffset + offset, filelength);
+		} else if (dir == std::ios_base::end) {
+			off = Utils::Clamp<std::streamoff>(0, offset + filelength, filelength);
+		}
+		backing_stream->stream.seekg(off + fileoffset, dir);
+		return backing_stream->stream.tellg() - fileoffset;
 	}
 
 	StreamPoolEntry* backing_stream;
