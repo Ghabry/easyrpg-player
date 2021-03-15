@@ -75,20 +75,19 @@ std::string Scene_Save::GetSaveFilename(const FilesystemView& fs, int slot_id) {
 	return filename;
 }
 
-void Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save) {
+bool Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save) {
 	const auto filename = GetSaveFilename(fs, slot_id);
-
 	auto save_stream = FileFinder::Save().OpenOutputStream(filename);
+
 	if (!save_stream) {
 		Output::Warning("Failed saving to {}", filename);
-		return;
+		return false;
 	}
 
-	Save(save_stream, slot_id, prepare_save);
+	return Save(save_stream, slot_id, prepare_save);
 }
 
-void Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
-
+bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
 	lcf::rpg::Save save;
 	auto& title = save.title;
 	// TODO: Maybe find a better place to setup the save file?
@@ -148,7 +147,7 @@ void Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
 		}
 	}
 	auto lcf_engine = Player::IsRPG2k3() ? lcf::EngineVersion::e2k3 : lcf::EngineVersion::e2k;
-	lcf::LSD_Reader::Save(os, save, lcf_engine, Player::encoding);
+	bool res = lcf::LSD_Reader::Save(os, save, lcf_engine, Player::encoding);
 
 	DynRpg::Save(slot_id);
 
@@ -160,6 +159,7 @@ void Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
 	});
 #endif
 
+	return res;
 }
 
 bool Scene_Save::IsSlotValid(int) {
