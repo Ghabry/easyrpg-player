@@ -21,6 +21,7 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+#include <ctime>
 #include "game_interpreter.h"
 #include "audio.h"
 #include "dynrpg.h"
@@ -43,6 +44,7 @@
 #include "sprite_character.h"
 #include "scene_gameover.h"
 #include "scene_map.h"
+#include "scene_save.h"
 #include "scene.h"
 #include "game_clock.h"
 #include "input.h"
@@ -51,6 +53,7 @@
 #include "player.h"
 #include "util_macro.h"
 #include <lcf/reader_util.h>
+#include <lcf/lsd/reader.h>
 #include "game_battle.h"
 #include "utils.h"
 #include "transition.h"
@@ -3456,12 +3459,73 @@ bool Game_Interpreter::CommandToggleFullscreen(lcf::rpg::EventCommand const& /* 
 	return true;
 }
 
-bool Game_Interpreter::CommandManiacGetSaveInfo(lcf::rpg::EventCommand const&) {
+bool Game_Interpreter::CommandManiacGetSaveInfo(lcf::rpg::EventCommand const& com) {
 	if (!Player::IsPatchManiac()) {
 		return true;
 	}
 
-	Output::Warning("Maniac Patch: Command GetSaveInfo not supported");
+	int save_number = ValueOrVariable(com.parameters[0], com.parameters[1]);
+
+	if (save_number <= 0) {
+		Output::Debug("ManiacGetSaveInfo: Invalid save number {}", save_number);
+		return true;
+	}
+
+	auto tree = FileFinder::CreateSaveDirectoryTree();
+	std::string save_name = Scene_Save::GetSaveFilename(*tree, save_number);
+	auto save = lcf::LSD_Reader::Load(save_name, Player::encoding);
+
+	if (!save) {
+		Output::Debug("ManiacGetSaveInfo: Save not found {}", save_number);
+		return true;
+	}
+
+	std::time_t t = lcf::LSD_Reader::ToUnixTimestamp(save->title.timestamp);
+	std::tm* tm = std::gmtime(&t);
+
+	// YYMMDD
+	Main_Data::game_variables->Set(com.parameters[2], (tm->tm_year - 100) * 10000 + (tm->tm_mon + 1) * 100 + tm->tm_mday);
+	// HHMMSS
+	Main_Data::game_variables->Set(com.parameters[3], tm->tm_hour * 10000 + tm->tm_min * 100 + tm->tm_sec);
+	Main_Data::game_variables->Set(com.parameters[4], save->title.hero_level);
+	Main_Data::game_variables->Set(com.parameters[5], save->title.hero_hp);
+	Game_Map::SetNeedRefresh(true);
+
+	auto face_ids = Utils::MakeArray(save->title.face1_id, save->title.face2_id, save->title.face3_id, save->title.face4_id);
+	auto face_names = Utils::MakeArray(save->title.face1_name, save->title.face2_name, save->title.face3_name, save->title.face4_name);
+
+	for (int i = 0; i <= 3; ++i) {
+		const int param = 8 + i;
+
+		int pic_id = ValueOrVariable(com.parameters[7], com.parameters[param]);
+		if (pic_id <= 0) {
+			Output::Debug("ManiacGetSaveInfo: Invalid picture {}", pic_id);
+		}
+
+		Game_Pictures::ShowParams params = {};
+		params.name = FileFinder::MakePath("..\\FaceSet", face_names[i]);
+		params.position_x = 0;
+		params.position_y = 0;
+		params.magnify = 100;
+		params.top_trans = 0;
+		params.bottom_trans = 0;
+		params.red = 100;
+		params.green = 100;
+		params.blue = 100;
+		params.saturation = 100;
+		params.effect_mode = 0;
+		params.effect_power = 0;
+		params.spritesheet_cols = 4;
+		params.spritesheet_rows = 4;
+		params.spritesheet_frame = face_ids[i];
+		params.spritesheet_speed = 0;
+		params.map_layer = 7;
+		params.battle_layer = 7;
+		// erase_on_map_change | affected_by_flash | affected_by_shake
+		int flags = 1 | 32 | 64;
+		Main_Data::game_pictures->Show(pic_id, params);
+	}
+
 	return true;
 }
 
@@ -3484,11 +3548,7 @@ bool Game_Interpreter::CommandManiacLoad(lcf::rpg::EventCommand const&) {
 }
 
 bool Game_Interpreter::CommandManiacEndLoadProcess(lcf::rpg::EventCommand const&) {
-	if (!Player::IsPatchManiac()) {
-		return true;
-	}
-
-	Output::Warning("Maniac Patch: Command EndLoadProcess not supported");
+	// no-op
 	return true;
 }
 
