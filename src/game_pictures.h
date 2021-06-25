@@ -78,6 +78,8 @@ public:
 	void Show(int id, const ShowParams& params);
 	void Move(int id, const MoveParams& params);
 	void Erase(int id);
+	bool Exists(int id);
+	void ReplaceName(int id, std::string new_name);
 
 	void Update(bool is_battle);
 
@@ -105,6 +107,7 @@ public:
 		bool Show(const ShowParams& params);
 		void Move(const MoveParams& params);
 		void Erase();
+		bool Exists() const;
 
 		void OnPictureSpriteReady();
 		void OnMapScrolled(int dx, int dy);

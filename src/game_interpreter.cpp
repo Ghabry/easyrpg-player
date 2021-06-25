@@ -3535,7 +3535,7 @@ bool Game_Interpreter::CommandManiacGetSaveInfo(lcf::rpg::EventCommand const& co
 	auto face_ids = Utils::MakeArray(save->title.face1_id, save->title.face2_id, save->title.face3_id, save->title.face4_id);
 	auto face_names = Utils::MakeArray(save->title.face1_name, save->title.face2_name, save->title.face3_name, save->title.face4_name);
 
-	for (int i = 0; i <= 3; ++i) {
+	for (int i = 0; i <= static_cast<int>(face_ids.size()); ++i) {
 		const int param = 8 + i;
 
 		int pic_id = ValueOrVariable(com.parameters[7], com.parameters[param]);
@@ -3543,25 +3543,36 @@ bool Game_Interpreter::CommandManiacGetSaveInfo(lcf::rpg::EventCommand const& co
 			Output::Debug("ManiacGetSaveInfo: Invalid picture {}", pic_id);
 		}
 
+		if (face_names[i].empty()) {
+			continue;
+		}
+
+		std::string name = FileFinder::MakePath("..\\FaceSet", face_names[i]);
+		/*if (Main_Data::game_pictures->Exists(pic_id)) {
+			Main_Data::game_pictures->ReplaceName(pic_id, name);
+			return true;
+		}*/
+		auto pic = Main_Data::game_pictures->GetPicture(pic_id).data;
+
 		Game_Pictures::ShowParams params = {};
-		params.name = FileFinder::MakePath("..\\FaceSet", face_names[i]);
-		params.position_x = 0;
-		params.position_y = 0;
-		params.magnify = 100;
-		params.top_trans = 0;
-		params.bottom_trans = 0;
-		params.red = 100;
-		params.green = 100;
-		params.blue = 100;
-		params.saturation = 100;
-		params.effect_mode = 0;
-		params.effect_power = 0;
+		params.name = name;
+		params.position_x = pic.current_x;
+		params.position_y = pic.current_y;
+		params.magnify = pic.current_magnify;
+		params.top_trans = pic.current_top_trans;
+		params.bottom_trans = pic.current_bot_trans;
+		params.red = pic.current_red;
+		params.green = pic.current_green;
+		params.blue = pic.current_blue;
+		params.saturation = pic.current_sat;
+		params.effect_mode = pic.effect_mode;
+		params.effect_power = pic.current_effect_power;
 		params.spritesheet_cols = 4;
 		params.spritesheet_rows = 4;
 		params.spritesheet_frame = face_ids[i];
 		params.spritesheet_speed = 0;
-		params.map_layer = 7;
-		params.battle_layer = 7;
+		params.map_layer = pic.map_layer;
+		params.battle_layer = pic.battle_layer;
 		// erase_on_map_change | affected_by_flash | affected_by_shake
 		int flags = 1 | 32 | 64;
 		Main_Data::game_pictures->Show(pic_id, params);

@@ -298,6 +298,24 @@ void Game_Pictures::Erase(int id) {
 	}
 }
 
+bool Game_Pictures::Exists(int id) {
+	auto* pic = GetPicturePtr(id);
+	if (EP_LIKELY(pic)) {
+		return pic->Exists();
+	}
+	return false;
+}
+
+bool Game_Pictures::Picture::Exists() const {
+	return !data.name.empty();
+}
+
+void Game_Pictures::ReplaceName(int id, std::string new_name) {
+	auto& pic = GetPicture(id);
+	pic.data.name = std::move(new_name);
+	RequestPictureSprite(pic);
+}
+
 void Game_Pictures::RequestPictureSprite(Picture& pic) {
 	const auto& name = pic.data.name;
 	if (name.empty()) return;
