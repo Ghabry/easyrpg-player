@@ -187,7 +187,7 @@ std::unique_ptr<AudioDecoder> AudioDecoder::Create(Filesystem_Stream::InputStrea
 
 	// Test for tracker modules
 #ifdef HAVE_XMP
-	if (XMPDecoder::IsModule(ToString(stream.GetName()))) {
+	if (XMPDecoder::IsModule(stream)) {
 		return add_resampler(std::make_unique<XMPDecoder>());
 	}
 #endif
