@@ -45,6 +45,8 @@ FileFinder_RTP::FileFinder_RTP(bool no_rtp, bool no_rtp_warnings, std::string rt
 		return;
 	}
 
+	return;
+
 	std::string const version_str =	Player::GetEngineVersion();
 	assert(!version_str.empty());
 

@@ -7,6 +7,7 @@
 #include <array>
 #include "bitmapfont_glyph.h"
 
+#if (WANT_BITMAPFONT & BMF_SHINONOME) == BMF_SHINONOME
 constexpr const std::array<BitmapFontGlyph,488> SHINONOME_MINCHO = {{
   { 12354, true, { 8, 208, 62, 72, 248, 328, 556, 554, 530, 266, 196, 0 } },
   { 12356, true, { 0, 0, 1, 194, 258, 514, 530, 778, 524, 8, 0, 0 } },
@@ -497,5 +498,7 @@ constexpr const std::array<BitmapFontGlyph,488> SHINONOME_MINCHO = {{
   { 39822, true, { 132, 156, 138, 1951, 149, 159, 981, 607, 584, 598, 970, 577 } },
   { 40236, true, { 276, 168, 2046, 530, 253, 132, 2044, 4, 1020, 680, 594, 385 } },
 }};
-
+#else
+constexpr const std::array<BitmapFontGlyph,0> SHINONOME_MINCHO;
+#endif
 #endif

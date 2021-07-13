@@ -7,6 +7,7 @@
 #include <array>
 #include "bitmapfont_glyph.h"
 
+#if (WANT_BITMAPFONT & BMF_WQY) == BMF_WQY
 constexpr const std::array<BitmapFontGlyph,20941> BITMAPFONT_WQY = {{
 	{ 32, false, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
 	{ 19968, true, { 0, 0, 0, 0, 512, 2047, 0, 0, 0, 0, 0, 0 } },
@@ -20950,5 +20951,7 @@ constexpr const std::array<BitmapFontGlyph,20941> BITMAPFONT_WQY = {{
 	{ 40906, true, { 136, 2047, 136, 2, 132, 161, 1962, 164, 163, 162, 2034, 0 } },
 	{ 40907, true, { 130, 2036, 143, 2036, 556, 998, 333, 2036, 548, 548, 996, 0 } },
 }};
-
+#else
+constexpr const std::array<BitmapFontGlyph,0> BITMAPFONT_WQY;
+#endif
 #endif

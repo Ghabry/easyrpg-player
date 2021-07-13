@@ -1,7 +1,8 @@
 #ifndef EP_BITMAPFONT_GLYPH_H
 #define EP_BITMAPFONT_GLYPH_H
 
-#include <stdint.h>
+#include <cstdint>
+#include "system.h"
 
 struct BitmapFontGlyph {
 	uint16_t code;

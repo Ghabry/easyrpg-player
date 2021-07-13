@@ -131,3 +131,12 @@
 #if defined(__APPLE__) && defined(__MACH__)
 #include <TargetConditionals.h>
 #endif
+
+//#define WANT_BITMAPFONT_ALL
+#define BMF_SHINONOME 1
+#define BMF_TTYP0 2
+#define BMF_WQY 4
+
+#ifdef WANT_BITMAPFONT_ALL
+#define WANT_BITMAPFONT (BMF_SHINONOME | BMF_TTYP0 | BMF_WQY)
+#endif

@@ -52,7 +52,7 @@ namespace {
 		if(iter != std::end(glyphset) && iter->code == code) {
 			return &*iter;
 		} else {
-			return NULL;
+			return nullptr;
 		}
 	}
 
@@ -60,7 +60,7 @@ namespace {
 	// It tries to display a WenQuanYi glyph, and if it’s not found, returns a replacement glyph.
 	BitmapFontGlyph const* find_fallback_glyph(char32_t code) {
 		auto* wqy = find_glyph(BITMAPFONT_WQY, code);
-		if (wqy != NULL) {
+		if (wqy != nullptr) {
 			return wqy;
 		}
 		else {
@@ -72,27 +72,27 @@ namespace {
 
 	BitmapFontGlyph const* find_gothic_glyph(char32_t code) {
 		auto* gothic = find_glyph(SHINONOME_GOTHIC, code);
-		return gothic != NULL ? gothic : find_fallback_glyph(code);
+		return gothic != nullptr ? gothic : find_fallback_glyph(code);
 	}
 
 	BitmapFontGlyph const* find_mincho_glyph(char32_t code) {
 		auto* mincho = find_glyph(SHINONOME_MINCHO, code);
-		return mincho == NULL ? find_gothic_glyph(code) : mincho;
+		return mincho == nullptr ? find_gothic_glyph(code) : mincho;
 	}
 
 	BitmapFontGlyph const* find_rmg2000_glyph(char32_t code) {
 		auto* rmg2000 = find_glyph(BITMAPFONT_RMG2000, code);
-		if (rmg2000 != NULL) {
+		if (rmg2000 != nullptr) {
 			return rmg2000;
 		}
 
 		auto* ttyp0 = find_glyph(BITMAPFONT_TTYP0, code);
-		return ttyp0 != NULL ? ttyp0 : find_mincho_glyph(code);
+		return ttyp0 != nullptr ? ttyp0 : find_mincho_glyph(code);
 	}
 
 	BitmapFontGlyph const* find_ttyp0_glyph(char32_t code) {
 		auto* ttyp0 = find_glyph(BITMAPFONT_TTYP0, code);
-		return ttyp0 != NULL ? ttyp0 : find_gothic_glyph(code);
+		return ttyp0 != nullptr ? ttyp0 : find_gothic_glyph(code);
 	}
 
 	struct BitmapFont : public Font {

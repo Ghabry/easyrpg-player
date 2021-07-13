@@ -7,6 +7,7 @@
 #include <array>
 #include "bitmapfont_glyph.h"
 
+#if (WANT_BITMAPFONT & BMF_SHINONOME) == BMF_SHINONOME
 constexpr const std::array<BitmapFontGlyph,11071> SHINONOME_GOTHIC = {{
   { 0, false, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } },
   { 1, false, { 0, 4, 4, 14, 14, 31, 31, 14, 14, 4, 4, 0 } },
@@ -11080,5 +11081,7 @@ constexpr const std::array<BitmapFontGlyph,11071> SHINONOME_GOTHIC = {{
   { 65509, true, { 0, 910, 260, 136, 508, 80, 508, 32, 32, 32, 112, 0 } },
   { 65510, true, { 1092, 1092, 1092, 4094, 680, 680, 272, 272, 272, 0, 0, 0 } },
 }};
-
+#else
+constexpr const std::array<BitmapFontGlyph,0> SHINONOME_GOTHIC;
+#endif
 #endif
