@@ -39,14 +39,6 @@ Game_System::Game_System()
 	: dbsys(&lcf::Data::system)
 { }
 
-static int32_t AdjustVolume(int32_t volume) {
-	// Adjust to RPG_RT (Direct Sound) volume scale
-	if (volume > 0) {
-		return static_cast<int32_t>(100 * std::pow(10, (-100 + volume) / 60.0));
-	}
-	return 0;
-}
-
 void Game_System::SetupFromSave(lcf::rpg::SaveSystem save) {
 	data = std::move(save);
 }
@@ -103,7 +95,7 @@ void Game_System::BgmPlay(lcf::rpg::Music const& bgm) {
 		if (!data.music_stopping && previous_music.name == bgm.name) {
 			if (previous_music.volume != data.current_music.volume) {
 				if (!bgm_pending) { // Delay if not ready
-					Audio().BGM_Volume(AdjustVolume(data.current_music.volume));
+					Audio().BGM_Volume(data.current_music.volume);
 				}
 			}
 			if (previous_music.tempo != data.current_music.tempo) {
@@ -538,12 +530,12 @@ void Game_System::OnBgmReady(FileRequestResult* result) {
 		return;
 	}
 
-	Audio().BGM_Play(std::move(stream), AdjustVolume(data.current_music.volume), data.current_music.tempo, data.current_music.fadein);
+	Audio().BGM_Play(std::move(stream), data.current_music.volume, data.current_music.tempo, data.current_music.fadein);
 }
 
 void Game_System::OnBgmInelukiReady(FileRequestResult* result) {
 	bgm_pending = false;
-	Audio().BGM_Play(FileFinder::Game().OpenFile(result->file), AdjustVolume(data.current_music.volume), data.current_music.tempo, data.current_music.fadein);
+	Audio().BGM_Play(FileFinder::Game().OpenFile(result->file), data.current_music.volume, data.current_music.tempo, data.current_music.fadein);
 }
 
 void Game_System::OnSeReady(FileRequestResult* result, lcf::rpg::Sound se, bool stop_sounds) {
@@ -569,7 +561,7 @@ void Game_System::OnSeReady(FileRequestResult* result, lcf::rpg::Sound se, bool 
 		return;
 	}
 
-	Audio().SE_Play(std::move(stream), AdjustVolume(se.volume), se.tempo);
+	Audio().SE_Play(std::move(stream), se.volume, se.tempo);
 }
 
 bool Game_System::IsMessageTransparent() {
