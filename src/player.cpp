@@ -158,6 +158,13 @@ void Player::Init(std::vector<std::string> args) {
 	// Must be called before the first call to Output
 	Graphics::Init();
 
+	lcf::DBString a("bla");
+	lcf::StringView b("blub");
+
+	Output::Debug("=== {:<30} {:<30}", std::string("bla"), "blub");
+
+	Output::Debug("=== {:<30} {:<30}", a, b);
+
 #ifdef _WIN32
 	SetConsoleOutputCP(65001);
 #endif
@@ -1240,7 +1247,7 @@ void Player::SetupBattleTest() {
 		}
 
 		Output::Debug("BattleTest Mode 2k3 troop=({}) background=({}) formation=({}) condition=({}) terrain=({})",
-				args.troop_id, args.background.c_str(), args.formation, args.condition, args.terrain_id);
+				args.troop_id, args.background, static_cast<int>(args.formation), static_cast<int>(args.condition), args.terrain_id);
 	} else {
 		Output::Debug("BattleTest Mode 2k troop=({}) background=({})", args.troop_id, args.background);
 	}
