@@ -40,7 +40,7 @@ static jobject get_jni_handle(const SafFilesystem* fs, StringView path) {
 }
 
 SafFilesystem::SafFilesystem(std::string base_path, FilesystemView parent_fs) : Filesystem(base_path, parent_fs) {
-	// no-op
+	feature_write = true;
 }
 
 bool SafFilesystem::IsFile(StringView path) const {
@@ -283,10 +283,6 @@ bool SafFilesystem::GetDirectoryContent(StringView path, std::vector<DirectoryTr
 	env->DeleteLocalRef(types_arr);
 
 	return true;
-}
-
-bool SafFilesystem::IsFeatureSupported(Filesystem::Feature f) const {
-	return f == Filesystem::Feature::Write;
 }
 
 std::string SafFilesystem::Describe() const {

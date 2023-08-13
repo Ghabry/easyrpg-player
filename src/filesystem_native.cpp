@@ -29,6 +29,7 @@
 #include "platform.h"
 
 NativeFilesystem::NativeFilesystem(std::string base_path, FilesystemView parent_fs) : Filesystem(std::move(base_path), parent_fs) {
+	feature_write = true;
 }
 
 bool NativeFilesystem::IsFile(StringView path) const {
@@ -117,10 +118,6 @@ bool NativeFilesystem::GetDirectoryContent(StringView path, std::vector<Director
 
 bool NativeFilesystem::MakeDirectory(StringView path, bool follow_symlinks) const {
 	return Platform::File(ToString(path)).MakeDirectory(follow_symlinks);
-}
-
-bool NativeFilesystem::IsFeatureSupported(Feature f) const {
-	return f == Filesystem::Feature::Write;
 }
 
 std::string NativeFilesystem::Describe() const {

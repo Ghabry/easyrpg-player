@@ -367,9 +367,9 @@ bool FilesystemView::MakeDirectory(StringView dir, bool follow_symlinks) const {
 	return fs->MakeDirectory(MakePath(dir), follow_symlinks);
 }
 
-bool FilesystemView::IsFeatureSupported(Filesystem::Feature f) const {
+bool FilesystemView::IsWriteSupported() const {
 	assert(fs);
-	return fs->IsFeatureSupported(f);
+	return fs->IsWriteSupported();
 }
 
 FilesystemView FilesystemView::Subtree(StringView sub_path) const {

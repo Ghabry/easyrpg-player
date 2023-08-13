@@ -81,7 +81,7 @@ void FileFinder::SetGameFilesystem(FilesystemView filesystem) {
 FilesystemView FileFinder::Save() {
 	if (save_fs) {
 		// This means the save filesystem was overwritten
-		if (!save_fs.IsFeatureSupported(Filesystem::Feature::Write)) {
+		if (!save_fs.IsWriteSupported()) {
 			Output::Error("{} is not a valid save path (not writable)", GetFullFilesystemPath(save_fs));
 		}
 		return save_fs;
@@ -93,7 +93,7 @@ FilesystemView FileFinder::Save() {
 	}
 
 	// Not overwritten, check if game fs is writable. If not redirect the write operation.
-	if (!game_fs.IsFeatureSupported(Filesystem::Feature::Write)) {
+	if (!game_fs.IsWriteSupported()) {
 		// When the Project path equals the Save path (this means the path was not configured)
 		// and the filesystem has no write support do a redirection to a folder with ".save" appended
 		FilesystemView parent = game_fs;
@@ -106,7 +106,7 @@ FilesystemView FileFinder::Save() {
 			if (!parent) {
 				break;
 			}
-			if (parent.IsFeatureSupported(Filesystem::Feature::Write)) {
+			if (parent.IsWriteSupported()) {
 				comps.back() += ".save";
 				std::reverse(comps.begin(), comps.end());
 				std::string save_path = MakePath(lcf::MakeSpan(comps));

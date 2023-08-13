@@ -146,6 +146,8 @@ public:
 	 */
 	FilesystemView Subtree(std::string sub_path) const;
 
+	bool IsWriteSupported() const;
+
 	// Helper functions for finding files in a case insensitive way
 	/**
 	 * Does a case insensitive search for the file.
@@ -220,7 +222,6 @@ public:
 	virtual bool Exists(StringView path) const = 0;
 	virtual int64_t GetFilesize(StringView path) const = 0;
 	virtual bool MakeDirectory(StringView dir, bool follow_symlinks) const;
-	virtual bool IsFeatureSupported(Feature f) const;
 	virtual std::string Describe() const = 0;
 	/** @} */
 
@@ -245,6 +246,8 @@ protected:
 	friend FilesystemView;
 	friend DirectoryTree;
 	friend RootFilesystem;
+
+	bool feature_write = false;
 
 	std::unique_ptr<DirectoryTree> tree;
 
@@ -462,10 +465,9 @@ public:
 	bool MakeDirectory(StringView dir, bool follow_symlinks) const;
 
 	/**
-	 * @param f Filesystem feature to check
-	 * @return true when the feature is supported.
+	 * @return true when filesystem supports write operations
 	 */
-	bool IsFeatureSupported(Filesystem::Feature f) const;
+	bool IsWriteSupported() const;
 
 	/**
 	 * Creates a new view on the subtree that is rooted at the sub_path.
@@ -501,12 +503,12 @@ inline FilesystemView Filesystem::GetParent() const {
 	return *parent_fs;
 }
 
-inline bool Filesystem::IsFeatureSupported(Filesystem::Feature) const {
-	return false;
+inline bool Filesystem::IsWriteSupported() const {
+	return feature_write;
 }
 
 inline std::streambuf* Filesystem::CreateOutputStreambuffer(StringView, std::ios_base::openmode) const {
-	assert(!IsFeatureSupported(Feature::Write) && "Write supported but CreateOutputStreambuffer not implemented");
+	assert(!feature_write && "Write supported but CreateOutputStreambuffer not implemented");
 	return nullptr;
 }
 
