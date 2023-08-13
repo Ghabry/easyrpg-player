@@ -613,9 +613,12 @@ lcf::rpg::MoveCommand Game_Interpreter::DecodeMove(lcf::DBArray<int32_t>::const_
 
 // Execute Command.
 bool Game_Interpreter::ExecuteCommand() {
-	auto& frame = GetFrame();
-	const auto& com = frame.commands[frame.current_command];
+	auto &frame = GetFrame();
+	const auto &com = frame.commands[frame.current_command];
+	return ExecuteCommand(com);
+}
 
+bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 	switch (static_cast<Cmd>(com.code)) {
 		case Cmd::ShowMessage:
 			return CommandShowMessage(com);
@@ -4626,13 +4629,33 @@ bool Game_Interpreter::CommandManiacSetGameOption(lcf::rpg::EventCommand const&)
 	return true;
 }
 
-bool Game_Interpreter::CommandManiacCallCommand(lcf::rpg::EventCommand const&) {
+bool Game_Interpreter::CommandManiacCallCommand(lcf::rpg::EventCommand const& com) {
 	if (!Player::IsPatchManiac()) {
 		return true;
 	}
 
-	Output::Warning("Maniac Patch: Command CallCommand not supported");
-	return true;
+	lcf::rpg::EventCommand cmd;
+	cmd.indent = com.indent;
+	cmd.string = com.string;
+	cmd.code = ValueOrVariableBitfield(com.parameters[0], 0, com.parameters[1]);
+	Output::Debug("Code {}", cmd.code);
+	std::vector<int32_t> parameters;
+
+	for (size_t i = 2; i < com.parameters.size(); ++i) {
+		parameters.push_back(ValueOrVariableBitfield(com.parameters[0], i - 1, com.parameters[i]));
+		Output::Debug("Arg {} {} {}", i - 2, parameters.back(), com.parameters.size());
+	}
+	parameters.resize(50);
+	cmd.parameters = lcf::DBArray<int32_t>(parameters.begin(), parameters.end());
+
+	/*Output::Debug("Call: {}", com.string);
+	for (auto i: com.parameters) {
+		Output::Debug("Call: {}", i);
+	}*/
+
+
+	//Output::Warning("Maniac Patch: Command CallCommand not supported");
+	return ExecuteCommand(cmd);
 }
 
 Game_Interpreter& Game_Interpreter::GetForegroundInterpreter() {
