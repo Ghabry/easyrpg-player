@@ -35,6 +35,7 @@
 #include "game_message.h"
 #include "game_screen.h"
 #include "game_pictures.h"
+#include "game_variables.h"
 #include "scene_battle.h"
 #include "scene_map.h"
 #include <lcf/lmu/reader.h>
@@ -62,7 +63,13 @@ namespace {
 	lcf::rpg::SaveMapInfo map_info;
 	lcf::rpg::SavePanorama panorama;
 
-	bool need_refresh;
+	enum class Refresh {
+		None,
+		Full,
+		Variable
+	};
+
+	Refresh need_refresh = Refresh::None;
 
 	int animation_type;
 	bool animation_fast;
@@ -87,10 +94,12 @@ namespace {
 
 	// Used when the current map is not in the maptree
 	const lcf::rpg::MapInfo empty_map_info;
+
+	FlatUniqueMultiMap<int,int> variable_events;
 }
 
 namespace Game_Map {
-void SetupCommon();
+	void SetupCommon();
 }
 
 void Game_Map::OnContinueFromBattle() {
@@ -352,9 +361,16 @@ void Game_Map::SetupCommon() {
 
 	// Create the map events
 	events.reserve(map->events.size());
+	variable_events = {};
+	std::stringstream ss;
 	for (const auto& ev : map->events) {
 		events.emplace_back(GetMapId(), &ev);
+		for (auto var: events.back().GetVariableConditions()) {
+			variable_events.Add({var, ev.ID});
+			ss << "(" << var << ", " << ev.ID << ") ";
+		}
 	}
+	Output::Debug("Variables: {}", ss.str());
 }
 
 void Game_Map::PrepareSave(lcf::rpg::Save& save) {
@@ -416,13 +432,36 @@ std::vector<uint8_t> Game_Map::GetTilesLayer(int layer) {
 }
 
 void Game_Map::Refresh() {
+	assert(need_refresh != Refresh::None);
+
 	if (GetMapId() > 0) {
-		for (Game_Event& ev : events) {
-			ev.RefreshPage();
+		switch (need_refresh) {
+			case Refresh::Full:
+				//Output::Debug("Normal refresh");
+				for (Game_Event& ev : events) {
+					ev.RefreshPage();
+				}
+				break;
+			case Refresh::Variable: {
+				/*const auto& var_ids = Main_Data::game_variables->written;
+				for (auto var_id: var_ids) {
+					for (auto it = variable_events.LowerBound(var_id); it != variable_events.end() && it->first == var_id; ++it) {
+						Output::Debug("Refreshing {}", it->second);
+						events[it->second - 1].RefreshPage();
+					}
+				}*/
+				for (Game_Event& ev : events) {
+					ev.RefreshPage();
+				}
+				break;
+			}
+			default:
+				break;
 		}
 	}
 
-	need_refresh = false;
+	Main_Data::game_variables->written.clear();
+	need_refresh = Refresh::None;
 }
 
 Game_Interpreter_Map& Game_Map::GetInterpreter() {
@@ -1427,11 +1466,30 @@ void Game_Map::SetPositionY(int y, bool reset_panorama) {
 }
 
 bool Game_Map::GetNeedRefresh() {
-	return need_refresh;
+	return need_refresh != Refresh::None;
 }
 
 void Game_Map::SetNeedRefresh(bool refresh) {
-	need_refresh = refresh;
+	need_refresh = refresh ? Refresh::Full : Refresh::None;
+}
+
+void Game_Map::TriggerVariableRefresh() {
+	if (need_refresh != Refresh::None) {
+		return;
+	}
+
+	//Output::Debug("Trigger refresh");
+
+	auto& vars = Main_Data::game_variables->written;
+	for (auto var_id: vars) {
+		if (variable_events.Has(var_id)) {
+			Output::Debug("Trigger refresh {}", var_id);
+			need_refresh = Refresh::Variable;
+			return;
+		}
+	}
+
+	Main_Data::game_variables->written.clear();
 }
 
 std::vector<unsigned char>& Game_Map::GetPassagesDown() {

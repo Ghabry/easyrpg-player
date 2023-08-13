@@ -139,6 +139,8 @@ public:
 	Var_t GetMinValue() const;
 
 	int GetMaxDigits() const;
+
+	std::vector<int> written;
 private:
 	bool ShouldWarn(int first_id, int last_id) const;
 	void WarnGet(int variable_id) const;

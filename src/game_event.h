@@ -125,6 +125,8 @@ public:
 	 */
 	AsyncOp Update(bool resume_async);
 
+	std::vector<int> GetVariableConditions() const;
+
 	bool AreConditionsMet(const lcf::rpg::EventPage& page);
 
 	/**

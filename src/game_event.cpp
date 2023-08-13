@@ -239,6 +239,16 @@ void Game_Event::RefreshPage() {
 	}
 }
 
+std::vector<int> Game_Event::GetVariableConditions() const {
+	std::vector<int> out;
+	for (const auto& page: event->pages) {
+		if (page.condition.flags.variable) {
+			out.push_back(page.condition.variable_id);
+		}
+	}
+	return out;
+}
+
 bool Game_Event::AreConditionsMet(const lcf::rpg::EventPage& page) {
 	// First switch (A)
 	if (page.condition.flags.switch_a && !Main_Data::game_switches->Get(page.condition.switch_a_id)) {

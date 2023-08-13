@@ -1480,7 +1480,7 @@ bool Game_Interpreter::CommandControlVariables(lcf::rpg::EventCommand const& com
 			}
 		}
 
-		Game_Map::SetNeedRefresh(true);
+		Game_Map::TriggerVariableRefresh();
 	}
 
 	return true;
@@ -4444,7 +4444,7 @@ bool Game_Interpreter::CommandManiacControlVarArray(lcf::rpg::EventCommand const
 			Output::Warning("ManiacControlVarArray: Unknown operation {}", op);
 	}
 
-	Game_Map::SetNeedRefresh(true);
+	Game_Map::TriggerVariableRefresh();
 
 	return true;
 }

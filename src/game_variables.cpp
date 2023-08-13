@@ -164,6 +164,7 @@ Game_Variables::Var_t Game_Variables::SetOp(int variable_id, Var_t value, F&& op
 	auto& v = _variables[variable_id - 1];
 	value = op(v, value);
 	v = Utils::Clamp(value, _min, _max);
+	written.push_back(variable_id);
 	return v;
 }
 
@@ -200,6 +201,7 @@ void Game_Variables::WriteRange(const int first_id, const int last_id, V&& value
 	auto& vv = _variables;
 	for (int i = std::max(0, first_id - 1); i < last_id; ++i) {
 		auto& v = vv[i];
+		written.push_back(i);
 		v = Utils::Clamp(op(v, value()), _min, _max);
 	}
 }
@@ -210,6 +212,7 @@ void Game_Variables::WriteArray(const int first_id_a, const int last_id_a, const
 	int out_b = std::max(0, first_id_b - 1);
 	for (int i = std::max(0, first_id_a - 1); i < last_id_a; ++i) {
 		auto& v_a = vv[i];
+		written.push_back(i);
 		auto v_b = vv[out_b++];
 		v_a = Utils::Clamp(op(v_a, v_b), _min, _max);
 	}

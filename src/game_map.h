@@ -460,6 +460,8 @@ namespace Game_Map {
 	 */
 	void SetNeedRefresh(bool refresh);
 
+	void TriggerVariableRefresh();
+
 	/**
 	 * Gets lower passages list.
 	 *
