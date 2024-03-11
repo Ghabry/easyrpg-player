@@ -141,7 +141,7 @@ private:
 		float scale = 0.f;
 	} window = {};
 
-	uint32_t texture_format = SDL_PIXELFORMAT_UNKNOWN;
+	SDL_PixelFormatEnum texture_format = SDL_PIXELFORMAT_UNKNOWN;
 
 	std::unique_ptr<AudioInterface> audio_;
 };

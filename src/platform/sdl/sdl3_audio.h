@@ -66,6 +66,7 @@ public:
 		Sdl3Audio* instance = nullptr;
 		std::unique_ptr<SDL_AudioStream, SdlAudioDeleter> sdl_stream;
 		SDL_AudioSpec sdl_spec;
+		const Game_ConfigAudio* cfg;
 	};
 
 	struct BgmChannel : public AudioChannel {

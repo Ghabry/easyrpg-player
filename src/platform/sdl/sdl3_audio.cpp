@@ -73,11 +73,13 @@ Sdl3Audio::Sdl3Audio(const Game_ConfigAudio& cfg) : AudioInterface(cfg) {
 	for (auto& BGM_Channel : BGM_Channels) {
 		BGM_Channel.id = i++;
 		BGM_Channel.instance = this;
+		BGM_Channel.cfg = &this->cfg;
 	}
 	i = 0;
 	for (auto& SE_Channel : SE_Channels) {
 		SE_Channel.id = i++;
 		SE_Channel.instance = this;
+		SE_Channel.cfg = &this->cfg;
 	}
 	BGM_PlayedOnceIndicator = false;
 	midi_thread.reset();
@@ -256,12 +258,15 @@ void sdl_bgm_audio_callback(void* userdata, SDL_AudioStream* stream, int additio
 	auto chan = static_cast<Sdl3Audio::BgmChannel*>(userdata);
 	chan->decoder->Decode(buffer.data(), buffer.size());
 
-	int volume = chan->decoder->GetVolume();
-	if (volume != 100) {
-		SDL_MixAudioFormat(buffer.data(), buffer.data(), chan->sdl_spec.format, buffer.size(), volume / 100.0f * SDL_MIX_MAXVOLUME);
-	}
+	float volume = chan->cfg->music_volume.Get() * chan->decoder->GetVolume() / 100.0f;
 
-	SDL_PutAudioStreamData(stream, buffer.data(), buffer.size());
+	if (volume != 100.0f) {
+		std::vector<uint8_t> buffer_out(buffer.size());
+		SDL_MixAudioFormat(buffer_out.data(), buffer.data(), chan->sdl_spec.format, buffer.size(), volume * SDL_MIX_MAXVOLUME / 100.0f);
+		SDL_PutAudioStreamData(stream, buffer_out.data(), buffer_out.size());
+	} else {
+		SDL_PutAudioStreamData(stream, buffer.data(), buffer.size());
+	}
 }
 
 bool Sdl3Audio::PlayOnChannel(BgmChannel& chan, Filesystem_Stream::InputStream filestream, int volume, int pitch, int fadein) {
@@ -370,14 +375,14 @@ bool Sdl3Audio::PlayOnChannel(SeChannel& chan, std::unique_ptr<AudioSeCache> se,
 		return false;
 	}
 
+	float fvolume = cfg.sound_volume.Get() * chan.decoder->GetVolume() / 100.0f;
 	if (use_raw_buffer && pitch == 100) {
 		auto se_ref = se->GetSeData();
 		auto& buf = se_ref->buffer;
 
-		int volume = chan.decoder->GetVolume();
-		if (volume != 100) {
-			auto buf_cp = buf;
-			SDL_MixAudioFormat(buf_cp.data(), buf.data(), sdl_format, buf.size(), volume / 100.0f * SDL_MIX_MAXVOLUME);
+		if (fvolume != 100.0f) {
+			std::vector<uint8_t> buf_cp(buf.size());
+			SDL_MixAudioFormat(buf_cp.data(), buf.data(), sdl_format, buf.size(), fvolume * SDL_MIX_MAXVOLUME / 100.0f);
 			SDL_PutAudioStreamData(chan.sdl_stream.get(), buf_cp.data(), buf_cp.size());
 		} else {
 			SDL_PutAudioStreamData(chan.sdl_stream.get(), buf.data(), buf.size());
@@ -385,12 +390,13 @@ bool Sdl3Audio::PlayOnChannel(SeChannel& chan, std::unique_ptr<AudioSeCache> se,
 	} else {
 		auto buf = chan.decoder->DecodeAll();
 
-		int volume = chan.decoder->GetVolume();
-		if (volume != 100) {
-			SDL_MixAudioFormat(buf.data(), buf.data(), sdl_format, buf.size(), volume / 100.0f * SDL_MIX_MAXVOLUME);
+		if (fvolume != 100.00f) {
+			std::vector<uint8_t> buf_cp(buf.size());
+			SDL_MixAudioFormat(buf_cp.data(), buf.data(), sdl_format, buf.size(), fvolume * SDL_MIX_MAXVOLUME / 100.0f);
+			SDL_PutAudioStreamData(chan.sdl_stream.get(), buf_cp.data(), buf_cp.size());
+		} else {
+			SDL_PutAudioStreamData(chan.sdl_stream.get(), buf.data(), buf.size());
 		}
-
-		SDL_PutAudioStreamData(chan.sdl_stream.get(), buf.data(), buf.size());
 	}
 
 	if (SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(chan.sdl_stream.get())) < 0) {

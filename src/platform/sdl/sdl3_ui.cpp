@@ -55,7 +55,7 @@ AudioInterface& Sdl3Ui::GetAudio() {
 }
 #endif
 
-static uint32_t GetDefaultFormat() {
+static SDL_PixelFormatEnum GetDefaultFormat() {
 	return SDL_PIXELFORMAT_RGBA32;
 }
 
@@ -64,7 +64,7 @@ static uint32_t GetDefaultFormat() {
  * Higher numbers are better, -1 means unsupported.
  * We prefer formats which have fast paths in pixman.
  */
-static int GetFormatRank(uint32_t fmt) {
+static int GetFormatRank(SDL_PixelFormatEnum fmt) {
 	switch (fmt) {
 		case SDL_PIXELFORMAT_RGBA32:
 			return 2;
@@ -79,7 +79,7 @@ static int GetFormatRank(uint32_t fmt) {
 	}
 }
 
-static DynamicFormat GetDynamicFormat(uint32_t fmt) {
+static DynamicFormat GetDynamicFormat(SDL_PixelFormatEnum fmt) {
 	switch (fmt) {
 		case SDL_PIXELFORMAT_RGBA32:
 			return format_R8G8B8A8_n().format();
@@ -94,12 +94,12 @@ static DynamicFormat GetDynamicFormat(uint32_t fmt) {
 	}
 }
 
-static uint32_t SelectFormat(const SDL_RendererInfo& rinfo, bool print_all) {
-	uint32_t current_fmt = SDL_PIXELFORMAT_UNKNOWN;
+static SDL_PixelFormatEnum SelectFormat(const SDL_RendererInfo& rinfo, bool print_all) {
+	SDL_PixelFormatEnum current_fmt = SDL_PIXELFORMAT_UNKNOWN;
 	int current_rank = -1;
 
 	for (int i = 0; i < static_cast<int>(rinfo.num_texture_formats); ++i) {
-		const auto fmt = rinfo.texture_formats[i];
+		const SDL_PixelFormatEnum fmt = rinfo.texture_formats[i];
 		int rank = GetFormatRank(fmt);
 		if (rank >= 0) {
 			if (rank > current_rank) {
@@ -211,6 +211,7 @@ bool Sdl3Ui::vChangeDisplaySurfaceResolution(int new_width, int new_height) {
 	}
 
 	sdl_texture_game = new_sdl_texture_game;
+	SDL_SetTextureScaleMode(sdl_texture_game, SDL_SCALEMODE_NEAREST);
 
 	BitmapRef new_main_surface = Bitmap::Create(new_width, new_height, Color(0, 0, 0, 255));
 
@@ -322,19 +323,24 @@ bool Sdl3Ui::RefreshDisplayMode() {
 		#endif
 
 		// Create our window
+		SDL_PropertiesID wprops = SDL_CreateProperties();
+		SDL_SetStringProperty(wprops, SDL_PROP_WINDOW_CREATE_TITLE_STRING, GAME_TITLE);
+		SDL_SetNumberProperty(wprops, "flags", SDL_WINDOW_RESIZABLE | flags);
+
 		if (vcfg.window_x.Get() < 0 || vcfg.window_y.Get() < 0 || vcfg.window_height.Get() <= 0 || vcfg.window_width.Get() <= 0) {
-			sdl_window = SDL_CreateWindowWithPosition(GAME_TITLE,
-				SDL_WINDOWPOS_CENTERED,
-				SDL_WINDOWPOS_CENTERED,
-				display_width_zoomed, display_height_zoomed,
-				SDL_WINDOW_RESIZABLE | flags);
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED);
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_CENTERED);
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, display_width_zoomed);
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, display_height_zoomed);
 		} else {
-			sdl_window = SDL_CreateWindowWithPosition(GAME_TITLE,
-				vcfg.window_x.Get(),
-				vcfg.window_y.Get(),
-				vcfg.window_width.Get(), vcfg.window_height.Get(),
-				SDL_WINDOW_RESIZABLE | flags);
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_X_NUMBER, vcfg.window_x.Get());
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_Y_NUMBER, vcfg.window_y.Get());
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, vcfg.window_width.Get());
+			SDL_SetNumberProperty(wprops, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, vcfg.window_height.Get());
 		}
+
+		sdl_window = SDL_CreateWindowWithProperties(wprops);
+		SDL_DestroyProperties(wprops);
 
 		if (!sdl_window) {
 			Output::Debug("SDL_CreateWindow failed : {}", SDL_GetError());
@@ -406,6 +412,8 @@ bool Sdl3Ui::RefreshDisplayMode() {
 			return false;
 		}
 
+		SDL_SetTextureScaleMode(sdl_texture_game, SDL_SCALEMODE_NEAREST);
+
 		renderer_sg.Dismiss();
 		window_sg.Dismiss();
 	} else {
@@ -430,10 +438,10 @@ bool Sdl3Ui::RefreshDisplayMode() {
 	// creating the renderer (i.e. Windows), see also comment in SetAppIcon()
 	SetAppIcon();
 
-	uint32_t sdl_pixel_fmt = GetDefaultFormat();
+	auto sdl_pixel_fmt = GetDefaultFormat();
 	int a, w, h;
 
-	if (SDL_QueryTexture(sdl_texture_game, &sdl_pixel_fmt, &a, &w, &h) != 0) {
+	if (SDL_QueryTexture(sdl_texture_game, reinterpret_cast<uint32_t*>(&sdl_pixel_fmt), &a, &w, &h) != 0) {
 		Output::Debug("SDL_QueryTexture failed : {}", SDL_GetError());
 		return false;
 	}
@@ -604,10 +612,9 @@ void Sdl3Ui::UpdateDisplay() {
 			if (sdl_texture_scaled) {
 				SDL_DestroyTexture(sdl_texture_scaled);
 			}
-			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "linear");
+			// This texture uses linear scaling mode (the default)
 			sdl_texture_scaled = SDL_CreateTexture(sdl_renderer, texture_format, SDL_TEXTUREACCESS_TARGET,
 			   static_cast<int>(ceilf(window.scale)) * main_surface->width(), static_cast<int>(ceilf(window.scale)) * main_surface->height());
-			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "nearest");
 			if (!sdl_texture_scaled) {
 				Output::Debug("SDL_CreateTexture failed : {}", SDL_GetError());
 			}
@@ -931,7 +938,7 @@ void Sdl3Ui::ProcessFingerEvent(SDL_Event& evnt) {
 	// We currently ignore swipe gestures
 	// A finger touch is detected when the fingers go up a brief delay after going down
 	if (evnt.type == SDL_EVENT_FINGER_DOWN) {
-		int finger = evnt.tfinger.fingerId;
+		int finger = evnt.tfinger.fingerID;
 		if (finger < static_cast<int>(finger_input.size())) {
 			auto& fi = touch_input[finger];
 			fi.position.x = (evnt.tfinger.x - viewport.x) * main_surface->width() / xw;
@@ -949,7 +956,7 @@ void Sdl3Ui::ProcessFingerEvent(SDL_Event& evnt) {
 			fi.pressed = true;
 		}
 	} else if (evnt.type == SDL_EVENT_FINGER_UP) {
-		int finger = evnt.tfinger.fingerId;
+		int finger = evnt.tfinger.fingerID;
 		if (finger < static_cast<int>(finger_input.size())) {
 			auto& fi = touch_input[finger];
 			fi.pressed = false;
@@ -1146,10 +1153,10 @@ Input::Keys::InputKey SdlKey2InputKey(SDL_Keycode sdlkey) {
 Input::Keys::InputKey SdlJKey2InputKey(int button_index) {
 	// Constants starting from 15 require newer SDL3 versions
 	switch (button_index) {
-		case SDL_GAMEPAD_BUTTON_A: return Input::Keys::JOY_A;
-		case SDL_GAMEPAD_BUTTON_B: return Input::Keys::JOY_B;
-		case SDL_GAMEPAD_BUTTON_X: return Input::Keys::JOY_X;
-		case SDL_GAMEPAD_BUTTON_Y: return Input::Keys::JOY_Y;
+		case SDL_GAMEPAD_BUTTON_SOUTH: return Input::Keys::JOY_A;
+		case SDL_GAMEPAD_BUTTON_EAST: return Input::Keys::JOY_B;
+		case SDL_GAMEPAD_BUTTON_WEST: return Input::Keys::JOY_X;
+		case SDL_GAMEPAD_BUTTON_NORTH: return Input::Keys::JOY_Y;
 		case SDL_GAMEPAD_BUTTON_BACK: return Input::Keys::JOY_BACK;
 		case SDL_GAMEPAD_BUTTON_GUIDE: return Input::Keys::JOY_GUIDE;
 		case SDL_GAMEPAD_BUTTON_START: return Input::Keys::JOY_START;
