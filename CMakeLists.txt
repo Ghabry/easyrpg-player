@@ -532,8 +532,8 @@ set_property(SOURCE src/version.cpp PROPERTY COMPILE_DEFINITIONS
 )
 
 # Platform setup
-set(PLAYER_TARGET_PLATFORM "SDL2" CACHE STRING "Platform to compile for. Options: SDL2 SDL1 libretro psvita 3ds switch wii amigaos4")
-set_property(CACHE PLAYER_TARGET_PLATFORM PROPERTY STRINGS SDL2 SDL1 libretro psvita 3ds switch wii amigaos4)
+set(PLAYER_TARGET_PLATFORM "SDL3" CACHE STRING "Platform to compile for. Options: SDL3 SDL2 SDL1 libretro psvita 3ds switch wii amigaos4")
+set_property(CACHE PLAYER_TARGET_PLATFORM PROPERTY STRINGS SDL3 SDL2 SDL1 libretro psvita 3ds switch wii amigaos4)
 set(PLAYER_BUILD_EXECUTABLE ON)
 set(PLAYER_TEST_LIBRARIES ${PROJECT_NAME})
 
@@ -546,10 +546,26 @@ if(ANDROID AND PLAYER_GRADLE_BUILD)
 	endforeach(f)
 endif()
 
-if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
+if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL3")
 	target_sources(${PROJECT_NAME} PRIVATE
-		src/platform/sdl/sdl_audio.cpp
-		src/platform/sdl/sdl_audio.h
+		src/platform/sdl/sdl3_audio.cpp
+		src/platform/sdl/sdl3_audio.h
+		src/platform/sdl/sdl3_ui.cpp
+		src/platform/sdl/sdl3_ui.h)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=3)
+
+	player_find_package(NAME SDL3
+		TARGET SDL3::SDL3
+		REQUIRED)
+
+	if(ANDROID)
+		add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/builds/android/app/src/gamebrowser)
+		set(PLAYER_BUILD_EXECUTABLE OFF)
+	endif()
+elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
+	target_sources(${PROJECT_NAME} PRIVATE
+		src/platform/sdl/sdl2_audio.cpp
+		src/platform/sdl/sdl2_audio.h
 		src/platform/sdl/sdl2_ui.cpp
 		src/platform/sdl/sdl2_ui.h)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=2)
@@ -878,7 +894,10 @@ player_find_package(NAME lhasa
 )
 
 # Sound system to use
-if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
+if(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL3")
+	set(PLAYER_AUDIO_BACKEND "SDL3" CACHE STRING "Audio system to use. Options: SDL3 OFF")
+	set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL3 OFF)
+elseif(${PLAYER_TARGET_PLATFORM} STREQUAL "SDL2")
 	set(PLAYER_AUDIO_BACKEND "SDL2" CACHE STRING "Audio system to use. Options: SDL2 OFF")
 	set_property(CACHE PLAYER_AUDIO_BACKEND PROPERTY STRINGS SDL2 OFF)
 
@@ -899,7 +918,7 @@ else()
 endif()
 
 # Configure Audio backends
-if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL2|SDL1|libretro|psvita|3ds|switch|wii|amigaos4)$")
+if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[123]|libretro|psvita|3ds|switch|wii|amigaos4)$")
 	set(PLAYER_HAS_AUDIO ON)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC SUPPORT_AUDIO=1)
 
@@ -958,7 +977,7 @@ CMAKE_DEPENDENT_OPTION(PLAYER_WITH_FLUIDLITE "Play MIDI audio with fluidlite" ON
 CMAKE_DEPENDENT_OPTION(PLAYER_WITH_XMP "Play MOD audio with libxmp" ON "PLAYER_HAS_AUDIO" OFF)
 CMAKE_DEPENDENT_OPTION(PLAYER_ENABLE_DRWAV "Play WAV audio with dr_wav (built-in). Unsupported files are played by libsndfile." ON "PLAYER_HAS_AUDIO" OFF)
 
-if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL2|SDL1|libretro|psvita|3ds|switch|wii|amigaos4)$")
+if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[123]|libretro|psvita|3ds|switch|wii|amigaos4)$")
 	set(PLAYER_AUDIO_RESAMPLER "Auto" CACHE STRING "Audio resampler to use. Options: Auto speexdsp samplerate OFF")
 	set_property(CACHE PLAYER_AUDIO_RESAMPLER PROPERTY STRINGS Auto speexdsp samplerate OFF)
 
@@ -1074,7 +1093,7 @@ if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL2|SDL1|libretro|psvita|3ds|switch|wii|a
 endif()
 
 # Executable
-if(${PLAYER_BUILD_EXECUTABLE} AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL(1|2)$" AND NOT NINTENDO_WIIU)
+if(${PLAYER_BUILD_EXECUTABLE} AND ${PLAYER_TARGET_PLATFORM} MATCHES "SDL[123]" AND NOT NINTENDO_WIIU)
 	if(APPLE)
 		set(EXE_NAME "EasyRPG-Player.app")
 		set_source_files_properties(${${PROJECT_NAME}_BUNDLE_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
@@ -1478,7 +1497,7 @@ if(PLAYER_BUILD_LIBLCF)
 endif()
 
 message(STATUS "Audio backend: ${PLAYER_AUDIO_BACKEND}")
-if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL2|SDL1|libretro|psvita|3ds|switch|wii)$")
+if(${PLAYER_AUDIO_BACKEND} MATCHES "^(SDL[123]|libretro|psvita|3ds|switch|wii)$")
 	message(STATUS "")
 
 	set(WAV_LIBS)
