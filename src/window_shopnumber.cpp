@@ -25,8 +25,8 @@
 #include "font.h"
 #include <lcf/reader_util.h>
 
-Window_ShopNumber::Window_ShopNumber(int ix, int iy, int iwidth, int iheight) :
-	Window_Base(ix, iy, iwidth, iheight),
+Window_ShopNumber::Window_ShopNumber(Scene* parent, int ix, int iy, int iwidth, int iheight) :
+	Window_Base(parent, ix, iy, iwidth, iheight),
 	item_max(1), price(0), number(1), item_id(0) {
 
 	SetContents(Bitmap::Create(width - 16, height - 16));

@@ -26,8 +26,8 @@
 #include "bitmap.h"
 #include "font.h"
 
-Window_Shop::Window_Shop(int shop_type, int ix, int iy, int iwidth, int iheight) :
-	Window_Base(ix, iy, iwidth, iheight) {
+Window_Shop::Window_Shop(Scene* parent, int shop_type, int ix, int iy, int iwidth, int iheight) :
+	Window_Base(parent, ix, iy, iwidth, iheight) {
 
 	SetContents(Bitmap::Create(width - 16, height - 16));
 
