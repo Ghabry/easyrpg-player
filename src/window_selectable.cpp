@@ -19,6 +19,7 @@
 #include "window_selectable.h"
 #include "game_system.h"
 #include "input.h"
+#include "input_buttons.h"
 #include "util_macro.h"
 #include "bitmap.h"
 
@@ -237,7 +238,16 @@ void Window_Selectable::Update() {
 				return;
 			}
 		}
+
+		if (Input::IsTriggered(Input::DECISION) && DecisionFn) {
+			DecisionFn(index);
+		}
+		if (Input::IsTriggered(Input::CANCEL) && CancelFn) {
+			CancelFn(index);
+		}
+
 	}
+
 	if (active && help_window != NULL) {
 		UpdateHelp();
 	}

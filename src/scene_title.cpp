@@ -79,6 +79,32 @@ void Scene_Title::Start() {
 	CreateCommandWindow();
 	CreateTranslationWindow();
 	CreateHelpWindow();
+
+	command_window->DecisionFn = [&](int index) {
+		if (index == indices.new_game) {  // New Game
+			CommandNewGame();
+		} else if (index == indices.continue_game) {  // Load Game
+			CommandContinue();
+		} else if (index == indices.import) {  // Import (multi-part games)
+			CommandImport();
+		} else if (index == indices.settings) {
+			CommandSettings();
+		} else if (index == indices.translate) { // Choose a Translation (Language)
+			CommandTranslation();
+		} else if (index == indices.exit) {  // Exit Game
+			CommandShutdown();
+		}
+	};
+
+	translate_window->DecisionFn = [&](int index) {
+		ChangeLanguage(lang_dirs.at(index));
+	};
+
+	translate_window->CancelFn = [&](int index) {
+		// Switch back
+		Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cancel));
+		HideTranslationWindow();
+	};
 }
 
 void Scene_Title::CreateHelpWindow() {
@@ -157,34 +183,6 @@ void Scene_Title::vUpdate() {
 		command_window->Update();
 	} else {
 		translate_window->Update();
-	}
-
-	if (Input::IsTriggered(Input::DECISION)) {
-		if (active_window == 0) {
-			int index = command_window->GetIndex();
-			if (index == indices.new_game) {  // New Game
-				CommandNewGame();
-			} else if (index == indices.continue_game) {  // Load Game
-				CommandContinue();
-			} else if (index == indices.import) {  // Import (multi-part games)
-				CommandImport();
-			} else if (index == indices.settings) {
-				CommandSettings();
-			} else if (index == indices.translate) { // Choose a Translation (Language)
-				CommandTranslation();
-			} else if (index == indices.exit) {  // Exit Game
-				CommandShutdown();
-			}
-		} else if (active_window == 1) {
-			int index = translate_window->GetIndex();
-			ChangeLanguage(lang_dirs.at(index));
-		}
-	} else if (Input::IsTriggered(Input::CANCEL)) {
-		if (active_window == 1) {
-			// Switch back
-			Main_Data::game_system->SePlay(Main_Data::game_system->GetSystemSE(Main_Data::game_system->SFX_Cancel));
-			HideTranslationWindow();
-		}
 	}
 }
 

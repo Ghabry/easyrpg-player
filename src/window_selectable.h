@@ -57,6 +57,9 @@ public:
 	 */
 	virtual Rect GetItemRect(int index);
 
+	std::function<void(int)> DecisionFn;
+	std::function<void(int)> CancelFn;
+
 	/**
 	 * Function called by the base UpdateHelp() implementation.
 	 * Passes in the Help Window and the current selected index
@@ -73,7 +76,6 @@ public:
 	 * @param nhelp_window the help window.
 	 */
 	void SetHelpWindow(Window_Help* nhelp_window);
-
 
 	/**
 	 * Returns a rectangle indicating the cursor location for the passed index.

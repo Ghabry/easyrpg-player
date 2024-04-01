@@ -18,6 +18,7 @@
 // Headers
 #include <cassert>
 #include "async_handler.h"
+#include "input_buttons.h"
 #include "scene.h"
 #include "graphics.h"
 #include "input.h"
@@ -258,9 +259,17 @@ void Scene::Update() {
 		}
 		auto* sel_window = static_cast<Window_Selectable*>(window);
 		int index = sel_window->CursorHitTest({mouse_pos.x - window->GetX(), mouse_pos.y - window->GetY()});
-		if (index >= 0 && index != sel_window->GetIndex()) {
+		if (index >= 0) {
 			// FIXME: Index changed callback?
-			sel_window->SetIndex(index);
+			//sel_window->SetIndex(index);
+			if (sel_window->DecisionFn && Input::IsTriggered(Input::MOUSE_LEFT)) {
+				sel_window->SetIndex(index);
+				sel_window->DecisionFn(index);
+			}
+			if (sel_window->CancelFn && Input::IsTriggered(Input::MOUSE_RIGHT)) {
+				sel_window->SetIndex(index);
+				sel_window->CancelFn(index);
+			}
 		}
 	}
 
