@@ -33,6 +33,7 @@
 #include "image_xyz.h"
 #include "image_bmp.h"
 #include "image_png.h"
+#include "image_ace.h"
 #include "transform.h"
 #include "font.h"
 #include "output.h"
@@ -103,11 +104,13 @@ Bitmap::Bitmap(Filesystem_Stream::InputStream stream, bool transparent, uint32_t
 	int h = 0;
 	void* pixels = nullptr;
 
-	uint8_t data[4] = {};
-	size_t bytes = stream.read(reinterpret_cast<char*>(data),  4).gcount();
+	uint8_t data[6] = {};
+	size_t bytes = stream.read(reinterpret_cast<char*>(data), 6).gcount();
 	stream.seekg(0, std::ios::ios_base::beg);
 
 	bool img_okay = false;
+
+	std::vector<ImageACE::Frame> ace_frames;
 
 	if (bytes >= 4 && strncmp((char*)data, "XYZ1", 4) == 0)
 		img_okay = ImageXYZ::ReadXYZ(stream, transparent, w, h, pixels);
@@ -115,20 +118,50 @@ Bitmap::Bitmap(Filesystem_Stream::InputStream stream, bool transparent, uint32_t
 		img_okay = ImageBMP::ReadBMP(stream, transparent, w, h, pixels);
 	else if (bytes >= 4 && strncmp((char*)(data + 1), "PNG", 3) == 0)
 		img_okay = ImagePNG::ReadPNG(stream, transparent, w, h, pixels);
+	else if (bytes >= 6 && memcmp((char*)(data + 4), "\xE0\xA5", 2) == 0) {
+		std::vector<ImageACE::Animation> ace_anims;
+		img_okay = ImageACE::ReadACE(stream, transparent, w, h, ace_frames, ace_anims);
+
+		// FIXME: Reduce copying
+		animations.clear();
+		frames.clear();
+		animations.resize(ace_anims.size());
+		frames.resize(ace_frames.size());
+
+		for (size_t i = 0; i < ace_anims.size(); ++i) {
+			animations[i].frame_beg = ace_anims[i].frame_beg;
+			animations[i].frame_end = ace_anims[i].frame_end;
+			animations[i].name = ace_anims[i].name;
+		}
+
+		for (size_t i = 0; i < ace_frames.size(); ++i) {
+			frames[i].duration = ace_frames[i].duration_ms;
+		}
+	}
 	else
 		Output::Warning("Unsupported image file {} (Magic: {:02X})", stream.GetName(), *reinterpret_cast<uint32_t*>(data));
 
 	if (!img_okay) {
 		free(pixels);
+		// TODO: Free acesprite memory
 		pixels = nullptr;
 		return;
 	}
 
-	Init(w, h, nullptr);
-
-	ConvertImage(w, h, pixels, transparent);
-
-	CheckPixels(flags);
+	if (IsAnimated()) {
+		InitAnimated(w, h);
+		for (size_t i = 0; i < frames.size(); ++i) {
+			SetActiveFrame(i);
+			ConvertImage(w, h, ace_frames[i].pixels, transparent);
+		}
+		SetActiveFrame(0);
+		// FIXME: Only implemented for first frame
+		CheckPixels(flags);
+	} else {
+		Init(w, h, nullptr);
+		ConvertImage(w, h, pixels, transparent);
+		CheckPixels(flags);
+	}
 
 	filename = ToString(stream.GetName());
 }
@@ -249,6 +282,32 @@ ImageOpacity Bitmap::ComputeImageOpacity(Rect rect) const {
 		all_opaque ? ImageOpacity::Opaque :
 		alpha_1bit ? ImageOpacity::Alpha_1Bit :
 		ImageOpacity::Alpha_8Bit;
+}
+
+bool Bitmap::IsAnimated() const {
+	return frames.size() > 1;
+}
+
+int Bitmap::GetFrameCount() const {
+	return frames.size();
+}
+
+int Bitmap::GetActiveFrame() const {
+	return frame_index;
+}
+
+void Bitmap::SetActiveFrame(unsigned frame) {
+	assert(frame < frames.size());
+	frame_index = frame;
+	bitmap = frames[frame_index].bitmap;
+}
+
+int Bitmap::GetFrameDuration() const {
+	return frames[frame_index].duration;
+}
+
+const std::vector<Bitmap::AnimationInfo>& Bitmap::GetAnimationInfo() const {
+	return animations;
 }
 
 void Bitmap::CheckPixels(uint32_t flags) {
@@ -528,6 +587,19 @@ void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
 
 	if (data != NULL && destroy)
 		pixman_image_set_destroy_function(bitmap.get(), destroy_func, data);
+}
+
+void Bitmap::InitAnimated(int width, int height) {
+	int pitch = width * format.bytes;
+
+	for (auto& frame: frames) {
+		frame.bitmap.reset(pixman_image_create_bits(pixman_format, width, height, nullptr, pitch));
+		if (frame.bitmap == NULL) {
+			Output::Error("Couldn't create {}x{} image.", width, height);
+		}
+	}
+
+	bitmap = frames[0].bitmap;
 }
 
 void Bitmap::ConvertImage(int& width, int& height, void*& pixels, bool transparent) {

@@ -103,6 +103,9 @@ public:
 	 */
 	void SetFlashEffect(const Color &color);
 
+	int counter = 0;
+	int frame = 0;
+
 private:
 	BitmapRef bitmap;
 

@@ -590,6 +590,25 @@ public:
 	ImageOpacity ComputeImageOpacity() const;
 	ImageOpacity ComputeImageOpacity(Rect rect) const;
 
+	bool IsAnimated() const;
+	int GetFrameCount() const;
+	int GetActiveFrame() const;
+	void SetActiveFrame(unsigned frame);
+	int GetFrameDuration() const;
+
+	struct FrameInfo {
+		PixmanImagePtr bitmap;
+		int duration;
+	};
+
+	struct AnimationInfo {
+		std::string name;
+		int frame_beg;
+		int frame_end;
+	};
+
+	const std::vector<AnimationInfo>& GetAnimationInfo() const;
+
 protected:
 	DynamicFormat format;
 
@@ -603,7 +622,13 @@ protected:
 	PixmanImagePtr bitmap;
 	pixman_format_code_t pixman_format;
 
+	/** Animation data */
+	int frame_index = 0;
+	std::vector<FrameInfo> frames = {{nullptr, 0}};
+	std::vector<AnimationInfo> animations;
+
 	void Init(int width, int height, void* data, int pitch = 0, bool destroy = true);
+	void InitAnimated(int width, int height);
 	void ConvertImage(int& width, int& height, void*& pixels, bool transparent);
 
 	static PixmanImagePtr GetSubimage(Bitmap const& src, const Rect& src_rect);

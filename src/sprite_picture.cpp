@@ -165,6 +165,19 @@ void Sprite_Picture::Draw(Bitmap& dst) {
 	SetFlipY((data.easyrpg_flip & lcf::rpg::SavePicture::EasyRpgFlip_y) == lcf::rpg::SavePicture::EasyRpgFlip_y);
 	SetBlendType(data.easyrpg_blend_mode);
 
+	++counter;
+
+	if (counter >= 20) {
+		int fcount = bitmap->GetFrameCount();
+
+		frame++;
+		if (frame >= fcount) {
+			frame = 0;
+		}
+		bitmap->SetActiveFrame(frame);
+		counter = 0;
+	}
+
 	Sprite::Draw(dst);
 }
 

@@ -197,6 +197,8 @@ libeasyrpg_player_a_SOURCES = \
 	src/hslrgb.cpp \
 	src/hslrgb.h \
 	src/icon.h \
+	src/image_ace.cpp \
+	src/image_ace.h \
 	src/image_bmp.cpp \
 	src/image_bmp.h \
 	src/image_png.cpp \
