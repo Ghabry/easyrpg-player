@@ -121,10 +121,11 @@ void Window_Item::DrawItem(int index) {
 		}
 
 		bool enabled = CheckEnable(item_id);
-		DrawItemName(*item, rect.x, rect.y, enabled);
+		rect.width -= 24;
+		DrawItemName(*item, rect, enabled);
 
 		Font::SystemColor color = enabled ? Font::ColorDefault : Font::ColorDisabled;
-		contents->TextDraw(rect.x + rect.width - 24, rect.y, color, fmt::format("{}{:3d}", lcf::rpg::Terms::TermOrDefault(lcf::Data::terms.easyrpg_item_number_separator, ":"), number));
+		contents->TextDraw(rect.x + rect.width, rect.y, color, fmt::format("{}{:3d}", lcf::rpg::Terms::TermOrDefault(lcf::Data::terms.easyrpg_item_number_separator, ":"), number));
 	}
 }
 
