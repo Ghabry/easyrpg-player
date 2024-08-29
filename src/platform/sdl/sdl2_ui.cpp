@@ -57,7 +57,7 @@ AudioInterface& Sdl2Ui::GetAudio() {
 #endif
 
 static uint32_t GetDefaultFormat() {
-	return SDL_PIXELFORMAT_RGBA32;
+	return SDL_PIXELFORMAT_ARGB1555;
 }
 
 /**
@@ -82,6 +82,8 @@ static int GetFormatRank(uint32_t fmt) {
 
 static DynamicFormat GetDynamicFormat(uint32_t fmt) {
 	switch (fmt) {
+		case SDL_PIXELFORMAT_ARGB1555:
+			return DynamicFormat(16,5,10,5,5,5,0,1,15,PF::Alpha);
 		case SDL_PIXELFORMAT_RGBA32:
 			return format_R8G8B8A8_n().format();
 		case SDL_PIXELFORMAT_BGRA32:
@@ -404,7 +406,7 @@ bool Sdl2Ui::RefreshDisplayMode() {
 
 		vsync = rinfo.flags & SDL_RENDERER_PRESENTVSYNC;
 		SetFrameRateSynchronized(vsync);
-
+		texture_format = SDL_PIXELFORMAT_UNKNOWN;
 		if (texture_format == SDL_PIXELFORMAT_UNKNOWN) {
 			texture_format = GetDefaultFormat();
 			Output::Debug("SDL2: None of the ({}) detected formats were supported! Falling back to {}. This will likely cause performance degredation.",
