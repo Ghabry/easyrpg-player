@@ -394,6 +394,24 @@ Font::GlyphRet FTFont::vRender(char32_t glyph) const {
 	return vRenderShaped(glyph_index);
 }
 
+template<typename T>
+void put_pixel(BitmapRef bm, FT_Bitmap* ft_bitmap) {
+	size_t const pitch = std::abs(ft_bitmap->pitch);
+	const int width = ft_bitmap->width;
+	const int height = ft_bitmap->rows;
+
+	auto* data = reinterpret_cast<T*>(bm->pixels());
+
+	for (int row = 0; row < height; ++row) {
+		for (int col = 0; col < width; ++col) {
+			unsigned c = ft_bitmap->buffer[pitch * row + (col / 8)];
+			unsigned bit = 7 - (col % 8);
+			c = c & (0x01 << bit) ? 255 : 0;
+			data[row * width + col] = bm->pixel_format.rgba_to_uint32_t(c, c, c, c);
+		}
+	}
+}
+
 Font::GlyphRet FTFont::vRenderShaped(char32_t glyph) const {
 	if (glyph == 0) {
 		if (fallback_font) {
@@ -443,27 +461,21 @@ Font::GlyphRet FTFont::vRenderShaped(char32_t glyph) const {
 
 	assert(ft_bitmap->pixel_mode == FT_PIXEL_MODE_MONO || ft_bitmap->pixel_mode == FT_PIXEL_MODE_BGRA);
 
-	size_t const pitch = std::abs(ft_bitmap->pitch);
-	const int width = ft_bitmap->width;
-	const int height = ft_bitmap->rows;
-
 	BitmapRef bm;
 	bool has_color = false;
+
+	const int width = ft_bitmap->width;
+	const int height = ft_bitmap->rows;
 
 	if (ft_bitmap->pixel_mode == FT_PIXEL_MODE_BGRA) {
 		bm = Bitmap::Create(ft_bitmap->buffer, width, height, 0, format_B8G8R8A8_a().format());
 		has_color = true;
 	} else {
 		bm = Bitmap::Create(width, height);
-		auto* data = reinterpret_cast<uint32_t*>(bm->pixels());
-
-		for (int row = 0; row < height; ++row) {
-			for (int col = 0; col < width; ++col) {
-				unsigned c = ft_bitmap->buffer[pitch * row + (col / 8)];
-				unsigned bit = 7 - (col % 8);
-				c = c & (0x01 << bit) ? 255 : 0;
-				data[row * width + col] = (c << 24) + (c << 16) + (c << 8) + c;
-			}
+		if (bm->bpp() == 2) {
+			put_pixel<uint16_t>(bm, ft_bitmap);
+		} else {
+			put_pixel<uint32_t>(bm, ft_bitmap);
 		}
 	}
 
