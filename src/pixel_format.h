@@ -668,6 +668,9 @@ typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligne
 typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,8,0,8,8,8,16,8,24> format_R8G8B8A8_n;
 typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,8,24,8,16,8,8,8,0> format_A8B8G8R8_n;
 typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,8,8,8,16,8,24,8,0> format_A8R8G8B8_n;
+
+typedef PixelFormatT<16,PF::StaticMasks,PF::StaticAlpha,PF::Alpha,PF::IsAligned,5,10,5,5,5,0,1,15> format_A1R5G5B5_a;
+typedef PixelFormatT<16,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,5,10,5,5,5,0,1,15> format_A1R5G5B5_n;
 #else
 typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::Alpha,PF::IsAligned,8,8,8,16,8,24,8,0> format_B8G8R8A8_a;
 typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::Alpha,PF::IsAligned,8,24,8,16,8,8,8,0> format_R8G8B8A8_a;
@@ -679,18 +682,5 @@ typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligne
 typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,8,0,8,8,8,16,8,24> format_A8B8G8R8_n;
 typedef PixelFormatT<32,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,8,16,8,8,8,0,8,24> format_A8R8G8B8_n;
 #endif
-
-typedef PixelFormatT< 8,PF::StaticMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,8,0,8,0,8,0,0,0> format_L8;
-
-typedef PixelFormatT<32,PF::DynamicMasks,PF::StaticAlpha,PF::Alpha,PF::IsAligned,0,0,0,0,0,0,0,0> format_dynamic_32_a;
-typedef PixelFormatT<32,PF::DynamicMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,0,0,0,0,0,0,0,0> format_dynamic_32_n;
-typedef PixelFormatT<32,PF::DynamicMasks,PF::DynamicAlpha,PF::NoAlpha,PF::IsAligned,0,0,0,0,0,0,0,0> format_dynamic_32_d;
-
-typedef PixelFormatT<24,PF::DynamicMasks,PF::StaticAlpha,PF::NoAlpha,PF::IsAligned,0,0,0,0,0,0,0,0> format_dynamic_24_n;
-typedef PixelFormatT<24,PF::DynamicMasks,PF::DynamicAlpha,PF::NoAlpha,PF::IsAligned,0,0,0,0,0,0,0,0> format_dynamic_24_d;
-
-typedef PixelFormatT<16,PF::DynamicMasks,PF::StaticAlpha,PF::Alpha,PF::NotAligned,0,0,0,0,0,0,0,0> format_dynamic_16_a;
-typedef PixelFormatT<16,PF::DynamicMasks,PF::StaticAlpha,PF::NoAlpha,PF::NotAligned,0,0,0,0,0,0,0,0> format_dynamic_16_n;
-typedef PixelFormatT<16,PF::DynamicMasks,PF::DynamicAlpha,PF::NoAlpha,PF::NotAligned,0,0,0,0,0,0,0,0> format_dynamic_16_d;
 
 #endif

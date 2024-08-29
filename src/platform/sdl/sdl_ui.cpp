@@ -18,6 +18,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include "pixel_format.h"
 #include "system.h"
 
 #include "sdl_ui.h"
@@ -88,13 +89,7 @@ SdlUi::SdlUi(long width, long height, const Game_Config& cfg) : BaseUi(cfg)
 		0x000000FF,
 		PF::NoAlpha);
 #else
-	DynamicFormat format = DynamicFormat(
-		32,
-		0x00FF0000,
-		0x0000FF00,
-		0x000000FF,
-		0xFF000000,
-		PF::NoAlpha);
+	DynamicFormat format = format_A1R5G5B5_n().format();
 #endif
 
 	Bitmap::SetFormat(Bitmap::ChooseFormat(format));
