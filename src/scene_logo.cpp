@@ -202,8 +202,13 @@ void Scene_Logo::DrawTextOnLogo(bool verbose) {
 	Color shadow_color = {69, 69, 69, 255};
 	logo_img->ClearRect(text_rect);
 
+	std::string bitness;
+	if (logo_img->bpp() == 2) {
+		bitness = " @ 16 bit";
+	}
+
 	for (auto& color: {shadow_color, text_color}) {
-		logo_img->TextDraw(text_rect, color, "v" + Version::GetVersionString(verbose, verbose), Text::AlignLeft);
+		logo_img->TextDraw(text_rect, color, "v" + Version::GetVersionString(verbose, verbose) + bitness, Text::AlignLeft);
 		if (!verbose) {
 			logo_img->TextDraw(text_rect, color, WEBSITE_ADDRESS, Text::AlignRight);
 		}
