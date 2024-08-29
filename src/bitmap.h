@@ -591,9 +591,13 @@ public:
 	static DynamicFormat ChooseFormat(const DynamicFormat& format);
 	static void SetFormat(const DynamicFormat& format);
 
+	/** Pixel format of the surface and of bitmaps */
 	static DynamicFormat pixel_format;
+	/** Pixel format of the surface and of bitmaps (no alpha) */
 	static DynamicFormat opaque_pixel_format;
+	/** Pixel format of image buffers (is converted to pixel_format upon load) */
 	static DynamicFormat image_format;
+	/** Pixel format of image buffers (no alpha, is converted to opaque_pixel_format upon load) */
 	static DynamicFormat opaque_image_format;
 
 	void* pixels();
@@ -628,6 +632,15 @@ protected:
 
 	void Init(int width, int height, void* data, int pitch = 0, bool destroy = true);
 	void ConvertImage(int& width, int& height, void*& pixels, bool transparent);
+
+	template<typename T>
+	ImageOpacity ComputeImageOpacityT() const;
+
+	template<typename T>
+	ImageOpacity ComputeImageOpacityT(Rect rect) const;
+
+	template<typename T>
+	void ToneBlitT(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity, ImageOpacity const& src_opacity);
 
 	static PixmanImagePtr GetSubimage(Bitmap const& src, const Rect& src_rect);
 	static inline void MultiplyAlpha(uint8_t &r, uint8_t &g, uint8_t &b, const uint8_t &a) {
