@@ -177,7 +177,7 @@ bool Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 					memcpy(
 						dst_pixels + y * dst_pitch + run_beg,
 						src_pixels + y * src_pitch + run_beg,
-						x - bpp - run_beg);
+						x - run_beg);
 				}
 			}
 		}
