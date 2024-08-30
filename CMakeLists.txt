@@ -67,9 +67,11 @@ add_library(${PROJECT_NAME} OBJECT
 	src/battle_message.cpp
 	src/battle_message.h
 	src/bitmap.cpp
+	src/bitmap.h
 	src/bitmapfont.h
 	src/bitmapfont_glyph.h
-	src/bitmap.h
+	src/bitmap_blit.cpp
+	src/bitmap_blit.h
 	src/bitmap_hslrgb.h
 	src/cache.cpp
 	src/cache.h

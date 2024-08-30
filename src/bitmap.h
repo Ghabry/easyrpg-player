@@ -21,8 +21,6 @@
 // Headers
 #include <cstdint>
 #include <string>
-#include <map>
-#include <vector>
 #include <cassert>
 #include <pixman.h>
 
@@ -78,8 +76,9 @@ public:
 	 * @param source source bitmap.
 	 * @param src_rect rect to copy from source bitmap.
 	 * @param transparent allow transparency on bitmap.
+	 * @param flags bitmap flags.
 	 */
-	static BitmapRef Create(Bitmap const& source, Rect const& src_rect, bool transparent = true);
+	static BitmapRef Create(Bitmap const& source, Rect const& src_rect, bool transparent = true, uint32_t flags = 0);
 
 	/**
 	 * Creates a surface.
@@ -105,7 +104,7 @@ public:
 	Bitmap(int width, int height, bool transparent);
 	Bitmap(Filesystem_Stream::InputStream stream, bool transparent, uint32_t flags);
 	Bitmap(const uint8_t* data, unsigned bytes, bool transparent, uint32_t flags);
-	Bitmap(Bitmap const& source, Rect const& src_rect, bool transparent);
+	Bitmap(Bitmap const& source, Rect const& src_rect, bool transparent, uint32_t flags);
 	Bitmap(void *pixels, int width, int height, int pitch, const DynamicFormat& format);
 
 	/**
@@ -613,9 +612,9 @@ public:
 	ImageOpacity ComputeImageOpacity() const;
 	ImageOpacity ComputeImageOpacity(Rect rect) const;
 
-protected:
 	DynamicFormat format;
 
+protected:
 	ImageOpacity image_opacity = ImageOpacity::Alpha_8Bit;
 	TileOpacity tile_opacity;
 	Color bg_color, sh_color;

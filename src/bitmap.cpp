@@ -22,13 +22,11 @@
 #include <algorithm>
 #include <iostream>
 #include <pixman.h>
-#include <unordered_map>
 
 #include "pixel_format.h"
 #include "utils.h"
 #include "cache.h"
 #include "bitmap.h"
-#include "filefinder.h"
 #include "options.h"
 #include <lcf/data.h>
 #include "output.h"
@@ -38,9 +36,8 @@
 #include "transform.h"
 #include "font.h"
 #include "output.h"
-#include "util_macro.h"
 #include "bitmap_hslrgb.h"
-#include <iostream>
+#include "bitmap_blit.h"
 
 BitmapRef Bitmap::Create(int width, int height, const Color& color) {
 	BitmapRef surface = Bitmap::Create(width, height, true);
@@ -68,8 +65,8 @@ BitmapRef Bitmap::Create(const uint8_t* data, unsigned bytes, bool transparent, 
 	return bmp;
 }
 
-BitmapRef Bitmap::Create(Bitmap const& source, Rect const& src_rect, bool transparent) {
-	return std::make_shared<Bitmap>(source, src_rect, transparent);
+BitmapRef Bitmap::Create(Bitmap const& source, Rect const& src_rect, bool transparent, uint32_t flags) {
+	return std::make_shared<Bitmap>(source, src_rect, transparent, flags);
 }
 
 BitmapRef Bitmap::Create(int width, int height, bool transparent, int /* bpp */) {
@@ -165,13 +162,15 @@ Bitmap::Bitmap(const uint8_t* data, unsigned bytes, bool transparent, uint32_t f
 	CheckPixels(flags);
 }
 
-Bitmap::Bitmap(Bitmap const& source, Rect const& src_rect, bool transparent) {
+Bitmap::Bitmap(Bitmap const& source, Rect const& src_rect, bool transparent, uint32_t flags) {
 	format = (transparent ? pixel_format : opaque_pixel_format);
 	pixman_format = find_format(format);
 
 	Init(src_rect.width, src_rect.height, (void *) NULL);
 
 	Blit(0, 0, source, src_rect, Opacity::Opaque());
+
+	CheckPixels(flags);
 }
 
 bool Bitmap::WritePNG(std::ostream& os) const {
@@ -631,8 +630,14 @@ void Bitmap::Blit(int x, int y, Bitmap const& src, Rect const& src_rect, Opacity
 	}
 
 	auto mask = CreateMask(opacity, src_rect);
+	auto pixman_op = src.GetOperator(mask.get(), blend_mode);
 
-	pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
+	if (!mask && src.pixman_format == pixman_format) {
+		BitmapBlit::Blit(*this, x, y, src, src_rect, opacity, pixman_op);
+		return;
+	}
+
+	pixman_image_composite32(pixman_op,
 							 src.bitmap.get(),
 							 mask.get(), bitmap.get(),
 							 src_rect.x, src_rect.y,
@@ -643,6 +648,11 @@ void Bitmap::Blit(int x, int y, Bitmap const& src, Rect const& src_rect, Opacity
 
 void Bitmap::BlitFast(int x, int y, Bitmap const & src, Rect const & src_rect, Opacity const & opacity) {
 	if (opacity.IsTransparent()) {
+		return;
+	}
+
+	if (src.pixman_format == pixman_format) {
+		BitmapBlit::BlitFast(*this, x, y, src, src_rect, opacity);
 		return;
 	}
 

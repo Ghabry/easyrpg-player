@@ -48,6 +48,8 @@ libeasyrpg_player_a_SOURCES = \
 	src/bitmap.h \
 	src/bitmapfont.h \
 	src/bitmapfont_glyph.h \
+	src/bitmap_blit.cpp \
+	src/bitmap_blit.h \
 	src/bitmap_hslrgb.h \
 	src/cache.cpp \
 	src/cache.h \
