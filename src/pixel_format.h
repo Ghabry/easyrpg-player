@@ -159,6 +159,10 @@ public:
 		alpha_type = _alpha_type;
 	}
 
+	constexpr bool rgb_equal(const DynamicFormat& f) const {
+		return r == f.r && g == f.g && b == f.b;
+	}
+
 	constexpr int code(bool shifts) const {
 		int x = (int) alpha_type | ((bits - 1) << 2);
 		if (!shifts)
