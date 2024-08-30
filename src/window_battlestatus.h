@@ -87,7 +87,7 @@ protected:
 	/**
 	 * Tests whether actor is selectable in current ChoiceMode.
 	 *
-	 * @return true: selection possible 
+	 * @return true: selection possible
 	 */
 	bool IsChoiceValid(const Game_Battler& battler) const;
 
@@ -99,6 +99,18 @@ protected:
 	FileRequestBinding request_id;
 
 	int actor_face_height = 24;
+
+	struct ActorDataCache {
+		std::string name;
+		int hp;
+		int sp;
+		const lcf::rpg::State* state;
+
+		bool HasChanged(const Game_Battler& battler);
+	};
+
+	int item_max_prev = 0;
+	std::array<ActorDataCache, 4> data_cache;
 };
 
 #endif
