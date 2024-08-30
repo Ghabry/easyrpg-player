@@ -202,7 +202,7 @@ ImageOpacity Bitmap::ComputeImageOpacityT() const {
 	bool alpha_1bit = true;
 
 	auto* p = reinterpret_cast<const T*>(pixels());
-	const auto mask = pixel_format.rgba_to_uint32_t(0, 0, 0, 0xFF);
+	const auto mask = format.rgba_to_uint32_t(0, 0, 0, 0xFF);
 
 	int n = GetSize() / sizeof(T);
 	for (int i = 0; i < n; ++i ) {
@@ -240,7 +240,7 @@ ImageOpacity Bitmap::ComputeImageOpacityT(Rect rect) const {
 
 	auto* p = reinterpret_cast<const T*>(pixels());
 	const int stride = pitch() / sizeof(T);
-	const auto mask = pixel_format.rgba_to_uint32_t(0, 0, 0, 0xFF);
+	const auto mask = format.rgba_to_uint32_t(0, 0, 0, 0xFF);
 
 	int xend = (rect.x + rect.width);
 	int yend = (rect.y + rect.height);
@@ -300,7 +300,9 @@ void Bitmap::CheckPixels(uint32_t flags) {
 	if (flags & Flag_ReadOnly) {
 		read_only = true;
 
-		image_opacity = ComputeImageOpacity();
+		if (GetTransparent()) {
+			image_opacity = ComputeImageOpacity();
+		}
 	}
 }
 
