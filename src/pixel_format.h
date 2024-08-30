@@ -69,11 +69,11 @@ struct Component {
 		byte = shift / 8;
 	}
 
-	constexpr bool operator==(const Component& c) {
+	constexpr bool operator==(const Component& c) const {
 		return mask == c.mask;
 	}
 
-	constexpr bool operator!=(const Component& c) {
+	constexpr bool operator!=(const Component& c) const {
 		return mask != c.mask;
 	}
 
@@ -189,11 +189,11 @@ public:
 		return r.pack(_r) | g.pack(_g) | b.pack(_b) | a.pack(_a);
 	}
 
-	constexpr bool operator==(const DynamicFormat& f) {
+	constexpr bool operator==(const DynamicFormat& f) const {
 		return r ==  f.r && g == f.g && b == f.b && a == f.a && alpha_type == f.alpha_type;
 	}
 
-	constexpr bool operator!=(const DynamicFormat& f) {
+	constexpr bool operator!=(const DynamicFormat& f) const {
 		return r !=  f.r || g != f.g || b != f.b || a != f.a || alpha_type != f.alpha_type;
 	}
 };

@@ -23,6 +23,7 @@
 #include <iostream>
 #include <pixman.h>
 
+#include "opacity.h"
 #include "pixel_format.h"
 #include "utils.h"
 #include "cache.h"
@@ -546,6 +547,10 @@ void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
 
 	if (data != NULL && destroy)
 		pixman_image_set_destroy_function(bitmap.get(), destroy_func, data);
+
+	if (!GetTransparent()) {
+		image_opacity = ImageOpacity::Opaque;
+	}
 }
 
 void Bitmap::ConvertImage(int& width, int& height, void*& pixels, bool transparent) {
@@ -625,17 +630,13 @@ namespace {
 } // anonymous namespace
 
 void Bitmap::Blit(int x, int y, Bitmap const& src, Rect const& src_rect, Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	if (opacity.IsTransparent()) {
+	auto pixman_op = src.GetOperator(opacity, blend_mode);
+
+	if (BitmapBlit::Blit(*this, x, y, src, src_rect, opacity, pixman_op)) {
 		return;
 	}
 
 	auto mask = CreateMask(opacity, src_rect);
-	auto pixman_op = src.GetOperator(mask.get(), blend_mode);
-
-	if (!mask && src.pixman_format == pixman_format) {
-		BitmapBlit::Blit(*this, x, y, src, src_rect, opacity, pixman_op);
-		return;
-	}
 
 	pixman_image_composite32(pixman_op,
 							 src.bitmap.get(),
@@ -647,12 +648,7 @@ void Bitmap::Blit(int x, int y, Bitmap const& src, Rect const& src_rect, Opacity
 }
 
 void Bitmap::BlitFast(int x, int y, Bitmap const & src, Rect const & src_rect, Opacity const & opacity) {
-	if (opacity.IsTransparent()) {
-		return;
-	}
-
-	if (src.pixman_format == pixman_format) {
-		BitmapBlit::BlitFast(*this, x, y, src, src_rect, opacity);
+	if (BitmapBlit::BlitFast(*this, x, y, src, src_rect, opacity)) {
 		return;
 	}
 
@@ -691,7 +687,7 @@ void Bitmap::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, 
 
 	auto mask = CreateMask(opacity, src_rect);
 
-	pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
+	pixman_image_composite32(src.GetOperator(opacity, blend_mode),
 							 src_bm.get(), mask.get(), bitmap.get(),
 							 ox, oy,
 							 0, 0,
@@ -717,7 +713,7 @@ void Bitmap::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& sr
 
 	auto mask = CreateMask(opacity, src_rect, &xform);
 
-	pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
+	pixman_image_composite32(src.GetOperator(opacity, blend_mode),
 							 src.bitmap.get(), mask.get(), bitmap.get(),
 							 src_rect.x / zoom_x, src_rect.y / zoom_y,
 							 0, 0,
@@ -752,7 +748,7 @@ void Bitmap::WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const&
 		const double sy = (i - yclip) * (2 * M_PI) / (32.0 * zoom_y);
 		const int offset = 2 * zoom_x * depth * std::sin(phase + sy);
 
-		pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
+		pixman_image_composite32(src.GetOperator(opacity, blend_mode),
 								 src.bitmap.get(), mask.get(), bitmap.get(),
 								 xoff, yoff + i,
 								 0, i,
@@ -1234,7 +1230,7 @@ void Bitmap::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 
 	// OP_SRC draws a black rectangle around the rotated image making this operator unusable here
 	blend_mode = (blend_mode == BlendMode::Default ? BlendMode::Normal : blend_mode);
-	pixman_image_composite32(GetOperator(mask.get(), blend_mode),
+	pixman_image_composite32(GetOperator(opacity, blend_mode),
 							 src_img, mask.get(), bitmap.get(),
 							 dst_rect.x, dst_rect.y,
 							 dst_rect.x, dst_rect.y,
@@ -1261,7 +1257,7 @@ void Bitmap::ZoomOpacityBlit(int x, int y, int ox, int oy,
 	StretchBlit(dst_rect, src, src_rect, opacity, blend_mode);
 }
 
-pixman_op_t Bitmap::GetOperator(pixman_image_t* mask, Bitmap::BlendMode blend_mode) const {
+pixman_op_t Bitmap::GetOperator(Opacity const& opacity, Bitmap::BlendMode blend_mode) const {
 	if (blend_mode != BlendMode::Default) {
 		switch (blend_mode) {
 			case BlendMode::Normal:
@@ -1299,7 +1295,9 @@ pixman_op_t Bitmap::GetOperator(pixman_image_t* mask, Bitmap::BlendMode blend_mo
 		}
 	}
 
-	if (!mask && (!GetTransparent() || GetImageOpacity() == ImageOpacity::Opaque)) {
+	bool has_mask = !opacity.IsOpaque() && !opacity.IsTransparent();
+
+	if (!has_mask && GetImageOpacity() == ImageOpacity::Opaque) {
 		return PIXMAN_OP_SRC;
 	}
 
@@ -1315,7 +1313,7 @@ void Bitmap::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rec
 	const auto dst_rect = GetRect();
 
 	auto draw = [&](int x, int y) {
-		pixman_image_composite32(src.GetOperator(mask.get()),
+		pixman_image_composite32(src.GetOperator(opacity),
 				src.bitmap.get(),
 				mask.get(), bitmap.get(),
 				src_rect.x, src_rect.y,

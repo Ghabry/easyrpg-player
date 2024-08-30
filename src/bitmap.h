@@ -667,7 +667,7 @@ protected:
 	 * @param blend_mode When >= 0: Force this blend mode as operator
 	 * @return blend mode
 	 */
-	pixman_op_t GetOperator(pixman_image_t* mask = nullptr, BlendMode blend_mode = BlendMode::Default) const;
+	pixman_op_t GetOperator(Opacity const& opacity = Opacity::Opaque(), BlendMode blend_mode = BlendMode::Default) const;
 	bool read_only = false;
 };
 

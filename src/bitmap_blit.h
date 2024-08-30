@@ -22,10 +22,10 @@
 #include <pixman.h>
 
 namespace BitmapBlit {
-	void Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
+	bool Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 		Opacity const& opacity, pixman_op_t blend_mode);
 
-	void BlitFast(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
+	bool BlitFast(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 		Opacity const& opacity);
 }
 

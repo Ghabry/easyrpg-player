@@ -21,10 +21,6 @@
 namespace {
 
 bool adjust_rects(Bitmap const& dest, Rect& dst_rect, Bitmap const& src, Rect& src_rect, Opacity const& opacity) {
-	if (opacity.IsTransparent()) {
-		return false;
-	}
-
 	if (!Rect::AdjustRectangles(src_rect, dst_rect, src.GetRect()))
 		return false;
 
@@ -34,30 +30,34 @@ bool adjust_rects(Bitmap const& dest, Rect& dst_rect, Bitmap const& src, Rect& s
 	return true;
 }
 
-void BlitFastT() {
-
-}
-
 }
 
 namespace BitmapBlit {
 
-void Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
+bool Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 		Opacity const& opacity, pixman_op_t blend_mode) {
 
 	if (blend_mode == PIXMAN_OP_SRC) {
-		BlitFast(dest, x, y, src, src_rect, opacity);
-		return;
+		return BlitFast(dest, x, y, src, src_rect, opacity);
 	}
 
-	if (blend_mode != PIXMAN_OP_OVER) {
-		return;
+	if (opacity.IsTransparent()) {
+		return true;
+	}
+
+	if (dest.format != src.format) {
+		return false;
+	}
+
+	if (blend_mode != PIXMAN_OP_OVER || src.bpp() != 2) {
+		// Not supported
+		return false;
 	}
 
 	Rect dst_rect = {x, y, 0, 0};
 
 	if (!adjust_rects(dest, dst_rect, src, src_rect, opacity)) {
-		return;
+		return true;
 	}
 
 	int bpp = src.bpp();
@@ -112,16 +112,10 @@ void Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 					x - bpp - run_beg);
 			}
 		}
-
-		/*if (run_alpha != 0 && x - bpp >= run_beg) {
-			memcpy(
-				dst_pixels + y * dst_pitch,
-				src_pixels + y * src_pitch,
-				to_copy);
-		}*/
 	}
 
 	/*
+	// Naive implementation
 	for (int y = 0; y < src_rect.height; ++y) {
 		for (int x = 0; x < src_rect.width * bpp; x += bpp) {
 			src_pixel = *(uint16_t*)(src_pixels + y * src_pitch + x);
@@ -132,15 +126,25 @@ void Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 		}
 	}
 	*/
+
+	return true;
 }
 
-void BlitFast(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
+bool BlitFast(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 		Opacity const& opacity) {
+
+	if (opacity.IsTransparent()) {
+		return true;
+	}
+
+	if (dest.format != src.format) {
+		return false;
+	}
 
 	Rect dst_rect = {x, y, 0, 0};
 
 	if (!adjust_rects(dest, dst_rect, src, src_rect, opacity)) {
-		return;
+		return true;
 	}
 
 	int bpp = src.bpp();
@@ -158,6 +162,8 @@ void BlitFast(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 			src_pixels + y * src_pitch,
 			to_copy);
 	}
+
+	return true;
 }
 
 } // namespace BitmapBlit
