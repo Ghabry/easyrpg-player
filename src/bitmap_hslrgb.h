@@ -1,3 +1,24 @@
+/*
+ * This file is part of EasyRPG Player.
+ *
+ * EasyRPG Player is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * EasyRPG Player is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifndef EP_BITMAP_HSLRGB_H
+#define EP_BITMAP_HSLRGB_H
+
+#include <cstdint>
 
 static inline void RGB_to_HSL(const uint8_t& r, const uint8_t& g, const uint8_t& b,
 							  int &h, int &s, int &l)
@@ -68,3 +89,5 @@ static inline void RGB_adjust_HSL(uint8_t& r, uint8_t& g, uint8_t& b,
 	HSL_adjust(h, s, l, hue);
 	HSL_to_RGB(h, s, l, r, g, b);
 }
+
+#endif
