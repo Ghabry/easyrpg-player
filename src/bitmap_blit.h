@@ -27,6 +27,8 @@ namespace BitmapBlit {
 
 	bool BlitFast(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 		Opacity const& opacity);
+
+	void ClearRect(Bitmap& dest, Rect src_rect);
 }
 
 #endif

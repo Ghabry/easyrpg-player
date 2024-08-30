@@ -235,4 +235,20 @@ bool BlitFast(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 	return true;
 }
 
+void ClearRect(Bitmap& dest, Rect src_rect) {
+	src_rect.Adjust(dest.GetRect());
+	Rect& dst_rect = src_rect;
+
+	int bpp = dest.bpp();
+	int dst_pitch = dest.pitch();
+
+	uint8_t* dst_pixels = (uint8_t*)dest.pixels() + dst_rect.x * bpp + dst_rect.y * dst_pitch;
+
+	int line_width = src_rect.width * bpp;
+
+	for (int y = 0; y < src_rect.height; ++y) {
+		memset(dst_pixels + y * dst_pitch, '\0', line_width);
+	}
+}
+
 } // namespace BitmapBlit

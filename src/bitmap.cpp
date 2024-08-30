@@ -799,18 +799,12 @@ void Bitmap::Clear() {
 }
 
 void Bitmap::ClearRect(Rect const& dst_rect) {
-	pixman_color_t pcolor = {};
-	pixman_box32_t box = {
-		dst_rect.x,
-		dst_rect.y,
-		dst_rect.x + dst_rect.width,
-		dst_rect.y + dst_rect.height
-	};
+	if (dst_rect == GetRect()) {
+		Clear();
+		return;
+	}
 
-	box.x2 = Utils::Clamp<int32_t>(box.x2, 0, width());
-	box.y2 = Utils::Clamp<int32_t>(box.y2, 0, height());
-
-	pixman_image_fill_boxes(PIXMAN_OP_CLEAR, bitmap.get(), &pcolor, 1, &box);
+	BitmapBlit::ClearRect(*this, dst_rect);
 }
 
 // Hard light lookup table mapping source color to destination color
