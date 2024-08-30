@@ -111,28 +111,41 @@ bool Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 
 		mask /= 8; // Reduce range to [0 - 32] (5 bit)
 
-		for (int y = 0; y < src_rect.height; ++y) {
-			for (int x = 0; x < src_rect.width * bpp; x += bpp) {
-				src_pixel = *(uint16_t*)(src_pixels + y * src_pitch + x);
+		auto set_pixel_fn = [&]() {
+			dst_pixel = (uint16_t*)(dst_pixels + y * dst_pitch + x);
+			dst_pixel_val = *dst_pixel;
 
-				// Transparent pixels are skipped
-				if ((src_pixel & amask) != 0) {
-					dst_pixel = (uint16_t*)(dst_pixels + y * dst_pitch + x);
-					dst_pixel_val = *dst_pixel;
+			rs = (src_pixel >> rshift) & pxmask;
+			gs = (src_pixel >> gshift) & pxmask;
+			bs = (src_pixel >> bshift) & pxmask;
 
-					rs = (src_pixel >> rshift) & pxmask;
-					gs = (src_pixel >> gshift) & pxmask;
-					bs = (src_pixel >> bshift) & pxmask;
+			rd = (dst_pixel_val >> rshift) & pxmask;
+			gd = (dst_pixel_val >> gshift) & pxmask;
+			bd = (dst_pixel_val >> bshift) & pxmask;
 
-					rd = (dst_pixel_val >> rshift) & pxmask;
-					gd = (dst_pixel_val >> gshift) & pxmask;
-					bd = (dst_pixel_val >> bshift) & pxmask;
+			rd = (rs * mask + ((32 - mask) * rd)) / 32;
+			gd = (gs * mask + ((32 - mask) * gd)) / 32;
+			bd = (bs * mask + ((32 - mask) * bd)) / 32;
 
-					rd = (rs * mask + ((64 - mask) * rd)) / 64;
-					gd = (gs * mask + ((64 - mask) * gd)) / 64;
-					bd = (bs * mask + ((64 - mask) * bd)) / 64;
+			*dst_pixel = (rd << rshift ) | (gd << gshift) | (bd << bshift) | (1 << ashift);
+		};
 
-					*dst_pixel = (rd << rshift ) | (gd << gshift) | (bd << bshift) | (1 << ashift);
+		if (!src.GetTransparent()) {
+			for (y = 0; y < src_rect.height; ++y) {
+				for (x = 0; x < src_rect.width * bpp; x += bpp) {
+					src_pixel = *(uint16_t*)(src_pixels + y * src_pitch + x);
+					set_pixel_fn();
+				}
+			}
+		} else {
+			for (y = 0; y < src_rect.height; ++y) {
+				for (x = 0; x < src_rect.width * bpp; x += bpp) {
+					src_pixel = *(uint16_t*)(src_pixels + y * src_pitch + x);
+
+					// Transparent pixels are skipped
+					if ((src_pixel & amask) != 0) {
+						set_pixel_fn();
+					}
 				}
 			}
 		}
