@@ -148,6 +148,8 @@ public:
 		// Special handling for chipset graphic.
 		// Generates a tile opacity list.
 		Flag_Chipset = 1 << 2,
+		// Special handling for charset graphic.
+		Flag_Charset = 1 << 4,
 		// Bitmap will not be written to. This allows blit optimisations because the
 		// opacity information will not change.
 		Flag_ReadOnly = 1 << 16
@@ -614,9 +616,19 @@ public:
 
 	DynamicFormat format;
 
+	struct Run {
+		uint16_t y;
+		uint16_t x_begin;
+		uint16_t x_end;
+	};
+
+	const std::vector<Run>& GetRuns() const;
+	void ComputeRuns();
+
 protected:
 	ImageOpacity image_opacity = ImageOpacity::Alpha_8Bit;
 	TileOpacity tile_opacity;
+	std::vector<Run> runs;
 	Color bg_color, sh_color;
 	FontRef font;
 
@@ -637,6 +649,9 @@ protected:
 
 	template<typename T>
 	ImageOpacity ComputeImageOpacityT(Rect rect) const;
+
+	template<typename T>
+	void ComputeRunsT();
 
 	template<typename T>
 	void ToneBlitT(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity, ImageOpacity const& src_opacity);
@@ -725,6 +740,10 @@ inline FontRef Bitmap::GetFont() const {
 
 inline void Bitmap::SetFont(FontRef font) {
 	this->font = font;
+}
+
+inline const std::vector<Bitmap::Run>& Bitmap::GetRuns() const {
+	return runs;
 }
 
 inline int Bitmap::GetOriginalBpp() const {

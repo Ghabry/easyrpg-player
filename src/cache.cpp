@@ -269,6 +269,7 @@ namespace {
 				} else {
 					auto flags = Bitmap::Flag_ReadOnly | (
 							T == Material::Chipset ? Bitmap::Flag_Chipset :
+							T == Material::Charset ? Bitmap::Flag_Charset :
 							T == Material::System ? Bitmap::Flag_System : 0);
 					bmp = Bitmap::Create(std::move(is), transparent, flags);
 					if (!bmp) {

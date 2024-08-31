@@ -270,6 +270,71 @@ ImageOpacity Bitmap::ComputeImageOpacity(Rect rect) const {
 	}
 }
 
+template<typename pixel_type>
+void Bitmap::ComputeRunsT() {
+	// This only works for images that have full transparent or full opaque pixels
+	// Except for some Maniac Patch and EasyRPG games this is always the cause.
+
+	// This function precalculates where the opaque pixels are which allows much
+	// faster blitting operations
+	int w = width();
+	int h = height();
+	int src_pitch = pitch();
+
+	pixel_type* src_pixels = (pixel_type*)pixels();
+
+	const uint32_t amask = format.a.mask;
+
+	pixel_type px_alpha = 0;
+	pixel_type run_alpha = 0;
+
+	for (pixel_type y = 0; y < h; ++y) {
+		px_alpha = (*src_pixels & amask);
+		run_alpha = px_alpha;
+
+		if (px_alpha != 0) {
+			// Begin of a run
+			runs.push_back({static_cast<uint16_t>(y), 0, 0});
+		}
+
+		for (pixel_type x = 0; x < w; ++x) {
+			px_alpha = (*src_pixels & amask);
+
+			if (px_alpha != run_alpha) {
+				if (px_alpha != 0) {
+					// Begin of a run
+					runs.push_back({static_cast<uint16_t>(y), static_cast<uint16_t>(x), 0});
+				} else {
+					// End of a run
+					runs.back().x_end = x;
+				}
+				run_alpha = px_alpha;
+			}
+
+			++src_pixels;
+		}
+
+		if (run_alpha != 0) {
+			// Run ends at end of line
+			runs.back().x_end = w;
+		}
+	}
+
+	for (auto& run: runs) {
+		assert(run.x_end > run.x_begin);
+	}
+}
+
+void Bitmap::ComputeRuns() {
+	runs.clear();
+
+	if (bpp() == 2) {
+		return ComputeRunsT<uint16_t>();
+	} else {
+		return ComputeRunsT<uint32_t>();
+	}
+}
+
 void Bitmap::CheckPixels(uint32_t flags) {
 	if (flags & Flag_System) {
 		DynamicFormat format(32,8,24,8,16,8,8,8,0,PF::Alpha);
@@ -302,6 +367,13 @@ void Bitmap::CheckPixels(uint32_t flags) {
 
 		if (GetTransparent()) {
 			image_opacity = ComputeImageOpacity();
+		}
+
+		if (image_opacity == ImageOpacity::Alpha_1Bit) {
+			const int img_flags = Flag_System | Flag_Chipset | Flag_Charset;
+			if ((flags & img_flags) == 0) {
+				ComputeRuns();
+			}
 		}
 	}
 }
