@@ -258,10 +258,10 @@ bool Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 
 	// This dispatching through a template function with a known pixel format is faster because
 	// bits, shift etc. are known at compile time and replaced with constants by the compiler.
-	if (format_A1R5G5B5_n().MatchIgnoreAlpha(src.format)) {
-		return BlitT<format_A1R5G5B5_a>(dest, dst_rect, src, src_rect, opacity);
-	} else if (format_A1B5G5R5_n().MatchIgnoreAlpha(src.format)) {
-		return BlitT<format_A1R5G5B5_a>(dest, dst_rect, src, src_rect, opacity);
+	if (format_B5G5R5A1_n().MatchIgnoreAlpha(src.format)) {
+		return BlitT<format_B5G5R5A1_n>(dest, dst_rect, src, src_rect, opacity);
+	} else if (format_R5G5B5A1_n().MatchIgnoreAlpha(src.format)) {
+		return BlitT<format_R5G5B5A1_n>(dest, dst_rect, src, src_rect, opacity);
 	}
 	/*
 	// 32bit versions for testing (not useful in production because pixman SIMD is faster)
