@@ -74,7 +74,8 @@ bool BlitT(Bitmap& dest, Rect const& dst_rect, Bitmap const& src, Rect const& sr
 		const uint8_t gshift = format.g_shift();
 		const uint8_t bshift = format.b_shift();
 		const uint8_t ashift = format.a_shift();
-		const uint16_t pxmax = (1 << format.r_bits());
+		const uint8_t bits = format.r_bits();
+		const uint16_t pxmax = (1 << bits);
 		const uint8_t pxmask = pxmax - 1;
 
 		uint8_t rs, gs, bs; // src colors
@@ -94,9 +95,9 @@ bool BlitT(Bitmap& dest, Rect const& dst_rect, Bitmap const& src, Rect const& sr
 			gd = (dst_p >> gshift) & pxmask;
 			bd = (dst_p >> bshift) & pxmask;
 
-			rd = (rs * mask + ((pxmax - mask) * rd)) / pxmax;
-			gd = (gs * mask + ((pxmax - mask) * gd)) / pxmax;
-			bd = (bs * mask + ((pxmax - mask) * bd)) / pxmax;
+			rd = (rs * mask + ((pxmax - mask) * rd)) >> bits;
+			gd = (gs * mask + ((pxmax - mask) * gd)) >> bits;
+			bd = (bs * mask + ((pxmax - mask) * bd)) >> bits;
 
 			*dst_pixel = (rd << rshift ) | (gd << gshift) | (bd << bshift) | (1 << ashift);
 		};

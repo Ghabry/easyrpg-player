@@ -453,12 +453,12 @@ struct mask_traits {
 
 template<class TPF, int _bits, int _shift>
 struct mask_traits<TPF, PF::StaticMasks, _bits, _shift> {
-	static const int _byte = _shift / 8;
-	static const int _mask = ((1 << _bits)-1) << _shift;
-	static inline int bits() { return _bits; }
-	static inline int shift() { return _shift; }
-	static inline int byte() { return _byte; }
-	static inline int mask() { return _mask; }
+	static const constexpr int _byte = _shift / 8;
+	static const constexpr int _mask = ((1 << _bits)-1) << _shift;
+	static inline constexpr int bits() { return _bits; }
+	static inline constexpr int shift() { return _shift; }
+	static inline constexpr int byte() { return _byte; }
+	static inline constexpr int mask() { return _mask; }
 };
 
 template<class TPF, int _bits, int _shift>
@@ -526,10 +526,10 @@ public:
 	typedef mask_traits<my_type, dynamic_masks, AB, AS> mask_a_traits_type;
 	dynamic_traits_type dynamic_traits;
 
-	PixelFormatT() : dynamic_traits(DynamicFormat(BITS, RB, RS, GB, GS, BB, BS, AB, AS, (PF::AlphaType) ALPHA)) {}
-	PixelFormatT(const DynamicFormat& format) : dynamic_traits(format) {}
+	constexpr PixelFormatT() : dynamic_traits(DynamicFormat(BITS, RB, RS, GB, GS, BB, BS, AB, AS, (PF::AlphaType) ALPHA)) {}
+	constexpr PixelFormatT(const DynamicFormat& format) : dynamic_traits(format) {}
 
-	static inline int endian(int byte) {
+	static constexpr int endian(int byte) {
 #if defined(WORDS_BIGENDIAN)
 		return bytes - 1 - byte;
 #else
@@ -537,14 +537,14 @@ public:
 #endif
 	}
 
-	inline void uint32_to_rgba(uint32_t pix, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a) const {
+	inline constexpr void uint32_to_rgba(uint32_t pix, uint8_t& r, uint8_t& g, uint8_t& b, uint8_t& a) const {
 		r = (uint8_t)(((pix >> r_shift()) & ((1 << r_bits()) - 1)) << (8 - r_bits()));
 		g = (uint8_t)(((pix >> g_shift()) & ((1 << g_bits()) - 1)) << (8 - g_bits()));
 		b = (uint8_t)(((pix >> b_shift()) & ((1 << b_bits()) - 1)) << (8 - b_bits()));
 		a = (uint8_t)(((pix >> a_shift()) & ((1 << a_bits()) - 1)) << (8 - a_bits()));
 	}
 
-	inline uint32_t rgba_to_uint32_t(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a) const {
+	inline constexpr uint32_t rgba_to_uint32_t(const uint8_t& r, const uint8_t& g, const uint8_t& b, const uint8_t& a) const {
 		return
 			(((uint32_t)r >> (8 - r_bits())) << r_shift()) |
 			(((uint32_t)g >> (8 - g_bits())) << g_shift()) |
@@ -552,29 +552,29 @@ public:
 			(((uint32_t)a >> (8 - a_bits())) << a_shift());
 	}
 
-	inline const DynamicFormat& format() const {
+	inline constexpr const DynamicFormat& format() const {
 		return dynamic_traits.format;
 	}
 
-	inline int r_byte() const { return endian(mask_r_traits_type::byte()); }
-	inline int g_byte() const { return endian(mask_g_traits_type::byte()); }
-	inline int b_byte() const { return endian(mask_b_traits_type::byte()); }
-	inline int a_byte() const { return endian(mask_a_traits_type::byte()); }
+	inline constexpr int r_byte() const { return endian(mask_r_traits_type::byte()); }
+	inline constexpr int g_byte() const { return endian(mask_g_traits_type::byte()); }
+	inline constexpr int b_byte() const { return endian(mask_b_traits_type::byte()); }
+	inline constexpr int a_byte() const { return endian(mask_a_traits_type::byte()); }
 
-	inline uint32_t r_mask() const { return mask_r_traits_type::mask(); }
-	inline uint32_t g_mask() const { return mask_g_traits_type::mask(); }
-	inline uint32_t b_mask() const { return mask_b_traits_type::mask(); }
-	inline uint32_t a_mask() const { return mask_a_traits_type::mask(); }
+	inline constexpr uint32_t r_mask() const { return mask_r_traits_type::mask(); }
+	inline constexpr uint32_t g_mask() const { return mask_g_traits_type::mask(); }
+	inline constexpr uint32_t b_mask() const { return mask_b_traits_type::mask(); }
+	inline constexpr uint32_t a_mask() const { return mask_a_traits_type::mask(); }
 
-	inline int r_bits() const { return mask_r_traits_type::bits(); }
-	inline int g_bits() const { return mask_g_traits_type::bits(); }
-	inline int b_bits() const { return mask_b_traits_type::bits(); }
-	inline int a_bits() const { return mask_a_traits_type::bits(); }
+	inline constexpr int r_bits() const { return mask_r_traits_type::bits(); }
+	inline constexpr int g_bits() const { return mask_g_traits_type::bits(); }
+	inline constexpr int b_bits() const { return mask_b_traits_type::bits(); }
+	inline constexpr int a_bits() const { return mask_a_traits_type::bits(); }
 
-	inline int r_shift() const { return mask_r_traits_type::shift(); }
-	inline int g_shift() const { return mask_g_traits_type::shift(); }
-	inline int b_shift() const { return mask_b_traits_type::shift(); }
-	inline int a_shift() const { return mask_a_traits_type::shift(); }
+	inline constexpr int r_shift() const { return mask_r_traits_type::shift(); }
+	inline constexpr int g_shift() const { return mask_g_traits_type::shift(); }
+	inline constexpr int b_shift() const { return mask_b_traits_type::shift(); }
+	inline constexpr int a_shift() const { return mask_a_traits_type::shift(); }
 
 	inline PF::AlphaType alpha_type() const {
 		return alpha_type_traits_type::alpha_type(this);
