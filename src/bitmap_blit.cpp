@@ -260,16 +260,20 @@ bool Blit(Bitmap& dest, int x, int y, Bitmap const& src, Rect src_rect,
 	// bits, shift etc. are known at compile time and replaced with constants by the compiler.
 	if (format_A1R5G5B5_n().MatchIgnoreAlpha(src.format)) {
 		return BlitT<format_A1R5G5B5_a>(dest, dst_rect, src, src_rect, opacity);
+	} else if (format_A1B5G5R5_n().MatchIgnoreAlpha(src.format)) {
+		return BlitT<format_A1R5G5B5_a>(dest, dst_rect, src, src_rect, opacity);
 	}
+	/*
 	// 32bit versions for testing (not useful in production because pixman SIMD is faster)
-	/* else if (format_R8G8B8A8_n().MatchIgnoreAlpha(src.format)) {
+	else if (format_R8G8B8A8_n().MatchIgnoreAlpha(src.format)) {
 		return BlitT<format_R8G8B8A8_n>(dest, dst_rect, src, src_rect, opacity);
 	} else if (format_B8G8R8A8_n().MatchIgnoreAlpha(src.format)) {
-		return BlitT<format_B8G8R8A8_n>(dest, dst_rect, src, src_rect, opacity);
+	return BlitT<format_B8G8R8A8_n>(dest, dst_rect, src, src_rect, opacity);
 	} else if (format_A8R8G8B8_n().MatchIgnoreAlpha(src.format)) {
 		return BlitT<format_A8R8G8B8_n>(dest, dst_rect, src, src_rect, opacity);
 	} else if (format_A8B8G8R8_n().MatchIgnoreAlpha(src.format)) {
 		return BlitT<format_A8B8G8R8_n>(dest, dst_rect, src, src_rect, opacity);
+	}
 	}*/
 
 	return false;

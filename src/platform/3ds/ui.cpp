@@ -21,6 +21,7 @@
 #include "graphics.h"
 #include "keys.h"
 #include "output.h"
+#include "pixel_format.h"
 #include "player.h"
 #include "bitmap.h"
 #include <iostream>
@@ -63,7 +64,7 @@ namespace {
 	} renderer;
 	constexpr int button_width = 80;
 	constexpr int button_height = 60;
-	constexpr int z = 0.5f;
+	constexpr float z = 0.5f;
 	aptHookCookie cookie;
 #ifndef _DEBUG
 	struct _batt {
@@ -147,9 +148,9 @@ CtrUi::CtrUi(int width, int height, const Game_Config& cfg) : BaseUi(cfg) {
 	current_display_mode.height = height;
 	current_display_mode.bpp = 32;
 
-	const auto format = format_B8G8R8A8_n().format();
+	const auto format = format_A1B5G5R5_n().format();
 	Bitmap::SetFormat(Bitmap::ChooseFormat(format));
-	main_surface = Bitmap::Create(width, height, Color(0, 0, 0, 255));
+	//main_surface = Bitmap::Create(width, height, Color(0, 0, 0, 255));
 
 	// compute render params to center/stretch image correctly
 	renderer.top = (GSP_SCREEN_WIDTH - height) / 2;
@@ -163,10 +164,12 @@ CtrUi::CtrUi(int width, int height, const Game_Config& cfg) : BaseUi(cfg) {
 	tex.border = 0xFFFFFFFF;
 	C3D_TexSetWrap(&tex, GPU_CLAMP_TO_BORDER, GPU_CLAMP_TO_BORDER);
 
-	const auto screen_format = format_A8B8G8R8_n().format();
+	// A1B5G5R5
+	//const auto screen_format = format_A1B5G5R5_n().format();
 	if(!(screen_buffer = (u32*)linearAlloc(tex.width * tex.height * 4)))
 		Output::Error("Could not create main buffer.");
-	screen_surface = Bitmap::Create(screen_buffer, width, height, tex.width * 4, screen_format);
+	screen_surface = Bitmap::Create(screen_buffer, width, height, tex.width * 4, format);
+	main_surface = screen_surface;
 
 	// only show actual image, texture dimensions are bigger
 	subt3x = { (u16)width, (u16)height, 0.0f, 1.0f,
@@ -329,7 +332,7 @@ void CtrUi::ProcessEvents() {
 void CtrUi::UpdateDisplay() {
 	// convert ARGB buffer to RGBA buffer
 	// required because pixman has no fast-paths for non AXXX buffers and 3DS wants RGBA
-	screen_surface->BlitFast(0, 0, *main_surface, main_surface->GetRect(), Opacity::Opaque());
+	//screen_surface->BlitFast(0, 0, *main_surface, main_surface->GetRect(), Opacity::Opaque());
 
 	GSPGPU_FlushDataCache(screen_buffer, tex.width * tex.height * 4);
 
@@ -338,7 +341,7 @@ void CtrUi::UpdateDisplay() {
 	u32 dim = GX_BUFFER_DIM(tex.width, tex.height);
 	C3D_SyncDisplayTransfer(screen_buffer, dim, (u32*)tex.data, dim,
 		(GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(1) | GX_TRANSFER_RAW_COPY(0) |
-		GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) |
+		GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGB5A1) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB5A1) |
 		GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
 	 );
 
