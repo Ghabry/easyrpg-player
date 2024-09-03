@@ -116,100 +116,10 @@ bool BlitT(Bitmap& dest, Rect const& dst_rect, Bitmap const& src, Rect const& sr
 			}
 		} else {
 			// Transparent pixels are skipped
-			auto& runs = src.GetRuns();
-
-			if (!runs.empty()) {
-				auto run_it = runs.begin();
-
-				uint16_t x_begin = src_rect.x;
-				uint16_t x_end = src_rect.x + src_rect.width;
-
-				for (int y = src_rect.y; y < src_rect.y + src_rect.height; ++y) {
-					for (; run_it != runs.end(); ++run_it) {
-						if (run_it->y < y) {
-							continue;
-						}
-
-						if (run_it->y > y) {
-							break;
-						}
-
-						if (run_it->x_begin <= x_begin && run_it->x_end > x_begin ||
-							run_it->x_begin >= x_begin && run_it->x_end <= x_end ||
-							run_it->x_begin < x_end && run_it->x_end >= x_end) {
-
-							uint16_t x_begin_cp = std::max(run_it->x_begin, x_begin);
-							uint16_t x_end_cp = std::min(run_it->x_end, x_end);
-							uint16_t amount = (x_end_cp - x_begin_cp);
-
-							for (x = 0; x < amount; ++x) {
-								auto off = x_begin_cp - x_begin + x;
-								set_pixel_fn(src_pixels + off, dst_pixels + off);
-							}
-						}
-					}
-
-					src_pixels += src_w;
-					dst_pixels += dst_w;
-				}
-			} else {
-				for (y = 0; y < src_rect.height; ++y) {
-					for (x = 0; x < src_rect.width; ++x) {
-						if ((*src_pixels & amask) != 0) {
-							set_pixel_fn(src_pixels, dst_pixels);
-						}
-
-						++src_pixels;
-						++dst_pixels;
-					}
-
-					src_pixels += src_advance;
-					dst_pixels += dst_advance;
-				}
-			}
-		}
-	} else {
-		auto& runs = src.GetRuns();
-
-		if (!runs.empty()) {
-			auto run_it = runs.begin();
-
-			uint16_t x_begin = src_rect.x;
-			uint16_t x_end = src_rect.x + src_rect.width;
-
-			for (int y = src_rect.y; y < src_rect.y + src_rect.height; ++y) {
-				for (; run_it != runs.end(); ++run_it) {
-					if (run_it->y < y) {
-						continue;
-					}
-
-					if (run_it->y > y) {
-						break;
-					}
-
-					if (run_it->x_begin <= x_begin && run_it->x_end > x_begin ||
-						run_it->x_begin >= x_begin && run_it->x_end <= x_end ||
-						run_it->x_begin < x_end && run_it->x_end >= x_end) {
-
-						uint16_t x_begin_cp = std::max(run_it->x_begin, x_begin);
-						uint16_t x_end_cp = std::min(run_it->x_end, x_end);
-						uint16_t amount = (x_end_cp - x_begin_cp) * bpp;
-
-						memcpy(
-							dst_pixels + x_begin_cp - x_begin,
-							src_pixels + x_begin_cp - x_begin,
-							amount);
-					}
-				}
-
-				src_pixels += src_w;
-				dst_pixels += dst_w;
-			}
-		} else {
-			for (int y = 0; y < src_rect.height; ++y) {
-				for (int x = 0; x < src_rect.width; ++x) {
+			for (y = 0; y < src_rect.height; ++y) {
+				for (x = 0; x < src_rect.width; ++x) {
 					if ((*src_pixels & amask) != 0) {
-						*(pixel_type*)(dst_pixels) = *src_pixels;
+						set_pixel_fn(src_pixels, dst_pixels);
 					}
 
 					++src_pixels;
@@ -219,6 +129,20 @@ bool BlitT(Bitmap& dest, Rect const& dst_rect, Bitmap const& src, Rect const& sr
 				src_pixels += src_advance;
 				dst_pixels += dst_advance;
 			}
+		}
+	} else {
+		for (int y = 0; y < src_rect.height; ++y) {
+			for (int x = 0; x < src_rect.width; ++x) {
+				if ((*src_pixels & amask) != 0) {
+					*(pixel_type*)(dst_pixels) = *src_pixels;
+				}
+
+				++src_pixels;
+				++dst_pixels;
+			}
+
+			src_pixels += src_advance;
+			dst_pixels += dst_advance;
 		}
 	}
 
