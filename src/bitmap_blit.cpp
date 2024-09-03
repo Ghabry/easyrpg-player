@@ -17,6 +17,7 @@
 
 #include "bitmap_blit.h"
 #include "pixel_format.h"
+#include <cstdint>
 #include <pixman.h>
 
 namespace {
@@ -70,16 +71,16 @@ bool BlitT(Bitmap& dest, Rect const& dst_rect, Bitmap const& src, Rect const& sr
 
 	if (mask >= 0) {
 		// Alpha blending required (slow)
-		const uint8_t rshift = format.r_shift();
-		const uint8_t gshift = format.g_shift();
-		const uint8_t bshift = format.b_shift();
-		const uint8_t ashift = format.a_shift();
-		const uint8_t bits = format.r_bits();
-		const uint16_t pxmax = (1 << bits);
-		const uint8_t pxmask = pxmax - 1;
+		const uint_fast8_t rshift = format.r_shift();
+		const uint_fast8_t gshift = format.g_shift();
+		const uint_fast8_t bshift = format.b_shift();
+		const uint_fast8_t ashift = format.a_shift();
+		const uint_fast8_t bits = format.r_bits();
+		const uint_fast16_t pxmax = (1 << bits);
+		const uint_fast8_t pxmask = pxmax - 1;
 
-		uint8_t rs, gs, bs; // src colors
-		uint8_t rd, gd, bd; // dest colors
+		uint_fast8_t rs, gs, bs; // src colors
+		uint_fast8_t rd, gd, bd; // dest colors
 
 		mask /= (256 / pxmax); // Reduce range to [0 - 32] (5 bit)
 
