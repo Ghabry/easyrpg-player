@@ -78,10 +78,6 @@ enum BranchSubcommand {
 	eOptionBranchElse = 1
 };
 
-constexpr int Game_Interpreter::loop_limit;
-constexpr int Game_Interpreter::call_stack_limit;
-constexpr int Game_Interpreter::subcommand_sentinel;
-
 Game_Interpreter::Game_Interpreter(bool _main_flag) {
 	main_flag = _main_flag;
 
@@ -3051,7 +3047,7 @@ bool Game_Interpreter::CommandPlayerVisibility(lcf::rpg::EventCommand const& com
 bool Game_Interpreter::CommandMoveEvent(lcf::rpg::EventCommand const& com) { // code 11330
 	int event_id = ValueOrVariableBitfield(com.parameters[2], 2, com.parameters[0]);
 	int repeat = ManiacBitmask(com.parameters[2], 0x1);
-	
+
 	Game_Character* event = GetCharacter(event_id);
 	if (event != NULL) {
 		// If the event is a vehicle in use, push the commands to the player instead
