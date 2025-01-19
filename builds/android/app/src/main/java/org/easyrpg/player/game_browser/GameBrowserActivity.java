@@ -29,6 +29,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,6 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.navigation.NavigationView;
 
 import org.easyrpg.player.BaseActivity;
+import org.easyrpg.player.Helper;
 import org.easyrpg.player.R;
 import org.easyrpg.player.settings.SettingsManager;
 import org.libsdl.app.SDL;
@@ -346,6 +348,7 @@ public class GameBrowserActivity extends BaseActivity
                 String[] choices_list = {
                     activity.getResources().getString(R.string.select_game_region),
                     activity.getResources().getString(R.string.game_rename),
+                    "Open Save directory",
                     activity.getResources().getString(R.string.launch_debug_mode)
                 };
 
@@ -354,10 +357,14 @@ public class GameBrowserActivity extends BaseActivity
                         .setTitle(R.string.settings)
                         .setItems(choices_list, (dialog, which) -> {
                             if (which == 0) {
-                                chooseRegion(activity, holder, gameList.get(position));
+                                chooseRegion(activity, holder, game);
                             } else if (which == 1) {
-                                renameGame(activity, holder, gameList.get(position));
+                                renameGame(activity, holder, game);
                             } else if (which == 2) {
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setDataAndType(game.createSaveUri(activity), DocumentsContract.Document.MIME_TYPE_DIR);
+                                activity.startActivity(intent);
+                            } else if (which == 3) {
                                 launchGame(position, true);
                             }
                         });

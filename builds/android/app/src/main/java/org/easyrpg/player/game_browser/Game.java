@@ -10,6 +10,7 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
 
+import org.easyrpg.player.Helper;
 import org.easyrpg.player.settings.SettingsManager;
 
 import java.io.ByteArrayOutputStream;
@@ -27,7 +28,7 @@ public class Game implements Comparable<Game> {
     private String gameFolderName;
     /** Path to the game folder (forwarded via --project-path */
     private final String gameFolderPath;
-    /** Relative path to the save directory, made absolute by launchGame (forwarded via --save-path) */
+    /** Relative path to the save directory, made absolute by calling createSaveUri */
     private String savePath = "";
     /** Whether the game was tagged as a favourite */
     private boolean isFavorite;
@@ -171,6 +172,20 @@ public class Game implements Comparable<Game> {
     @Override
     public String toString() {
         return getDisplayTitle();
+    }
+
+    public Uri createSaveUri(Context context) {
+        if (!getSavePath().isEmpty()) {
+            DocumentFile saveFolder = Helper.createFolderInSave(context, getSavePath());
+
+            if (saveFolder != null) {
+                return saveFolder.getUri();
+            }
+        } else {
+            return Uri.parse(getGameFolderPath());
+        }
+
+        return null;
     }
 
     public static Game fromCacheEntry(Context context, String cache) {
