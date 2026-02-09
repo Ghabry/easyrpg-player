@@ -17,6 +17,7 @@
 
 // Headers
 #include <cmath>
+#include "audio.h"
 #include "bitmap.h"
 #include <lcf/data.h>
 #include "player.h"
@@ -31,6 +32,7 @@
 #include "options.h"
 #include <lcf/reader_util.h>
 #include "scene.h"
+#include "video_decoder.h"
 #include "weather.h"
 #include "flash.h"
 #include "shake.h"
@@ -171,13 +173,24 @@ void Game_Screen::SetWeatherEffect(int type, int strength) {
 	}
 }
 
-void Game_Screen::PlayMovie(std::string filename,
-							int pos_x, int pos_y, int res_x, int res_y) {
+void Game_Screen::PlayMovie(std::string filename, int pos_x, int pos_y, int res_x, int res_y) {
 	movie_filename = std::move(filename);
 	movie_pos_x = pos_x;
 	movie_pos_y = pos_y;
 	movie_res_x = res_x;
 	movie_res_y = res_y;
+
+	auto is = FileFinder::OpenMovie(movie_filename);
+
+	auto video_dec = std::make_unique<VideoDecoder>();
+	video_dec->SetFormat(44100, AudioDecoder::Format::S16, 2);
+	if (!video_dec->Open(std::move(is))) {
+		return;
+	}
+
+	decoder_video = video_dec.get();
+
+	Audio().BGM_Play(1, std::move(video_dec));
 }
 
 static double interpolate(double d, double x0, double x1)
@@ -328,6 +341,7 @@ void Game_Screen::UpdateScreenEffects() {
 void Game_Screen::UpdateMovie() {
 	if (!movie_filename.empty()) {
 		/* update movie */
+		//decoder_video->runAV(nullptr, 0);
 	}
 }
 

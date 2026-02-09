@@ -27,6 +27,7 @@
 #include "game_character.h"
 #include "battle_animation.h"
 #include "flash.h"
+#include "video_decoder.h"
 #include <lcf/rpg/savescreen.h>
 #include <player.h>
 
@@ -54,8 +55,7 @@ public:
 	void ShakeBegin(int power, int speed);
 	void ShakeEnd();
 	void SetWeatherEffect(int type, int strength);
-	void PlayMovie(std::string filename,
-		int pos_x, int pos_y, int res_x, int res_y);
+	void PlayMovie(std::string filename, int pos_x, int pos_y, int res_x, int res_y);
 	void Update();
 
 	/**
@@ -176,6 +176,8 @@ public:
 	 * @param dy y distance in 1/16th pixels
 	 */
 	void OnMapScrolled(int dx, int dy);
+
+	VideoDecoder* decoder_video = nullptr;
 
 private:
 	std::unique_ptr<BattleAnimationMap> animation;

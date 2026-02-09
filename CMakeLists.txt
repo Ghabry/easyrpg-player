@@ -401,6 +401,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/utils.h
 	src/version.cpp
 	src/version.h
+	src/video_decoder.cpp
+	src/video_decoder.h
 	src/weather.cpp
 	src/weather.h
 	src/window_about.cpp
@@ -1228,6 +1230,8 @@ if(PLAYER_BUILD_EXECUTABLE AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$" AND N
 	endif()
 
 	target_link_libraries(${EXE_NAME} ${PROJECT_NAME})
+
+	target_link_libraries(${EXE_NAME} ${PROJECT_NAME} avcodec avformat avfilter swscale swresample avutil)
 
 	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		# Do not confuse this with our own -DUSE_SDL

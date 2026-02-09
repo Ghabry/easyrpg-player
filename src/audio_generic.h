@@ -44,6 +44,7 @@ public:
 	virtual ~GenericAudio() = default;
 
 	void BGM_Play(Filesystem_Stream::InputStream stream, int volume, int pitch, int fadein, int balance) override;
+	void BGM_Play(int channel, std::unique_ptr<AudioDecoder> decoder) override;
 	void BGM_Pause() override;
 	void BGM_Resume() override;
 	void BGM_Stop() override;

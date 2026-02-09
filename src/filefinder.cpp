@@ -532,6 +532,11 @@ Filesystem_Stream::InputStream FileFinder::OpenText(std::string_view name) {
 	return open_generic_with_fallback("Text", name, args);
 }
 
+Filesystem_Stream::InputStream FileFinder::OpenMovie(std::string_view name) {
+	DirectoryTree::Args args = { MakePath("Movie", name), MOVIE_TYPES, 1, false };
+	return open_generic("Movie", name, args);
+}
+
 bool FileFinder::IsMajorUpdatedTree() {
 	auto fs = Game();
 	assert(fs);

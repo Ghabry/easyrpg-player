@@ -65,6 +65,8 @@ struct AudioInterface {
 	 */
 	virtual void BGM_Play(Filesystem_Stream::InputStream stream, int volume, int pitch, int fadein, int balance) = 0;
 
+	virtual void BGM_Play(int channel, std::unique_ptr<AudioDecoder> decoder) {};
+
 	/**
 	 * Stops the currently playing background music.
 	 */

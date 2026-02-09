@@ -63,6 +63,15 @@ void GenericAudio::BGM_Play(Filesystem_Stream::InputStream stream, int volume, i
 	}
 }
 
+void GenericAudio::BGM_Play(int channel, std::unique_ptr<AudioDecoder> decoder) {
+	auto& bgm = BGM_Channels[channel];
+	bgm.stopped = false;
+	bgm.paused = false;
+	bgm.decoder = std::move(decoder);
+	bgm.decoder->SetVolume(100);
+	bgm.decoder->SetFormat(output_format.frequency, output_format.format, output_format.channels);
+}
+
 void GenericAudio::BGM_Pause() {
 	for (auto& BGM_Channel : BGM_Channels) {
 		if (BGM_Channel.IsUsed()) {
