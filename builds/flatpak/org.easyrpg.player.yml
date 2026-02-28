@@ -113,8 +113,8 @@ modules:
     post-install:
       - mv /app/bin/{easyrpg-player,org.easyrpg.player.real}
     sources:
-      - type: git
-        url: https://github.com/EasyRPG/Player.git
+      - type: dir
+        path: "../../"
     cleanup:
       - /share/bash-completion
       - /share/pixmaps

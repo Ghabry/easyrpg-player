@@ -18,6 +18,20 @@ defaults:
     shell: bash
 
 jobs:
+  flatpak:
+    name: "Flatpak (x86_64)"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-25.08
+      options: --privileged
+    steps:
+    - uses: actions/checkout@v6
+    - uses: bilelmoussaoui/flatpak-github-actions/flatpak-builder@v6
+      with:
+        bundle: EasyRPG-Player.flatpak
+        manifest-path: builds/flatpak/org.easyrpg.player.yml
+        cache-key: flatpak-builder-${{ github.sha }}
+
   docker:
     name: ${{ matrix.image }} (${{ matrix.os.arch }})
     runs-on: ${{ matrix.os.name }}
@@ -48,7 +62,8 @@ jobs:
             image: ubuntu:22.04
 
     steps:
-      - name: Install dependencies
+      - &deps
+        name: Install dependencies
         run: |
           export DEBIAN_FRONTEND="noninteractive"
           apt-get update
@@ -60,10 +75,12 @@ jobs:
             libvorbis-dev libopusfile-dev libspeexdsp-dev liblhasa-dev \
             libdrm-dev libgbm-dev # only needed for sdl2 on debian 11
 
-      - name: Clone Repository
+      - &clone
+        name: Clone Repository
         uses: actions/checkout@v6
         if: github.event.inputs.git-ref == ''
-      - name: Clone Repository (with custom ref)
+      - &cloneref
+        name: Clone Repository (with custom ref)
         uses: actions/checkout@v6
         if: github.event.inputs.git-ref != ''
         with:
@@ -91,3 +108,54 @@ jobs:
           build/easyrpg-player --version
           # run unit tests
           cmake --build build --target check
+
+  appimage:
+    name: "AppImage (x86_64)"
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+      options: --privileged
+
+    steps:
+      - *deps
+
+      - name: Install linuxdeploy dependencies
+        run: |
+          export DEBIAN_FRONTEND="noninteractive"
+          apt-get install -yqq --no-install-recommends --no-install-suggests \
+            curl file fuse
+
+      - *clone
+      - *cloneref
+
+      - name: Download linuxdeploy
+        run: |
+          curl -LO https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x linuxdeploy-x86_64.AppImage
+
+      - name: Compile
+        run: |
+          VER="(GA, `date +%Y-%m-%d`)"
+          cmake -G Ninja -B build . \
+            -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=AppDir \
+            -DPLAYER_BUILD_LIBLCF=ON -DPLAYER_VERSION_APPEND="$VER"
+          cmake --build build
+
+      - name: Install
+        run: |
+          cmake --install build
+
+      - name: Build AppImage
+        run: |
+          ./linuxdeploy-x86_64.AppImage \
+            --appdir AppDir \
+            --executable AppDir/bin/easyrpg-player \
+            --desktop-file AppDir/share/applications/easyrpg-player.desktop \
+            --icon-file AppDir/share/pixmaps/easyrpg-player.png \
+            --output appimage
+
+      - name: Upload AppImage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: EasyRPG-Player-AppImage
+          path: ./EasyRPG*.AppImage
