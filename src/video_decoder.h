@@ -20,6 +20,8 @@
 
 #include <cstdint>
 #include <deque>
+#include <mutex>
+#include <thread>
 #include "audio_decoder.h"
 #include "bitmap.h"
 
@@ -67,11 +69,7 @@ public:
 	int GetTicks() const override;
 
 	// Video Decoder interface
-    bool hasVideoFrame() const;
-
-    BitmapRef drawVideoFrame();
-
-    int runAV(uint8_t *stream, int len);
+    BitmapRef getVideoFrame();
 
     static void audio_out_stream(void *self, uint8_t *stream, int bytes);
 
@@ -102,6 +100,7 @@ private:
 	int m_dst_w = 0;
 	int m_dst_h = 0;
 
+	double m_playback_time = 0.0;
 	double m_time = 0.0;
 	double m_timeNextFrame = 0.0;
 	bool m_atEnd = false;
@@ -138,10 +137,11 @@ private:
 	AVFrame *in_frame = nullptr;
 	//! Packet buffer
 	AVPacket m_paquet;
-	std::deque<AVPacket> m_videoPaquets;
-	void videoPaquetToQueue();
-	void videoPaquetsClean();
-	void videoPaquetsProcess();
+	std::deque<AVPacket> m_audio_packet_queue;
+	std::deque<AVPacket> m_video_packet_queue;
+
+	void readPackets();
+	void processPackets();
 
 	//! Actual stream of audio
 	AVStream *m_audio = nullptr;
@@ -173,7 +173,18 @@ private:
 	bool updateVideoStream();
 
 	int decode_audio_packet(bool &got);
-	int decode_video_packet(AVPacket &paquet, bool &got);
+	int decode_video_packet(AVPacket &paquet, bool &got, double video_time);
+
+	void ThreadFunction();
+
+	struct VideoFrame {
+		BitmapRef frame;
+		double time;
+	};
+	std::vector<VideoFrame> frames;
+
+	std::thread av_thread;
+	std::mutex av_mutex;
 };
 
 #endif

@@ -64,14 +64,15 @@ void Screen::Draw(Bitmap& dst) {
 
 		//if (video->hasVideoFrame())
         //{
-            auto frame = video->drawVideoFrame();
+            auto frame = video->getVideoFrame();
 			if (!frame) {
 				return;
 			}
-			//static int f = 0;
+			static int f = 0;
 			//std::ofstream out(fmt::format("/tmp/frame{}.png", ++f));
 			//frame->WritePNG(out);
 			dst.Blit(0, 0, *frame, frame->GetRect(), Opacity::Opaque());
+			//dst.ZoomOpacityBlit(0, 0, 0, 0, *frame, frame->GetRect(), 0.5, 0.5, 255);
         //}
 	}
 }

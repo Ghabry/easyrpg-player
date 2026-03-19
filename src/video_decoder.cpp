@@ -93,41 +93,50 @@ static int64_t vio_seek_func(void* userdata, int64_t offset, int seek_type) {
 	return f->tellg();
 }
 
-void VideoDecoder::videoPaquetToQueue()
-{
-	m_videoPaquets.push_back(m_paquet);
-	m_paquet = {};
+void VideoDecoder::readPackets() {
+    const std::lock_guard<std::mutex> lock(av_mutex);
+
+    AVPacket pkt;
+    if (av_read_frame(m_inputCtx, &pkt) >= 0) {
+        if (pkt.stream_index == m_streamAudio) {
+            m_audio_packet_queue.push_back(pkt);
+        } else if (pkt.stream_index == m_streamVideo) {
+            m_video_packet_queue.push_back(pkt);
+        } else {
+            av_packet_unref(&pkt);
+        }
+    } else {
+        m_atEnd = true;
+    }
 }
 
-void VideoDecoder::videoPaquetsClean()
-{
-	while(!m_videoPaquets.empty())
-	{
-		auto p = m_videoPaquets.front();
-		av_packet_unref(&p);
-		m_videoPaquets.pop_front();
-	}
-}
+void VideoDecoder::processPackets() {
+    const std::lock_guard<std::mutex> lock(av_mutex);
 
-void VideoDecoder::videoPaquetsProcess()
-{
-	double videoTime = 0.0;
-	double timeBase = av_q2d(m_video->time_base);
+    // Decode Audio if buffer is low
+    while (!m_audio_packet_queue.empty() && m_audio_buffer.size() < 20480) {
+        AVPacket pkt = m_audio_packet_queue.front();
+        m_audio_packet_queue.pop_front();
 
-	if(m_videoPaquets.empty())
-		return; // Nothing To Do
+        bool got;
+        m_paquet = pkt; // TODO: Make param
+        decode_audio_packet(got);
+        av_packet_unref(&pkt);
+    }
 
-	videoTime = (double)m_videoPaquets.front().pts * timeBase;
+    // Decode video if not enough frames
+    while (!m_video_packet_queue.empty() && frames.size() < 10) {
+        AVPacket pkt = m_video_packet_queue.front();
+        m_video_packet_queue.pop_front();
 
-	while(videoTime < m_time && !m_videoPaquets.empty())
-	{
-		bool got;
-		auto p = m_videoPaquets.front();
-		videoTime = (double)p.pts * timeBase;
-		decode_video_packet(p, got);
-		av_packet_unref(&p);
-		m_videoPaquets.pop_front();
-	}
+        double time_base = av_q2d(m_video->time_base);
+        double pts = (pkt.pts == AV_NOPTS_VALUE) ? pkt.dts : pkt.pts;
+        double video_time = pts * time_base;
+
+        bool got;
+        decode_video_packet(pkt, got, video_time);
+        av_packet_unref(&pkt);
+    }
 }
 
 bool VideoDecoder::updateAudioStream()
@@ -388,7 +397,7 @@ int VideoDecoder::decode_audio_packet(bool &got)
 				return -1;
 			}*/
 			m_audio_buffer.insert(m_audio_buffer.end(), m_merge_buffer.begin(), m_merge_buffer.begin() + out_bytes);
-			Output::Debug("Put {} {}", out_bytes, m_audio_buffer.size());
+			//Output::Debug("Put {} {}", out_bytes, m_audio_buffer.size());
 		}
 		else
 		{
@@ -414,7 +423,7 @@ int VideoDecoder::decode_audio_packet(bool &got)
 	return 0;
 }
 
-int VideoDecoder::decode_video_packet(AVPacket &paquet, bool &got)
+int VideoDecoder::decode_video_packet(AVPacket &paquet, bool &got, double video_time)
 {
 	int ret = 0;
 	size_t unpadded_linesize;
@@ -455,8 +464,21 @@ int VideoDecoder::decode_video_packet(AVPacket &paquet, bool &got)
 		int lines[] = {m_texture_pitch};
 
 		sws_scale(m_video_cvt,
-				  in_frame->data, in_frame->linesize, 0, in_frame->height,
-				  out, lines);
+				in_frame->data, in_frame->linesize, 0, in_frame->height,
+				out, lines);
+
+		m_texture_w = m_dst_w;
+        m_texture_h = m_dst_h;
+
+		BitmapRef texture = Bitmap::Create(m_texturePixelData.data(), m_texture_w, m_texture_h, m_texture_pitch, format_B8G8R8A8_n().format());
+		BitmapRef frame = Bitmap::Create(*texture, texture->GetRect(), false);
+		frames.push_back({frame, video_time});
+		Output::Debug("FRAME {} {}", video_time, frames.front().time);
+
+		if(m_hasVideoFrame)
+		{
+			m_hasVideoFrame = false;
+		}
 
 		//SDL_UnlockMutex(m_textureMutex);
 		m_hasVideoFrame = true;
@@ -473,6 +495,31 @@ int VideoDecoder::decode_video_packet(AVPacket &paquet, bool &got)
 	}
 
 	return 0;
+}
+
+using namespace std::chrono_literals;
+
+void VideoDecoder::ThreadFunction() {
+	// TODO Terminate
+	for (;;) {
+        bool needs_more_data = false;
+
+        {
+            const std::lock_guard<std::mutex> lock(av_mutex);
+            // buffer ca. 1 second of audio or 30 frames of video
+            if (m_audio_packet_queue.size() < 50 || m_video_packet_queue.size() < 30) {
+                needs_more_data = true;
+            }
+        }
+
+        if (needs_more_data) {
+            readPackets();
+        }
+
+        processPackets();
+
+        std::this_thread::sleep_for(1ms);
+    }
 }
 
 VideoDecoder::VideoDecoder()
@@ -667,289 +714,10 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 
 	//m_textureMutex = SDL_CreateMutex();
 
-	return true;
-}
-
-/*
-void VideoDecoder::setAudioSpec(SDL_AudioSpec &spec)
-{
-	m_dstSpec = spec;
-}
-
-void VideoDecoder::setRender(SDL_Renderer *dst)
-{
-	m_render = dst;
-}*/
-
-/*void VideoDecoder::close()
-{
-	if(m_audio_cvt)
-	{
-		SDL_FreeAudioStream(m_audio_cvt);
-		m_audio_cvt = nullptr;
-	}
-
-	if(m_swr_ctx)
-	{
-		swr_free(&m_swr_ctx);
-		m_swr_ctx = nullptr;
-	}
-
-	if(m_video_cvt)
-	{
-		sws_freeContext(m_video_cvt);
-		m_video_cvt = nullptr;
-	}
-
-	m_texture_colour = AV_PIX_FMT_NONE;
-	m_texture_w = 0;
-	m_texture_h = 0;
-
-	m_dst_colour = AV_PIX_FMT_NONE;
-	m_dst_w = 0;
-	m_dst_h = 0;
-
-	if(m_texture)
-	{
-		SDL_DestroyTexture(m_texture);
-		m_texture = nullptr;
-	}
-
-	m_merge_buffer.clear();
-
-	av_frame_free(&sw_frame);
-	av_frame_free(&in_frame);
-	av_frame_free(&m_audio_frame);
-
-	// flush the decoder
-	m_paquet.data = nullptr;
-	m_paquet.size = 0;
-	if(m_paquet.buf)
-		av_packet_unref(&m_paquet);
-
-	videoPaquetsClean();
-
-	SDL_memset(&m_paquet, 0, sizeof(AVPacket));
-
-	if(m_decoderAudioCtx)
-		avcodec_free_context(&m_decoderAudioCtx);
-
-	if(m_decoderVideoCtx)
-		avcodec_free_context(&m_decoderVideoCtx);
-
-	if(m_inputCtx)
-	{
-		avformat_close_input(&m_inputCtx);
-		m_inputCtx = nullptr;
-	}
-
-	if(m_textureMutex)
-	{
-		SDL_DestroyMutex(m_textureMutex);
-		m_textureMutex = nullptr;
-	}
-
-	in_buffer = NULL; // This buffer is already freed by FFMPEG side
-	in_buffer_size = 0;
-
-	if(m_src && m_freesrc)
-		SDL_RWclose(m_src);
-
-	m_src = nullptr;
-	m_freesrc = false;
-
-	m_video = nullptr;
-	m_audio = nullptr;
-	m_decoderVideo = nullptr;
-	m_decoderAudio = nullptr;
-	m_sfmt = AV_SAMPLE_FMT_NONE;
-	m_srate = 0;
-	m_schannels = 0;
-	m_planar = false;
-}*/
-
-/*
-bool VideoDecoder::loadVideo(SDL_RWops *src, bool freesrc)
-{
-	AVDictionary *options = nullptr;
-	int ret;
-	char proto[] = "file:///sdl_rwops";
-	//close();
-
-	in_buffer = (uint8_t *)av_malloc(AUDIO_INBUF_SIZE);
-	in_buffer_size = AUDIO_INBUF_SIZE;
-	if(!in_buffer)
-	{
-		Output::Warning("FFMPEG: Out of memory");
-		//close();
-		return false;
-	}
-
-	m_src = src;
-
-	avio_in = avio_alloc_context(in_buffer,
-								 in_buffer_size,
-								 0,
-								 this,
-								 _rw_read_buffer,
-								 nullptr,
-								 _rw_seek);
-	if(!avio_in)
-	{
-		//close();
-		Output::Warning("FFMPEG: Unhandled file format");
-		return false;
-	}
-
-	m_inputCtx = avformat_alloc_context();
-	m_inputCtx->pb = avio_in;
-	m_inputCtx->url = proto;
-
-	// open the input file
-	ret = avformat_open_input(&m_inputCtx, nullptr, nullptr, &options);
-	av_dict_free(&options);
-
-	if(ret != 0)
-	{
-		Output::Warning("Cannot open input file");
-		//close();
-		return false;
-	}
-
-	if(avformat_find_stream_info(m_inputCtx, NULL) < 0)
-	{
-		Output::Warning("Cannot find input stream information");
-		//close();
-		return false;
-	}
-
-	ret = av_find_best_stream(m_inputCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &m_decoderVideo, 0);
-	if(ret < 0)
-	{
-		Output::Warning("No suitable video stream in the input file");
-		//close();
-		return false;
-	}
-
-	m_streamVideo = ret;
-	m_video = m_inputCtx->streams[ret];
-
-	ret = av_find_best_stream(m_inputCtx, AVMEDIA_TYPE_AUDIO, -1, -1, &m_decoderAudio, 0);
-	if(ret >= 0)
-	{
-		m_streamAudio = ret;
-		m_audio = m_inputCtx->streams[ret];
-	}
-
-	if(!(m_decoderVideoCtx = avcodec_alloc_context3(m_decoderVideo)))
-	{
-		Output::Warning("No enough memory to initialise the video decoder!");
-		//close();
-		return false;
-	}
-
-	if(!m_video->codecpar)
-	{
-		Output::Warning("FFMPEG: codec parameters aren't recognised");
-		//close();
-		return false;
-	}
-
-	if(m_audio && !(m_decoderAudioCtx = avcodec_alloc_context3(m_decoderAudio)))
-	{
-		Output::Warning("No enough memory to initialise the audio decoder!");
-		//close();
-		return false;
-	}
-
-	if(m_audio && !m_audio->codecpar)
-	{
-		Output::Warning("FFMPEG: codec parameters aren't recognised    m_texture_colour = AV_PIX_FMT_RGB24;");
-		//close();
-		return false;
-	}
-
-	if(avcodec_parameters_to_context(m_decoderVideoCtx, m_video->codecpar) < 0)
-	{
-		Output::Warning("Error of avcodec_parameters_to_context (video)");
-		//close();
-		return false;
-	}
-
-	if(m_audio && avcodec_parameters_to_context(m_decoderAudioCtx, m_audio->codecpar) < 0)
-	{
-		Output::Warning("Error of avcodec_parameters_to_context (audio)");
-		//close();
-		return false;
-	}
-
-	m_decoderVideoCtx->sw_pix_fmt = AV_PIX_FMT_RGB24;
-	m_decoderVideoCtx->opaque = this;
-
-	if(m_decoderAudioCtx)
-		m_decoderAudioCtx->opaque = this;
-
-	ret = avcodec_open2(m_decoderVideoCtx, m_decoderVideo, nullptr);
-	if(ret < 0)
-	{
-		Output::Warning("Failed avcodec_open2 (video)");
-		//close();
-		return false;
-	}
-
-	if(m_audio)
-	{
-		ret = avcodec_open2(m_decoderAudioCtx, m_decoderAudio, nullptr);
-		if(ret < 0)
-		{
-			Output::Warning("Failed avcodec_open2 (audio)");
-			//close();
-			return false;
-		}
-	}
-
-	if(!(in_frame = av_frame_alloc()) || !(sw_frame = av_frame_alloc()))
-	{
-		Output::Warning("Can not alloc frame");
-		//close();
-		return false;
-	}
-
-	if(m_audio && !(m_audio_frame = av_frame_alloc()))
-	{
-		Output::Warning("Can not alloc audio frame");
-		//close();
-		return false;
-	}
-
-	m_freesrc = freesrc;
-
-	m_texture_colour = AV_PIX_FMT_RGB24;
-	m_texture_w = 0;
-	m_texture_h = 0;
-
-	m_dst_colour = AV_PIX_FMT_RGB24;
-	m_dst_w = m_video->codecpar->width;
-	m_dst_h = m_video->codecpar->height;
-
-	m_texturePixelData.resize(m_dst_h * m_texture_pitch);
-	SDL_memset(m_texturePixelData.data(), 0, m_texturePixelData.size());
-
-	updateVideoStream();
-	updateAudioStream();
-
-	// av_dump_format(m_inputCtx, m_streamVideo, video_path.c_str(), 0);
-
-	// if(m_streamAudio >= 0)
-	//     av_dump_format(m_inputCtx, m_streamAudio, video_path.c_str(), 0);
-
-	m_time = 0.0;
-	m_atEnd = false;
-
-	m_textureMutex = SDL_CreateMutex();
+	av_thread = std::thread(&VideoDecoder::ThreadFunction, this);
 
 	return true;
-}*/
+}
 
 bool VideoDecoder::IsFinished() const
 {
@@ -974,130 +742,59 @@ int VideoDecoder::GetTicks() const {
 	return 0;
 }
 
-bool VideoDecoder::hasVideoFrame() const
-{
-	return m_hasVideoFrame;
-}
-
-BitmapRef VideoDecoder::drawVideoFrame()
+BitmapRef VideoDecoder::getVideoFrame()
 {
 	//SDL_LockMutex(m_textureMutex);
-
-	if(m_texture_w != m_dst_w || m_texture_h != m_dst_h)
-	{
-		if(m_texture)
-		{
-			m_texture.reset();
-		}
-		m_texture_w = m_dst_w;
-		m_texture_h = m_dst_h;
-	}
-
-	if(!m_texture)
-	{
-		m_texture = Bitmap::Create(m_texturePixelData.data(), m_texture_w, m_texture_h, m_texture_pitch, format_B8G8R8A8_n().format());
-		m_hasVideoFrame = false;
-	}
-
-	if(m_hasVideoFrame)
-	{
-		m_hasVideoFrame = false;
-	}
 
 	// FIXME: Implement aspect ration keeping!
 
 	//SDL_UnlockMutex(m_textureMutex);
 
-	return m_texture;
-}
-#include <fstream>
-int VideoDecoder::runAV(uint8_t *stream, int len)
-{
-	int filled, ret = 0;
-	bool got_some, got_video;
+	const std::lock_guard<std::mutex> lock(av_mutex);
 
-	if(!m_audio) // When no audio, just process a time
-	{
-		memset(stream, 0, len);
-		m_time += (len / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_schannels)) / m_srate;
-
-		double videoTime = 0.0;
-		double timeBase = av_q2d(m_video->time_base);
-
-		while((ret = av_read_frame(m_inputCtx, &m_paquet)) >= 0)
-		{
-			if(m_paquet.stream_index == m_streamVideo)
-			{
-				videoTime = (double)m_paquet.pts * timeBase;
-				ret = decode_video_packet(m_paquet, got_some);
-			}
-
-			av_packet_unref(&m_paquet);
-
-			if(ret < 0 || videoTime >= m_time)
-				break;
-		}
-
-		if(ret == AVERROR_EOF)
-			m_atEnd = true;
-
-		return len;
+	if (frames.empty()) {
+		return {};
 	}
 
-	Output::Debug("m_time {} {}", m_time, m_timeNextFrame);
+	Output::Debug("GetFrame {} {}", frames.begin()->time, m_playback_time);
 
-	if(!m_videoPaquets.empty() || (m_time < m_timeNextFrame))
-	{
-		filled = std::clamp(len, 0, static_cast<int>(m_audio_buffer.size()));
-		//Output::Warning("Filled {}", filled);
-
-		memcpy(stream, m_audio_buffer.data(), filled);
-		//std::ofstream o("/tmp/out.wav", std::ios_base::out | std::ios_base::app);
-		//o.write((const char*)stream, filled);
-
-		m_audio_buffer.erase(m_audio_buffer.begin(), m_audio_buffer.begin() + filled);
-		//m_audio_buffer.clear();
-		Output::Debug("Took {} {} {}", filled, m_audio_buffer.size(), (filled / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_dec_freq);
-
-		if(filled != 0)
-		{
-			m_time += (filled / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_dec_freq;
-			videoPaquetsProcess();
-			return filled;
-		}
-	}
-
-	got_some = false;
-	got_video = false;
-
-	while(av_read_frame(m_inputCtx, &m_paquet) >= 0)
-	{
-		if(m_paquet.stream_index == m_streamAudio)
-		{
-			ret = decode_audio_packet(got_some);
-			av_packet_unref(&m_paquet);
-		}
-		else if(m_paquet.stream_index == m_streamVideo)
-		{
-			videoPaquetToQueue();
-			got_video = true;
-		}
-		else
-			av_packet_unref(&m_paquet);
-
-		if(ret < 0 || (got_some && got_video))
-			break;
-	}
-
-	if(!got_some || ret == AVERROR_EOF)
-	{
-		//SDL_AudioStreamFlush(m_audio_cvt);
-		m_atEnd = true;
-	}
-
-	return len;
+	return frames.begin()->frame;
 }
 
 int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
-	return runAV(buffer, length);
+	const std::lock_guard<std::mutex> lock(av_mutex);
+
+	memset(buffer, '\0', length);
+
+	int to_copy = std::min<int>(length, m_audio_buffer.size());
+
+	memcpy(buffer, m_audio_buffer.data(), to_copy);
+	//std::ofstream o("/tmp/out.wav", std::ios_base::out | std::ios_base::app);
+	//o.write((const char*)stream, filled);
+
+	m_audio_buffer.erase(m_audio_buffer.begin(), m_audio_buffer.begin() + to_copy);
+
+	//Output::Debug("Took {} {} {}", m_audio_buffer.size(), to_copy, length);
+
+	//m_audio_buffer.clear();
+	//Output::Debug("Took {} {} {}", filled, m_audio_buffer.size(), (filled / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_dec_freq);
+
+	auto it = frames.begin();
+
+	while (frames.size() > 1 && it != frames.end()) {
+		// Throw away outdated frames
+		if (it->time < m_playback_time) {
+			//Output::Debug("Deleting {}", it->time);
+			it = frames.erase(it);
+		} else {
+			break;
+		}
+	}
+
+	m_playback_time += (to_copy / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_srate;
+
+	Output::Debug("PLAYBACK {}", m_playback_time);
+
+	// FIXME: Decoder is deleted when "warming up"
+	return to_copy <= 0 ? 1 : to_copy;
 }
