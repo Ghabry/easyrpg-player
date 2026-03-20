@@ -307,15 +307,12 @@ bool VideoDecoder::UpdateVideoStream()
 		if (!video_cvt)
 			return false;
 
-		//SDL_LockMutex(m_textureMutex);
 		uint8_t *dst_data[4];
 		int dst_line_sizes[4];
 
 		int data_size = av_image_fill_arrays(dst_data, dst_line_sizes, nullptr, video_dst_format, w, h, 8);
 		video_pitch = dst_line_sizes[0];
 		video_pixel_data.resize(data_size);
-
-		//SDL_UnlockMutex(m_textureMutex);
 	}
 
 	return false;
@@ -432,7 +429,7 @@ int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 				in_frame->data, in_frame->linesize, 0, in_frame->height,
 				out, lines);
 
-		BitmapRef texture = Bitmap::Create(video_pixel_data.data(), video_width, video_height, video_pitch, format_B8G8R8A8_n().format());
+		BitmapRef texture = Bitmap::Create(video_pixel_data.data(), video_width, video_height, video_pitch, format_R8G8B8A8_n().format());
 		BitmapRef frame = Bitmap::Create(*texture, texture->GetRect(), false);
 
 		double time_base = av_q2d(video_stream->time_base);
@@ -655,8 +652,6 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 		Output::Warning("Can not alloc audio frame");
 		return false;
 	}
-
-	video_src_format = AV_PIX_FMT_RGBA;
 
 	video_dst_format = AV_PIX_FMT_RGBA;
 	video_width = video_stream->codecpar->width;

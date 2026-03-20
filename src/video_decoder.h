@@ -150,7 +150,6 @@ private:
 
 	/** Video conversion handling */
 	SwsContext* video_cvt = nullptr;
-	AVPixelFormat video_src_format = AV_PIX_FMT_NONE;
 	AVPixelFormat video_dst_format = AV_PIX_FMT_NONE;
 	int video_width = 0;
 	int video_height = 0;
