@@ -180,6 +180,8 @@ public:
 	/** @return Currently playing Movie or nullptr when nothing is playing */
 	VideoDecoder* GetMovie() const;
 
+	void UpdateMovie();
+
 	/** @return The viewport of the active movie */
 	Rect GetMovieRect() const;
 
@@ -204,7 +206,6 @@ protected:
 	void UpdateFog();
 	void UpdateSandstorm();
 	void UpdateScreenEffects();
-	void UpdateMovie();
 	void UpdateWeather();
 	void UpdateFog(int dx, int dy);
 	void OnWeatherChanged();

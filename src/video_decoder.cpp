@@ -135,7 +135,9 @@ void VideoDecoder::ProcessPackets() {
         if (audio_packet_queue.empty() && !audio_flushed) {
             bool got;
             // Forces the decoder to empty its internal buffers
-            DecodeAudioPacket(nullptr, got);
+			if (audio_stream) {
+            	DecodeAudioPacket(nullptr, got);
+			}
             audio_flushed = true;
         }
 
@@ -456,8 +458,7 @@ int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 using namespace std::chrono_literals;
 
 void VideoDecoder::ThreadFunction() {
-	// TODO Terminate
-	for (;;) {
+	while (!IsFinished()) {
         bool needs_more_data = false;
 
         {
@@ -514,6 +515,8 @@ VideoDecoder::~VideoDecoder() {
 	if (input_ctx) {
 		avformat_close_input(&input_ctx);
 	}
+
+	av_thread.join();
 }
 
 bool VideoDecoder::Seek(std::streamoff offset, std::ios_base::seekdir origin) {
@@ -675,10 +678,10 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 	return true;
 }
 
-bool VideoDecoder::IsFinished() const
-{
+bool VideoDecoder::IsFinished() const {
+	// video buffer contains the last frame
     return at_end && audio_flushed && video_flushed
-           && video_buffer.empty() && audio_buffer.empty();
+           && video_buffer.size() <= 1 && audio_buffer.empty();
 }
 
 void VideoDecoder::GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const {
@@ -706,14 +709,18 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 
 	int to_copy = std::min<int>(length, audio_buffer.size());
 
-	if (playback_time == 0.0 && audio_buffer.empty()) {
+	if (playback_time == 0.0 && audio_buffer.empty() && audio_stream) {
 		// Decoder just started and has no data yet
 		return length;
 	}
 
-	memcpy(buffer, audio_buffer.data(), to_copy);
-
-	audio_buffer.erase(audio_buffer.begin(), audio_buffer.begin() + to_copy);
+	if (audio_stream) {
+		memcpy(buffer, audio_buffer.data(), to_copy);
+		audio_buffer.erase(audio_buffer.begin(), audio_buffer.begin() + to_copy);
+	} else {
+		// Video has no audio channel
+		to_copy = length;
+	}
 
 	//Output::Debug("Took {} {} {}", m_audio_buffer.size(), to_copy, length);
 
@@ -749,7 +756,7 @@ BitmapRef VideoDecoder::GetVideoFrame() const {
 		return {};
 	}
 
-	//Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
+	Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
 
 	return video_buffer.begin()->frame;
 }

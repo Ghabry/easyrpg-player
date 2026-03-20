@@ -360,7 +360,6 @@ void Game_Screen::UpdateWeather() {
 
 void Game_Screen::Update() {
 	UpdateScreenEffects();
-	UpdateMovie();
 	UpdateWeather();
 	UpdateBattleAnimation();
 }

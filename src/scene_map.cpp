@@ -240,6 +240,7 @@ void Scene_Map::PreUpdateForegroundEvents(MapUpdateAsyncContext& actx) {
 
 void Scene_Map::vUpdate() {
 	if (Main_Data::game_screen->GetMovie()) {
+		Main_Data::game_screen->UpdateMovie();
 		return;
 	}
 
