@@ -18,12 +18,13 @@
 #ifndef VIDEO_DECODER_H
 #define VIDEO_DECODER_H
 
+#ifdef HAVE_FFMPEG
+
 #include <cstdint>
 #include <deque>
 #include <mutex>
 #include <thread>
 #include "audio_decoder.h"
-#include "bitmap.h"
 
 extern "C"
 {
@@ -188,5 +189,7 @@ private:
 	 */
 	std::mutex av_mutex;
 };
+
+#endif
 
 #endif

@@ -28,6 +28,7 @@ extern "C"
 #include <string>
 
 #include "video_decoder.h"
+#include "bitmap.h"
 #include "output.h"
 
 #define AUDIO_INBUF_SIZE 4096

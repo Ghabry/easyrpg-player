@@ -401,7 +401,6 @@ add_library(${PROJECT_NAME} OBJECT
 	src/utils.h
 	src/version.cpp
 	src/version.h
-	src/video_decoder.cpp
 	src/video_decoder.h
 	src/weather.cpp
 	src/weather.h
@@ -1056,6 +1055,9 @@ cmake_dependent_option(PLAYER_WITH_XMP
 cmake_dependent_option(PLAYER_ENABLE_DRWAV
 	"Play WAV audio with dr_wav (built-in). Unsupported files are played by libsndfile." ON
 	"PLAYER_HAS_AUDIO" OFF)
+cmake_dependent_option(PLAYER_WITH_FFMPEG
+	"Play videos through ffmpeg (libavcodec)." ON
+	"PLAYER_HAS_AUDIO;NOT PLAYER_NONFREE" OFF)
 
 if(PLAYER_HAS_AUDIO)
 	set(PLAYER_AUDIO_RESAMPLER "Auto" CACHE STRING "Audio resampler to use. Options: Auto speexdsp samplerate OFF")
@@ -1158,6 +1160,18 @@ if(PLAYER_HAS_AUDIO)
 		DEFINITION HAVE_LIBXMP
 		TARGET XMP::XMP)
 
+	# ffmpeg (libavcodec)
+	if (PLAYER_WITH_FFMPEG)
+		find_package(FFmpeg COMPONENTS AVFORMAT SWRESAMPLE SWSCALE AVCODEC AVUTIL)
+		if (TARGET FFmpeg::AVCODEC)
+			target_compile_definitions(${PROJECT_NAME} PUBLIC HAVE_FFMPEG=1)
+			target_link_libraries(${PROJECT_NAME}
+				FFmpeg::AVFORMAT FFmpeg::SWRESAMPLE FFmpeg::SWSCALE FFmpeg::AVCODEC FFmpeg::AVUTIL)
+			target_sources(${PROJECT_NAME} PRIVATE
+				src/video_decoder.cpp)
+		endif()
+	endif()
+
 	if(PLAYER_ENABLE_FMMIDI)
 		target_sources(${PROJECT_NAME} PRIVATE
 			src/decoder_fmmidi.cpp
@@ -1230,8 +1244,6 @@ if(PLAYER_BUILD_EXECUTABLE AND ${PLAYER_TARGET_PLATFORM} MATCHES "^SDL.*$" AND N
 	endif()
 
 	target_link_libraries(${EXE_NAME} ${PROJECT_NAME})
-
-	target_link_libraries(${EXE_NAME} ${PROJECT_NAME} avcodec avformat avfilter swscale swresample avutil)
 
 	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		# Do not confuse this with our own -DUSE_SDL
@@ -1701,6 +1713,12 @@ if(PLAYER_HAS_AUDIO)
 		message(STATUS "Resampler: libsamplerate")
 	else()
 		message(STATUS "Resampler: No")
+	endif()
+
+	if (TARGET FFmpeg::AVCODEC)
+		message(STATUS "Video playback: ffmpeg (libavcodec)")
+	else()
+		message(STATUS "Video playback: No")
 	endif()
 endif()
 
