@@ -53,7 +53,7 @@ struct AVIOContext;
 
 class VideoDecoder {
 public:
-	VideoDecoder();
+	VideoDecoder() = default;
 	~VideoDecoder();
 
 	// Audio Decoder interface
