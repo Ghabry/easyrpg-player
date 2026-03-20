@@ -25,17 +25,21 @@ Documentation is available at the documentation wiki: https://wiki.easyrpg.org
 
 ### extended / recommended
 
-- FreeType2 for external font support (+ HarfBuzz for Unicode text shaping).
+- FreeType2 for external font support (+ HarfBuzz for Unicode text shaping).¹
 - mpg123 for MP3 audio support.
 - WildMIDI for MIDI audio support using GUS patches.
 - FluidSynth for MIDI audio support using soundfonts.
-- Libvorbis / Tremor for Ogg Vorbis audio support.
-- opusfile for Opus audio support.
-- libsndfile for better WAVE audio support.
-- libxmp for tracker music support.
+- Libvorbis / Tremor for Ogg Vorbis audio support.¹
+- opusfile for Opus audio support.¹
+- libsndfile for better WAVE audio support.²
+- libxmp for tracker music support.¹
 - SpeexDSP or libsamplerate for proper audio resampling.
-- lhasa for LHA (.lzh) archive support.
-- nlohmann_json for processing JSON files (required when targeting Emscripten)
+- lhasa for loading games inside LHA (.lzh) archives.
+- nlohmann_json for processing JSON files (required for Emscripten).¹
+- ffmpeg (libavcodec) for video playback.¹
+
+¹ This feature is used by only a few games.\
+² Most WAVE files will work without this library.
 
 The older SDL version 1.2 is still supported, but deprecated.
 Please do not add new platform code for this library.
