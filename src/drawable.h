@@ -178,7 +178,7 @@ inline void Drawable::SetRenderOy(int offset_y) {
 	render_oy = offset_y;
 }
 
-// Upper 8 bit are reserved for the layer 
+// Upper 8 bit are reserved for the layer
 static constexpr uint64_t z_offset = 64 - 8;
 
 // Lower 56 Bit are free to use
@@ -200,6 +200,7 @@ enum Priority : Drawable::Z_t {
 	Priority_Window = 130ULL << z_offset,
 	Priority_Timer = 140ULL << z_offset,
 	Priority_Frame = 150ULL << z_offset,
+	Priority_Movie = 155ULL << z_offset,
 	Priority_Transition = 160ULL << z_offset,
 	Priority_Overlay = 170ULL << z_offset,
 	Priority_Maximum = 255ULL << z_offset // Higher values will overflow

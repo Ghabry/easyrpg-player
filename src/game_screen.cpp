@@ -18,20 +18,12 @@
 // Headers
 #include <cmath>
 #include "audio.h"
-#include "bitmap.h"
 #include <lcf/data.h>
 #include "player.h"
 #include "game_battle.h"
-#include "game_battler.h"
 #include "game_screen.h"
-#include "game_system.h"
-#include "game_variables.h"
-#include "game_map.h"
 #include "output.h"
-#include "utils.h"
-#include "options.h"
 #include <lcf/reader_util.h>
-#include "scene.h"
 #include "video_decoder.h"
 #include "weather.h"
 #include "flash.h"
@@ -84,10 +76,7 @@ void Game_Screen::OnMapChange() {
 	}
 
 	movie_filename = "";
-	movie_pos_x = 0;
-	movie_pos_y = 0;
-	movie_res_x = 0;
-	movie_res_y = 0;
+	movie_rect = {};
 
 	data.battleanim_active = false;
 	animation.reset();
@@ -175,22 +164,18 @@ void Game_Screen::SetWeatherEffect(int type, int strength) {
 
 void Game_Screen::PlayMovie(std::string filename, int pos_x, int pos_y, int res_x, int res_y) {
 	movie_filename = std::move(filename);
-	movie_pos_x = pos_x;
-	movie_pos_y = pos_y;
-	movie_res_x = res_x;
-	movie_res_y = res_y;
+	movie_rect = { pos_x, pos_y, res_x, res_y };
 
 	auto is = FileFinder::OpenMovie(movie_filename);
 
-	auto video_dec = std::make_unique<VideoDecoder>();
-	video_dec->SetFormat(44100, AudioDecoder::Format::S16, 2);
-	if (!video_dec->Open(std::move(is))) {
+	decoder_video = std::make_unique<VideoDecoder>();
+	decoder_video->SetFormat(44100, AudioDecoder::Format::S16, 2);
+	if (!decoder_video->Open(std::move(is))) {
+		decoder_video.reset();
 		return;
 	}
 
-	decoder_video = video_dec.get();
-
-	Audio().BGM_Play(1, video_dec->CreateAudioDecoder());
+	Audio().BGM_Play(1, decoder_video->CreateAudioDecoder());
 }
 
 static double interpolate(double d, double x0, double x1)
@@ -316,6 +301,14 @@ void Game_Screen::OnMapScrolled(int dx, int dy) {
 	data.pan_y = (data.pan_y - dy + pan_limit_y) % pan_limit_y;
 }
 
+VideoDecoder* Game_Screen::GetMovie() const {
+	return decoder_video.get();
+}
+
+Rect Game_Screen::GetMovieRect() const {
+	return movie_rect;
+}
+
 void Game_Screen::UpdateScreenEffects() {
 	if (data.tint_time_left > 0) {
 		data.tint_current_red = interpolate(data.tint_time_left, data.tint_current_red, data.tint_finish_red);
@@ -339,9 +332,10 @@ void Game_Screen::UpdateScreenEffects() {
 }
 
 void Game_Screen::UpdateMovie() {
-	if (!movie_filename.empty()) {
-		/* update movie */
-		//decoder_video->runAV(nullptr, 0);
+	if (!movie_filename.empty() && decoder_video.get()) {
+		if (decoder_video->IsFinished()) {
+			decoder_video.reset();
+		}
 	}
 }
 

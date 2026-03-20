@@ -83,7 +83,7 @@ public:
 
 	// Video Decoder interface
 	std::unique_ptr<AudioComponent> CreateAudioDecoder();
-    BitmapRef GetVideoFrame();
+    BitmapRef GetVideoFrame() const;
 
 private:
 	Filesystem_Stream::InputStream stream;
@@ -196,7 +196,7 @@ private:
 	 * Mutex for synchronisation
 	 * Only video_buffer and audio_buffer are accessed on multiple threads.
 	 */
-	std::mutex av_mutex;
+	mutable std::mutex av_mutex;
 };
 
 inline bool VideoDecoder::AudioComponent::Open(Filesystem_Stream::InputStream stream) {

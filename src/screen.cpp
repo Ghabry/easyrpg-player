@@ -16,7 +16,6 @@
  */
 
 // Headers
-#include <string>
 #include "bitmap.h"
 #include "color.h"
 #include "game_screen.h"
@@ -57,22 +56,5 @@ void Screen::Draw(Bitmap& dst) {
 			dst.ClearRect({0, 0, dst.GetWidth(), dy});
 			dst.ClearRect({0, dst.GetHeight() - dy, dst.GetWidth(), dy});
 		}
-	}
-
-	if (Main_Data::game_screen->decoder_video) {
-		auto video = Main_Data::game_screen->decoder_video;
-
-		//if (video->hasVideoFrame())
-        //{
-            auto frame = video->GetVideoFrame();
-			if (!frame) {
-				return;
-			}
-			static int f = 0;
-			//std::ofstream out(fmt::format("/tmp/frame{}.png", ++f));
-			//frame->WritePNG(out);
-			dst.Blit(0, 0, *frame, frame->GetRect(), Opacity::Opaque());
-			//dst.ZoomOpacityBlit(0, 0, 0, 0, *frame, frame->GetRect(), 0.5, 0.5, 255);
-        //}
 	}
 }

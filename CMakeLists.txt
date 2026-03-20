@@ -367,6 +367,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/sprite_character.h
 	src/sprite_picture.h
 	src/sprite_picture.cpp
+	src/sprite_video.cpp
+	src/sprite_video.h
 	src/sprite_weapon.cpp
 	src/sprite_weapon.h
 	src/sprite.cpp

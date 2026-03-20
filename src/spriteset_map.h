@@ -27,6 +27,7 @@
 #include "sprite_airshipshadow.h"
 #include "sprite_character.h"
 #include "sprite_timer.h"
+#include "sprite_video.h"
 #include "system.h"
 #include "tilemap.h"
 
@@ -112,6 +113,7 @@ protected:
 	std::unique_ptr<Sprite_Timer> timer2;
 	std::unique_ptr<Screen> screen;
 	std::unique_ptr<Frame> frame;
+	std::unique_ptr<Sprite_Video> video;
 
 	void CreateSprite(Game_Character* character, bool create_x_clone, bool create_y_clone);
 	void CreateAirshipShadowSprite(bool create_x_clone, bool create_y_clone);

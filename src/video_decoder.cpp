@@ -435,7 +435,9 @@ int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 		BitmapRef texture = Bitmap::Create(video_pixel_data.data(), video_width, video_height, video_pitch, format_B8G8R8A8_n().format());
 		BitmapRef frame = Bitmap::Create(*texture, texture->GetRect(), false);
 
-		double video_time = in_frame->pts * av_q2d(video_stream->time_base);
+		double time_base = av_q2d(video_stream->time_base);
+		double pts = (in_frame->pts == AV_NOPTS_VALUE) ? in_frame->pkt_dts : in_frame->pts;
+		double video_time = pts * time_base;
 
 		{
 			const std::lock_guard<std::mutex> lock(av_mutex);
@@ -709,7 +711,7 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 
 	int to_copy = std::min<int>(length, audio_buffer.size());
 
-	if (playback_time == 0.0) {
+	if (playback_time == 0.0 && audio_buffer.empty()) {
 		// Decoder just started and has no data yet
 		return length;
 	}
@@ -743,8 +745,7 @@ std::unique_ptr<VideoDecoder::AudioComponent> VideoDecoder::CreateAudioDecoder()
 	return std::make_unique<AudioComponent>(this);
 }
 
-BitmapRef VideoDecoder::GetVideoFrame()
-{
+BitmapRef VideoDecoder::GetVideoFrame() const {
 	// FIXME: Implement aspect ration keeping!
 
 	const std::lock_guard<std::mutex> lock(av_mutex);
@@ -753,7 +754,7 @@ BitmapRef VideoDecoder::GetVideoFrame()
 		return {};
 	}
 
-	Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
+	//Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
 
 	return video_buffer.begin()->frame;
 }
