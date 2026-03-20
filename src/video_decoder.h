@@ -92,8 +92,6 @@ private:
 	int DecodeAudioPacket(AVPacket* paquet, bool &got);
 	int DecodeVideoPacket(AVPacket* paquet, bool &got);
 
-	void ThreadFunction();
-
 	/** Buffer for avio_alloc_context */
 	uint8_t* in_buffer = nullptr;
 
@@ -180,6 +178,9 @@ private:
 
 	/** Thread handling all the processing */
 	std::thread av_thread;
+
+	/** Function executed by av_thread */
+	void ThreadFunction();
 
 	/**
 	 * Mutex for synchronisation

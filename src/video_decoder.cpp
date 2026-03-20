@@ -92,8 +92,6 @@ static int64_t vio_seek_func(void* userdata, int64_t offset, int seek_type) {
 }
 
 void VideoDecoder::ReadPackets() {
-    const std::lock_guard<std::mutex> lock(av_mutex);
-
     AVPacket pkt;
     if (av_read_frame(input_ctx, &pkt) >= 0) {
         if (pkt.stream_index == audio_stream_index) {
@@ -109,8 +107,6 @@ void VideoDecoder::ReadPackets() {
 }
 
 void VideoDecoder::ProcessPackets() {
-    const std::lock_guard<std::mutex> lock(av_mutex);
-
 	// Process Audio queue
     // Decode Audio if buffer is low
     while (!audio_packet_queue.empty() && audio_buffer.size() < 20480) {
@@ -375,6 +371,8 @@ int VideoDecoder::DecodeAudioPacket(AVPacket* paquet, bool &got)
 
 		if (out_samples > 0) {
 			auto out_bytes = out_samples * out_bytes_per_sample * audio_dst_channels;
+
+			const std::lock_guard<std::mutex> lock(av_mutex);
 			audio_buffer.insert(audio_buffer.end(), audio_merge_buffer.begin(), audio_merge_buffer.begin() + out_bytes);
 		}
 
@@ -426,8 +424,6 @@ int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 
 		UpdateVideoStream();
 
-		//SDL_LockMutex(m_textureMutex);
-
 		uint8_t *out[] = {video_pixel_data.data()};
 		int lines[] = {video_pitch};
 
@@ -439,10 +435,12 @@ int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 		BitmapRef frame = Bitmap::Create(*texture, texture->GetRect(), false);
 
 		double video_time = in_frame->pts * av_q2d(video_stream->time_base);
-		video_buffer.push_back({frame, video_time});
-		Output::Debug("FRAME {} {}", video_time, video_buffer.front().time);
 
-		//SDL_UnlockMutex(m_textureMutex);
+		{
+			const std::lock_guard<std::mutex> lock(av_mutex);
+			video_buffer.push_back({frame, video_time});
+			Output::Debug("FRAME {} {}", video_time, video_buffer.front().time);
+		}
 
 		av_frame_unref(in_frame);
 
