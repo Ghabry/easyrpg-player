@@ -136,7 +136,6 @@ private:
 	AVFrame *sw_frame = nullptr;
 	AVFrame *in_frame = nullptr;
 	//! Packet buffer
-	AVPacket m_paquet;
 	std::deque<AVPacket> m_audio_packet_queue;
 	std::deque<AVPacket> m_video_packet_queue;
 
@@ -152,7 +151,6 @@ private:
 	enum AVSampleFormat m_sfmt = AV_SAMPLE_FMT_NONE;
 	int m_srate = 0;
 	int m_schannels = 0;
-	bool m_planar = false;
 
 	enum AVSampleFormat m_dst_sample_fmt = AV_SAMPLE_FMT_NONE;
 
@@ -172,8 +170,8 @@ private:
 	bool updateAudioStream();
 	bool updateVideoStream();
 
-	int decode_audio_packet(bool &got);
-	int decode_video_packet(AVPacket &paquet, bool &got, double video_time);
+	int decode_audio_packet(AVPacket* paquet, bool &got);
+	int decode_video_packet(AVPacket* paquet, bool &got);
 
 	void ThreadFunction();
 
@@ -185,6 +183,9 @@ private:
 
 	std::thread av_thread;
 	std::mutex av_mutex;
+
+	bool m_audio_flushed = false;
+	bool m_video_flushed = false;
 };
 
 #endif

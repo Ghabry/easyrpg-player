@@ -15,16 +15,11 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libavutil/channel_layout.h>
-#include <libavutil/pixfmt.h>
 extern "C"
 {
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/imgutils.h>
-#include <libavfilter/avfilter.h>
-#include <libavfilter/buffersrc.h>
-#include <libavfilter/buffersink.h>
 #include <libavutil/opt.h>
 #include <libswresample/swresample.h>
 #include <libswscale/swscale.h>
@@ -84,6 +79,9 @@ static int64_t vio_seek_func(void* userdata, int64_t offset, int seek_type) {
 	auto* f = reinterpret_cast<Filesystem_Stream::InputStream*>(userdata);
 	if (f->eof()) f->clear(); // emulate behaviour of fseek
 
+	// Ignore AVSEEK_FORCE
+	seek_type = seek_type & ~AVSEEK_FORCE;
+
 	if (seek_type == AVSEEK_SIZE) {
 		return f->GetSize();
 	}
@@ -113,29 +111,43 @@ void VideoDecoder::readPackets() {
 void VideoDecoder::processPackets() {
     const std::lock_guard<std::mutex> lock(av_mutex);
 
+	// Process Audio queue
     // Decode Audio if buffer is low
     while (!m_audio_packet_queue.empty() && m_audio_buffer.size() < 20480) {
         AVPacket pkt = m_audio_packet_queue.front();
         m_audio_packet_queue.pop_front();
 
         bool got;
-        m_paquet = pkt; // TODO: Make param
-        decode_audio_packet(got);
+        decode_audio_packet(&pkt, got);
         av_packet_unref(&pkt);
     }
 
+	// Process Video queue
     // Decode video if not enough frames
     while (!m_video_packet_queue.empty() && frames.size() < 10) {
         AVPacket pkt = m_video_packet_queue.front();
         m_video_packet_queue.pop_front();
 
-        double time_base = av_q2d(m_video->time_base);
-        double pts = (pkt.pts == AV_NOPTS_VALUE) ? pkt.dts : pkt.pts;
-        double video_time = pts * time_base;
-
         bool got;
-        decode_video_packet(pkt, got, video_time);
+        decode_video_packet(&pkt, got);
         av_packet_unref(&pkt);
+    }
+
+	// Flush decoders at EOF
+    if (m_atEnd) {
+        if (m_audio_packet_queue.empty() && !m_audio_flushed) {
+            bool got;
+            // Forces the decoder to empty its internal buffers
+            decode_audio_packet(nullptr, got);
+            m_audio_flushed = true;
+        }
+
+        if (m_video_packet_queue.empty() && !m_video_flushed) {
+            bool got;
+            // Flushes remaining B-frames/delayed frames
+            decode_video_packet(nullptr, got);
+            m_video_flushed = true;
+        }
     }
 }
 
@@ -164,47 +176,33 @@ bool VideoDecoder::updateAudioStream()
 
 	if(sfmt != m_sfmt || srate != m_srate || channels != m_schannels/* || !m_audio_cvt*/)
 	{
-		m_planar = false;
-
 		switch(sfmt)
 		{
 		case AV_SAMPLE_FMT_U8P:
-			m_planar = true;
-			m_dst_sample_fmt = AV_SAMPLE_FMT_U8;
-			/*fallthrough*/
 		case AV_SAMPLE_FMT_U8:
-			//m_dec_fmt = AudioDecoder::Format::U8;
+			m_dst_sample_fmt = AV_SAMPLE_FMT_U8;
 			break;
 
 		case AV_SAMPLE_FMT_S16P:
-			m_planar = true;
-			m_dst_sample_fmt = AV_SAMPLE_FMT_S16;
-			/*fallthrough*/
 		case AV_SAMPLE_FMT_S16:
-			//m_dec_fmt = AudioDecoder::Format::S16;
+			m_dst_sample_fmt = AV_SAMPLE_FMT_S16;
 			break;
 
 		case AV_SAMPLE_FMT_S32P:
-			m_planar = true;
-			m_dst_sample_fmt = AV_SAMPLE_FMT_S32;
-			/*fallthrough*/
 		case AV_SAMPLE_FMT_S32:
-			//m_dec_fmt = AudioDecoder::Format::S32;
+			m_dst_sample_fmt = AV_SAMPLE_FMT_S32;
 			break;
 
 		case AV_SAMPLE_FMT_FLTP:
-			m_planar = true;
-			m_dst_sample_fmt = AV_SAMPLE_FMT_FLT;
-			/*fallthrough*/
 		case AV_SAMPLE_FMT_FLT:
-			//m_dec_fmt = AudioDecoder::Format::F32;
+			m_dst_sample_fmt = AV_SAMPLE_FMT_FLT;
 			break;
 
 		default:
-			return -1; /* Unsupported audio format */
+			return false; /* Unsupported audio format */
 		}
 
-		//m_dec_fmt = AudioDecoder::Format::S16;
+		m_dec_fmt = AudioDecoder::Format::S16;
 
 		/*if(m_audio_cvt)
 		{
@@ -225,70 +223,67 @@ bool VideoDecoder::updateAudioStream()
 		//if(!m_audio_cvt)
 		//    return false;
 
-		if(m_planar)
+		m_swr_ctx = swr_alloc();
+#if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
+		layout = m_audio->codecpar->ch_layout;
+#else
+		layout = m_audio->codecpar->channel_layout;
+#endif
+
+#if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
+		if(layout.u.mask == 0)
 		{
-			m_swr_ctx = swr_alloc();
-#if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
-			layout = m_audio->codecpar->ch_layout;
-#else
-			layout = m_audio->codecpar->channel_layout;
-#endif
+			layout.order = AV_CHANNEL_ORDER_NATIVE;
+			layout.nb_channels = channels;
 
-#if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
-			if(layout.u.mask == 0)
-			{
-				layout.order = AV_CHANNEL_ORDER_NATIVE;
-				layout.nb_channels = channels;
-
-				if(channels > 2)
-					layout.u.mask = AV_CH_LAYOUT_SURROUND;
-				else if(channels == 2)
-					layout.u.mask = AV_CH_LAYOUT_STEREO;
-				else if(channels == 1)
-					layout.u.mask = AV_CH_LAYOUT_MONO;
-			}
-
-
-			av_opt_set_chlayout(m_swr_ctx, "in_chlayout",  &layout, 0);
-
-			AVChannelLayout out_layout = (m_dec_channels == 1) ?
-				(AVChannelLayout)AV_CHANNEL_LAYOUT_MONO :
-				(AVChannelLayout)AV_CHANNEL_LAYOUT_STEREO;
-
-			av_opt_set_chlayout(m_swr_ctx, "out_chlayout", &out_layout, 0);
-#else
-			if(layout == 0)
-			{
-				if(channels > 2)
-					layout = AV_CH_LAYOUT_SURROUND;
-				else if(channels == 2)
-					layout = AV_CH_LAYOUT_STEREO;
-				else if(channels == 1)
-					layout = AV_CH_LAYOUT_MONO;
-			}
-
-			av_opt_set_int(m_swr_ctx, "in_channel_layout",  layout, 0);
-
-			if (m_dec_channels == 1) {
-				layout = AV_CH_LAYOUT_MONO;
-			} else {
-				layout = AV_CH_LAYOUT_STEREO;
-			}
-
-			av_opt_set_int(m_swr_ctx, "out_channel_layout", layout, 0);
-#endif
-			av_opt_set_int(m_swr_ctx, "in_sample_rate", srate, 0);
-			av_opt_set_int(m_swr_ctx, "out_sample_rate", m_dec_freq, 0);
-			av_opt_set_sample_fmt(m_swr_ctx, "in_sample_fmt",  sfmt, 0);
-			av_opt_set_sample_fmt(m_swr_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16,  0);
-			swr_init(m_swr_ctx);
-
-#if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
-			//av_channel_layout_uninit(&layout);
-#endif
-
-			m_merge_buffer.resize(channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) * 4096);
+			if(channels > 2)
+				layout.u.mask = AV_CH_LAYOUT_SURROUND;
+			else if(channels == 2)
+				layout.u.mask = AV_CH_LAYOUT_STEREO;
+			else if(channels == 1)
+				layout.u.mask = AV_CH_LAYOUT_MONO;
 		}
+
+		av_opt_set_chlayout(m_swr_ctx, "in_chlayout",  &layout, 0);
+
+		AVChannelLayout out_layout;
+
+		av_channel_layout_default(&out_layout, m_dec_channels);
+
+		av_opt_set_chlayout(m_swr_ctx, "out_chlayout", &out_layout, 0);
+#else
+		if(layout == 0)
+		{
+			if(channels > 2)
+				layout = AV_CH_LAYOUT_SURROUND;
+			else if(channels == 2)
+				layout = AV_CH_LAYOUT_STEREO;
+			else if(channels == 1)
+				layout = AV_CH_LAYOUT_MONO;
+		}
+
+		av_opt_set_int(m_swr_ctx, "in_channel_layout",  layout, 0);
+
+		if (m_dec_channels == 1) {
+			layout = AV_CH_LAYOUT_MONO;
+		} else {
+			layout = AV_CH_LAYOUT_STEREO;
+		}
+
+		av_opt_set_int(m_swr_ctx, "out_channel_layout", layout, 0);
+#endif
+		av_opt_set_int(m_swr_ctx, "in_sample_rate", srate, 0);
+		av_opt_set_int(m_swr_ctx, "out_sample_rate", m_dec_freq, 0);
+		av_opt_set_sample_fmt(m_swr_ctx, "in_sample_fmt",  sfmt, 0);
+		// AV_SAMPLE_FMT must match m_dec_fmt
+		av_opt_set_sample_fmt(m_swr_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16,  0);
+		swr_init(m_swr_ctx);
+
+#if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
+		//av_channel_layout_uninit(&layout);
+#endif
+
+		m_merge_buffer.resize(channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) * 192000);
 
 		m_sfmt = sfmt;
 		m_srate = srate;
@@ -336,7 +331,7 @@ bool VideoDecoder::updateVideoStream()
 	return false;
 }
 
-int VideoDecoder::decode_audio_packet(bool &got)
+int VideoDecoder::decode_audio_packet(AVPacket* paquet, bool &got)
 {
 	int ret = 0;
 	size_t unpadded_linesize;
@@ -344,7 +339,7 @@ int VideoDecoder::decode_audio_packet(bool &got)
 
 	got = false;
 
-	ret = avcodec_send_packet(m_decoderAudioCtx, &m_paquet);
+	ret = avcodec_send_packet(m_decoderAudioCtx, paquet);
 	if(ret < 0)
 	{
 		if(ret == AVERROR_EOF)
@@ -371,46 +366,36 @@ int VideoDecoder::decode_audio_packet(bool &got)
 
 		updateAudioStream();
 
-		if(m_planar)
-		{
-			sample_size = av_get_bytes_per_sample((enum AVSampleFormat)m_audio_frame->format);
-			unpadded_linesize = m_dec_freq * AudioDecoder::GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels;
+		int expected_out_samples = swr_get_out_samples(m_swr_ctx, m_audio_frame->nb_samples);
+		int out_bytes_per_sample = AudioDecoder::GetSamplesizeForFormat(m_dec_fmt);
 
-			if(unpadded_linesize > m_merge_buffer.size())
-				m_merge_buffer.resize(unpadded_linesize);
+		size_t required_buffer_size = expected_out_samples * m_dec_channels * out_bytes_per_sample;
+		if (m_merge_buffer.size() < required_buffer_size) {
+			m_merge_buffer.resize(required_buffer_size);
+		}
 
-			uint8_t *out = m_merge_buffer.data();
+		uint8_t *out = m_merge_buffer.data();
 
-			auto out_samples = swr_convert(m_swr_ctx, &out, m_merge_buffer.size() / m_dec_channels,
-						(const uint8_t**)m_audio_frame->extended_data, m_audio_frame->nb_samples);
+		int out_samples = swr_convert(m_swr_ctx,
+			&out, expected_out_samples,
+			(const uint8_t**)m_audio_frame->extended_data, m_audio_frame->nb_samples);
 
-			auto out_bytes = out_samples * AudioDecoder::GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels;
-
-			// if (m_paquet.pts != AV_NOPTS_VALUE)
-			//     m_time = (double)m_paquet.pts * av_q2d(m_audio->time_base);
-			// else
-			//     m_time = -1.0;
-
-			/*if(SDL_AudioStreamPut(m_audio_cvt, m_merge_buffer.data(), unpadded_linesize) < 0)
-			{
-				Output::Warning("FFMPEG: Failed to put audio stream");
-				return -1;
-			}*/
+		if (out_samples > 0) {
+			auto out_bytes = out_samples * out_bytes_per_sample * m_dec_channels;
 			m_audio_buffer.insert(m_audio_buffer.end(), m_merge_buffer.begin(), m_merge_buffer.begin() + out_bytes);
-			//Output::Debug("Put {} {}", out_bytes, m_audio_buffer.size());
 		}
-		else
+
+		// if (m_paquet.pts != AV_NOPTS_VALUE)
+		//     m_time = (double)m_paquet.pts * av_q2d(m_audio->time_base);
+		// else
+		//     m_time = -1.0;
+
+		/*if(SDL_AudioStreamPut(m_audio_cvt, m_merge_buffer.data(), unpadded_linesize) < 0)
 		{
-			unpadded_linesize = m_audio_frame->nb_samples * av_get_bytes_per_sample((enum AVSampleFormat)m_audio_frame->format);
-
-			m_audio_buffer.insert(m_audio_buffer.end(), m_audio_frame->extended_data[0], m_audio_frame->extended_data[0] + unpadded_linesize);
-
-			/*if(SDL_AudioStreamPut(m_audio_cvt, m_audio_frame->extended_data[0], unpadded_linesize) < 0)
-			{
-				Output::Warning("FFMPEG: Failed to put audio stream");
-				return -1;
-			}*/
-		}
+			Output::Warning("FFMPEG: Failed to put audio stream");
+			return -1;
+		}*/
+		//Output::Debug("Put {} {}", out_bytes, m_audio_buffer.size());
 
 		av_frame_unref(m_audio_frame);
 
@@ -423,7 +408,7 @@ int VideoDecoder::decode_audio_packet(bool &got)
 	return 0;
 }
 
-int VideoDecoder::decode_video_packet(AVPacket &paquet, bool &got, double video_time)
+int VideoDecoder::decode_video_packet(AVPacket* paquet, bool &got)
 {
 	int ret = 0;
 	size_t unpadded_linesize;
@@ -431,7 +416,7 @@ int VideoDecoder::decode_video_packet(AVPacket &paquet, bool &got, double video_
 
 	got = false;
 
-	ret = avcodec_send_packet(m_decoderVideoCtx, &paquet);
+	ret = avcodec_send_packet(m_decoderVideoCtx, paquet);
 	if(ret < 0)
 	{
 		if(ret == AVERROR_EOF)
@@ -472,6 +457,8 @@ int VideoDecoder::decode_video_packet(AVPacket &paquet, bool &got, double video_
 
 		BitmapRef texture = Bitmap::Create(m_texturePixelData.data(), m_texture_w, m_texture_h, m_texture_pitch, format_B8G8R8A8_n().format());
 		BitmapRef frame = Bitmap::Create(*texture, texture->GetRect(), false);
+
+		double video_time = in_frame->pts * av_q2d(m_video->time_base);
 		frames.push_back({frame, video_time});
 		Output::Debug("FRAME {} {}", video_time, frames.front().time);
 
@@ -524,7 +511,6 @@ void VideoDecoder::ThreadFunction() {
 
 VideoDecoder::VideoDecoder()
 {
-	m_paquet = {};
 }
 
 VideoDecoder::~VideoDecoder()
@@ -568,11 +554,9 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 
 	m_inputCtx = avformat_alloc_context();
 	m_inputCtx->pb = avio_in;
-	static char proto[] = "file:///easyrpg";
-	m_inputCtx->url = proto;
 
 	// open the input file
-	ret = avformat_open_input(&m_inputCtx, nullptr, nullptr, &options);
+	ret = avformat_open_input(&m_inputCtx, "file:///easyrpg", nullptr, &options);
 	av_dict_free(&options);
 
 	if(ret != 0)
@@ -721,7 +705,8 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 
 bool VideoDecoder::IsFinished() const
 {
-	return m_atEnd;
+    return m_atEnd && m_audio_flushed && m_video_flushed
+           && frames.empty() && m_audio_buffer.empty();
 }
 
 void VideoDecoder::GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const {
@@ -791,7 +776,7 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 		}
 	}
 
-	m_playback_time += (to_copy / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_srate;
+	m_playback_time += (to_copy / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_dec_freq;
 
 	Output::Debug("PLAYBACK {}", m_playback_time);
 
