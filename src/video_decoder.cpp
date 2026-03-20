@@ -91,76 +91,76 @@ static int64_t vio_seek_func(void* userdata, int64_t offset, int seek_type) {
 	return f->tellg();
 }
 
-void VideoDecoder::readPackets() {
+void VideoDecoder::ReadPackets() {
     const std::lock_guard<std::mutex> lock(av_mutex);
 
     AVPacket pkt;
-    if (av_read_frame(m_inputCtx, &pkt) >= 0) {
-        if (pkt.stream_index == m_streamAudio) {
-            m_audio_packet_queue.push_back(pkt);
-        } else if (pkt.stream_index == m_streamVideo) {
-            m_video_packet_queue.push_back(pkt);
+    if (av_read_frame(input_ctx, &pkt) >= 0) {
+        if (pkt.stream_index == audio_stream_index) {
+            audio_packet_queue.push_back(pkt);
+        } else if (pkt.stream_index == video_stream_index) {
+            video_packet_queue.push_back(pkt);
         } else {
             av_packet_unref(&pkt);
         }
     } else {
-        m_atEnd = true;
+        at_end = true;
     }
 }
 
-void VideoDecoder::processPackets() {
+void VideoDecoder::ProcessPackets() {
     const std::lock_guard<std::mutex> lock(av_mutex);
 
 	// Process Audio queue
     // Decode Audio if buffer is low
-    while (!m_audio_packet_queue.empty() && m_audio_buffer.size() < 20480) {
-        AVPacket pkt = m_audio_packet_queue.front();
-        m_audio_packet_queue.pop_front();
+    while (!audio_packet_queue.empty() && audio_buffer.size() < 20480) {
+        AVPacket pkt = audio_packet_queue.front();
+        audio_packet_queue.pop_front();
 
         bool got;
-        decode_audio_packet(&pkt, got);
+        DecodeAudioPacket(&pkt, got);
         av_packet_unref(&pkt);
     }
 
 	// Process Video queue
     // Decode video if not enough frames
-    while (!m_video_packet_queue.empty() && frames.size() < 10) {
-        AVPacket pkt = m_video_packet_queue.front();
-        m_video_packet_queue.pop_front();
+    while (!video_packet_queue.empty() && video_buffer.size() < 10) {
+        AVPacket pkt = video_packet_queue.front();
+        video_packet_queue.pop_front();
 
         bool got;
-        decode_video_packet(&pkt, got);
+        DecodeVideoPacket(&pkt, got);
         av_packet_unref(&pkt);
     }
 
 	// Flush decoders at EOF
-    if (m_atEnd) {
-        if (m_audio_packet_queue.empty() && !m_audio_flushed) {
+    if (at_end) {
+        if (audio_packet_queue.empty() && !audio_flushed) {
             bool got;
             // Forces the decoder to empty its internal buffers
-            decode_audio_packet(nullptr, got);
-            m_audio_flushed = true;
+            DecodeAudioPacket(nullptr, got);
+            audio_flushed = true;
         }
 
-        if (m_video_packet_queue.empty() && !m_video_flushed) {
+        if (video_packet_queue.empty() && !video_flushed) {
             bool got;
             // Flushes remaining B-frames/delayed frames
-            decode_video_packet(nullptr, got);
-            m_video_flushed = true;
+            DecodeVideoPacket(nullptr, got);
+            video_flushed = true;
         }
     }
 }
 
-bool VideoDecoder::updateAudioStream()
+bool VideoDecoder::UpdateAudioStream()
 {
-	if(!m_audio || !m_audio->codecpar)
+	if(!audio_stream || !audio_stream->codecpar)
 		return true; // No audio - no actions!
 
-	enum AVSampleFormat sfmt = (enum AVSampleFormat)m_audio->codecpar->format;
-	int srate = m_audio->codecpar->sample_rate;
+	enum AVSampleFormat sfmt = (enum AVSampleFormat)audio_stream->codecpar->format;
+	int srate = audio_stream->codecpar->sample_rate;
 
 #if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
-	int channels = m_audio->codecpar->ch_layout.nb_channels;
+	int channels = audio_stream->codecpar->ch_layout.nb_channels;
 #else
 	int channels = m_audio->codecpar->channels;
 #endif
@@ -174,58 +174,51 @@ bool VideoDecoder::updateAudioStream()
 	if(srate == 0 || channels == 0)
 		return false;
 
-	if(sfmt != m_sfmt || srate != m_srate || channels != m_schannels/* || !m_audio_cvt*/)
+	if(sfmt != audio_src_format || srate != audio_src_freq || channels != audio_src_channels)
 	{
+#if 0
 		switch(sfmt)
 		{
 		case AV_SAMPLE_FMT_U8P:
 		case AV_SAMPLE_FMT_U8:
-			m_dst_sample_fmt = AV_SAMPLE_FMT_U8;
+			audio_dst_format = AV_SAMPLE_FMT_U8;
 			break;
 
 		case AV_SAMPLE_FMT_S16P:
 		case AV_SAMPLE_FMT_S16:
-			m_dst_sample_fmt = AV_SAMPLE_FMT_S16;
+			audio_dst_format = AV_SAMPLE_FMT_S16;
 			break;
 
 		case AV_SAMPLE_FMT_S32P:
 		case AV_SAMPLE_FMT_S32:
-			m_dst_sample_fmt = AV_SAMPLE_FMT_S32;
+			audio_dst_format = AV_SAMPLE_FMT_S32;
 			break;
 
 		case AV_SAMPLE_FMT_FLTP:
 		case AV_SAMPLE_FMT_FLT:
-			m_dst_sample_fmt = AV_SAMPLE_FMT_FLT;
+			audio_dst_format = AV_SAMPLE_FMT_FLT;
 			break;
 
 		default:
 			return false; /* Unsupported audio format */
 		}
+#endif
 
-		m_dec_fmt = AudioDecoder::Format::S16;
+		// For simplicity always S16
+		audio_dst_format = AV_SAMPLE_FMT_S16;
+		audio_dst_format_decoder = AudioDecoder::Format::S16;
 
-		/*if(m_audio_cvt)
+		audio_merge_buffer.clear();
+
+		if(swr_ctx)
 		{
-			SDL_FreeAudioStream(m_audio_cvt);
-			m_audio_cvt = NULL;
-		}*/
-
-		m_merge_buffer.clear();
-
-		if(m_swr_ctx)
-		{
-			swr_free(&m_swr_ctx);
-			m_swr_ctx = nullptr;
+			swr_free(&swr_ctx);
+			swr_ctx = nullptr;
 		}
 
-		//m_audio_cvt = SDL_NewAudioStream(fmt, (Uint8)channels, srate,
-		//                                 m_dstSpec.format, m_dstSpec.channels, m_dstSpec.freq);
-		//if(!m_audio_cvt)
-		//    return false;
-
-		m_swr_ctx = swr_alloc();
+		swr_ctx = swr_alloc();
 #if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
-		layout = m_audio->codecpar->ch_layout;
+		layout = audio_stream->codecpar->ch_layout;
 #else
 		layout = m_audio->codecpar->channel_layout;
 #endif
@@ -244,13 +237,13 @@ bool VideoDecoder::updateAudioStream()
 				layout.u.mask = AV_CH_LAYOUT_MONO;
 		}
 
-		av_opt_set_chlayout(m_swr_ctx, "in_chlayout",  &layout, 0);
+		av_opt_set_chlayout(swr_ctx, "in_chlayout",  &layout, 0);
 
 		AVChannelLayout out_layout;
 
-		av_channel_layout_default(&out_layout, m_dec_channels);
+		av_channel_layout_default(&out_layout, audio_dst_channels);
 
-		av_opt_set_chlayout(m_swr_ctx, "out_chlayout", &out_layout, 0);
+		av_opt_set_chlayout(swr_ctx, "out_chlayout", &out_layout, 0);
 #else
 		if(layout == 0)
 		{
@@ -272,58 +265,58 @@ bool VideoDecoder::updateAudioStream()
 
 		av_opt_set_int(m_swr_ctx, "out_channel_layout", layout, 0);
 #endif
-		av_opt_set_int(m_swr_ctx, "in_sample_rate", srate, 0);
-		av_opt_set_int(m_swr_ctx, "out_sample_rate", m_dec_freq, 0);
-		av_opt_set_sample_fmt(m_swr_ctx, "in_sample_fmt",  sfmt, 0);
+		av_opt_set_int(swr_ctx, "in_sample_rate", srate, 0);
+		av_opt_set_int(swr_ctx, "out_sample_rate", audio_dst_freq, 0);
+		av_opt_set_sample_fmt(swr_ctx, "in_sample_fmt",  sfmt, 0);
 		// AV_SAMPLE_FMT must match m_dec_fmt
-		av_opt_set_sample_fmt(m_swr_ctx, "out_sample_fmt", AV_SAMPLE_FMT_S16,  0);
-		swr_init(m_swr_ctx);
+		av_opt_set_sample_fmt(swr_ctx, "out_sample_fmt", audio_dst_format,  0);
+		swr_init(swr_ctx);
 
 #if defined(AVCODEC_NEW_CHANNEL_LAYOUT)
 		//av_channel_layout_uninit(&layout);
 #endif
 
-		m_merge_buffer.resize(channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16) * 192000);
+		audio_merge_buffer.resize(channels * av_get_bytes_per_sample(audio_dst_format) * 192000);
 
-		m_sfmt = sfmt;
-		m_srate = srate;
-		m_schannels = channels;
+		audio_src_format = sfmt;
+		audio_src_freq = srate;
+		audio_src_channels = channels;
 	}
 
 	return true;
 }
 
-bool VideoDecoder::updateVideoStream()
+bool VideoDecoder::UpdateVideoStream()
 {
-	if(!m_video || !m_video->codecpar)
+	if(!video_stream || !video_stream->codecpar)
 		return true; // No video - no actions!
 
-	AVPixelFormat pixfmt = (AVPixelFormat)m_video->codecpar->format;
-	int w = m_video->codecpar->width;
-	int h = m_video->codecpar->height;
+	AVPixelFormat pixfmt = (AVPixelFormat)video_stream->codecpar->format;
+	int w = video_stream->codecpar->width;
+	int h = video_stream->codecpar->height;
 
 	if(pixfmt == AV_PIX_FMT_NONE || w == 0 || h == 0)
 		return false;
 
-	if(w != m_dst_w || h != m_dst_h || pixfmt != m_dst_colour || !m_video_cvt)
+	if(w != video_width || h != video_height || pixfmt != video_dst_format || !video_cvt)
 	{
-		if(m_video_cvt)
+		if(video_cvt)
 		{
-			sws_freeContext(m_video_cvt);
-			m_video_cvt = nullptr;
+			sws_freeContext(video_cvt);
+			video_cvt = nullptr;
 		}
 
-		m_video_cvt = sws_getContext(w, h, pixfmt, m_dst_w, m_dst_h, m_dst_colour, 0, 0, 0, 0);
-		if(!m_video_cvt)
+		video_cvt = sws_getContext(w, h, pixfmt, video_width, video_height, video_dst_format, 0, 0, 0, 0);
+		if(!video_cvt)
 			return false;
 
 		//SDL_LockMutex(m_textureMutex);
 		uint8_t *dst_data[4];
 		int dst_line_sizes[4];
 
-		int data_size = av_image_fill_arrays(dst_data, dst_line_sizes, nullptr, m_dst_colour, w, h, 8);
-		m_texture_pitch = dst_line_sizes[0];
-		m_texturePixelData.resize(data_size);
+		int data_size = av_image_fill_arrays(dst_data, dst_line_sizes, nullptr, video_dst_format, w, h, 8);
+		video_pitch = dst_line_sizes[0];
+		video_pixel_data.resize(data_size);
 
 		//SDL_UnlockMutex(m_textureMutex);
 	}
@@ -331,7 +324,7 @@ bool VideoDecoder::updateVideoStream()
 	return false;
 }
 
-int VideoDecoder::decode_audio_packet(AVPacket* paquet, bool &got)
+int VideoDecoder::DecodeAudioPacket(AVPacket* paquet, bool &got)
 {
 	int ret = 0;
 	size_t unpadded_linesize;
@@ -339,7 +332,7 @@ int VideoDecoder::decode_audio_packet(AVPacket* paquet, bool &got)
 
 	got = false;
 
-	ret = avcodec_send_packet(m_decoderAudioCtx, paquet);
+	ret = avcodec_send_packet(audio_decoder_ctx, paquet);
 	if(ret < 0)
 	{
 		if(ret == AVERROR_EOF)
@@ -351,7 +344,7 @@ int VideoDecoder::decode_audio_packet(AVPacket* paquet, bool &got)
 
 	while(ret >= 0)
 	{
-		ret = avcodec_receive_frame(m_decoderAudioCtx, m_audio_frame);
+		ret = avcodec_receive_frame(audio_decoder_ctx, audio_frame);
 
 		if(ret < 0)
 		{
@@ -364,40 +357,30 @@ int VideoDecoder::decode_audio_packet(AVPacket* paquet, bool &got)
 			return ret;
 		}
 
-		updateAudioStream();
+		UpdateAudioStream();
 
-		int expected_out_samples = swr_get_out_samples(m_swr_ctx, m_audio_frame->nb_samples);
-		int out_bytes_per_sample = AudioDecoder::GetSamplesizeForFormat(m_dec_fmt);
+		int expected_out_samples = swr_get_out_samples(swr_ctx, audio_frame->nb_samples);
+		int out_bytes_per_sample = AudioDecoder::GetSamplesizeForFormat(audio_dst_format_decoder);
 
-		size_t required_buffer_size = expected_out_samples * m_dec_channels * out_bytes_per_sample;
-		if (m_merge_buffer.size() < required_buffer_size) {
-			m_merge_buffer.resize(required_buffer_size);
+		size_t required_buffer_size = expected_out_samples * audio_dst_channels * out_bytes_per_sample;
+		if (audio_merge_buffer.size() < required_buffer_size) {
+			audio_merge_buffer.resize(required_buffer_size);
 		}
 
-		uint8_t *out = m_merge_buffer.data();
+		uint8_t *out = audio_merge_buffer.data();
 
-		int out_samples = swr_convert(m_swr_ctx,
+		int out_samples = swr_convert(swr_ctx,
 			&out, expected_out_samples,
-			(const uint8_t**)m_audio_frame->extended_data, m_audio_frame->nb_samples);
+			(const uint8_t**)audio_frame->extended_data, audio_frame->nb_samples);
 
 		if (out_samples > 0) {
-			auto out_bytes = out_samples * out_bytes_per_sample * m_dec_channels;
-			m_audio_buffer.insert(m_audio_buffer.end(), m_merge_buffer.begin(), m_merge_buffer.begin() + out_bytes);
+			auto out_bytes = out_samples * out_bytes_per_sample * audio_dst_channels;
+			audio_buffer.insert(audio_buffer.end(), audio_merge_buffer.begin(), audio_merge_buffer.begin() + out_bytes);
 		}
 
-		// if (m_paquet.pts != AV_NOPTS_VALUE)
-		//     m_time = (double)m_paquet.pts * av_q2d(m_audio->time_base);
-		// else
-		//     m_time = -1.0;
-
-		/*if(SDL_AudioStreamPut(m_audio_cvt, m_merge_buffer.data(), unpadded_linesize) < 0)
-		{
-			Output::Warning("FFMPEG: Failed to put audio stream");
-			return -1;
-		}*/
 		//Output::Debug("Put {} {}", out_bytes, m_audio_buffer.size());
 
-		av_frame_unref(m_audio_frame);
+		av_frame_unref(audio_frame);
 
 		got = true;
 
@@ -408,7 +391,7 @@ int VideoDecoder::decode_audio_packet(AVPacket* paquet, bool &got)
 	return 0;
 }
 
-int VideoDecoder::decode_video_packet(AVPacket* paquet, bool &got)
+int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 {
 	int ret = 0;
 	size_t unpadded_linesize;
@@ -416,7 +399,7 @@ int VideoDecoder::decode_video_packet(AVPacket* paquet, bool &got)
 
 	got = false;
 
-	ret = avcodec_send_packet(m_decoderVideoCtx, paquet);
+	ret = avcodec_send_packet(video_decoder_ctx, paquet);
 	if(ret < 0)
 	{
 		if(ret == AVERROR_EOF)
@@ -428,7 +411,7 @@ int VideoDecoder::decode_video_packet(AVPacket* paquet, bool &got)
 
 	while(ret >= 0)
 	{
-		ret = avcodec_receive_frame(m_decoderVideoCtx, in_frame);
+		ret = avcodec_receive_frame(video_decoder_ctx, in_frame);
 
 		if(ret < 0)
 		{
@@ -441,37 +424,25 @@ int VideoDecoder::decode_video_packet(AVPacket* paquet, bool &got)
 			return ret;
 		}
 
-		updateVideoStream();
+		UpdateVideoStream();
 
 		//SDL_LockMutex(m_textureMutex);
 
-		uint8_t *out[] = {m_texturePixelData.data()};
-		int lines[] = {m_texture_pitch};
+		uint8_t *out[] = {video_pixel_data.data()};
+		int lines[] = {video_pitch};
 
-		sws_scale(m_video_cvt,
+		sws_scale(video_cvt,
 				in_frame->data, in_frame->linesize, 0, in_frame->height,
 				out, lines);
 
-		m_texture_w = m_dst_w;
-        m_texture_h = m_dst_h;
-
-		BitmapRef texture = Bitmap::Create(m_texturePixelData.data(), m_texture_w, m_texture_h, m_texture_pitch, format_B8G8R8A8_n().format());
+		BitmapRef texture = Bitmap::Create(video_pixel_data.data(), video_width, video_height, video_pitch, format_B8G8R8A8_n().format());
 		BitmapRef frame = Bitmap::Create(*texture, texture->GetRect(), false);
 
-		double video_time = in_frame->pts * av_q2d(m_video->time_base);
-		frames.push_back({frame, video_time});
-		Output::Debug("FRAME {} {}", video_time, frames.front().time);
-
-		if(m_hasVideoFrame)
-		{
-			m_hasVideoFrame = false;
-		}
+		double video_time = in_frame->pts * av_q2d(video_stream->time_base);
+		video_buffer.push_back({frame, video_time});
+		Output::Debug("FRAME {} {}", video_time, video_buffer.front().time);
 
 		//SDL_UnlockMutex(m_textureMutex);
-		m_hasVideoFrame = true;
-
-		double fps = av_q2d(av_guess_frame_rate(m_inputCtx, m_video, in_frame));
-		m_timeNextFrame = m_time + (1.0 / fps);
 
 		av_frame_unref(in_frame);
 
@@ -494,16 +465,16 @@ void VideoDecoder::ThreadFunction() {
         {
             const std::lock_guard<std::mutex> lock(av_mutex);
             // buffer ca. 1 second of audio or 30 frames of video
-            if (m_audio_packet_queue.size() < 50 || m_video_packet_queue.size() < 30) {
+            if (audio_packet_queue.size() < 50 || video_packet_queue.size() < 30) {
                 needs_more_data = true;
             }
         }
 
         if (needs_more_data) {
-            readPackets();
+            ReadPackets();
         }
 
-        processPackets();
+        ProcessPackets();
 
         std::this_thread::sleep_for(1ms);
     }
@@ -530,7 +501,6 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 	//close();
 
 	in_buffer = (uint8_t *)av_malloc(AUDIO_INBUF_SIZE);
-	in_buffer_size = AUDIO_INBUF_SIZE;
 	if(!in_buffer)
 	{
 		Output::Warning("FFMPEG: Out of memory");
@@ -539,7 +509,7 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 	}
 
 	avio_in = avio_alloc_context(in_buffer,
-								 in_buffer_size,
+								 AUDIO_INBUF_SIZE,
 								 0,
 								 &this->stream,
 								 vio_read_func,
@@ -552,11 +522,11 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 		return false;
 	}
 
-	m_inputCtx = avformat_alloc_context();
-	m_inputCtx->pb = avio_in;
+	input_ctx = avformat_alloc_context();
+	input_ctx->pb = avio_in;
 
 	// open the input file
-	ret = avformat_open_input(&m_inputCtx, "file:///easyrpg", nullptr, &options);
+	ret = avformat_open_input(&input_ctx, "file:///easyrpg", nullptr, &options);
 	av_dict_free(&options);
 
 	if(ret != 0)
@@ -566,14 +536,14 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 		return false;
 	}
 
-	if(avformat_find_stream_info(m_inputCtx, NULL) < 0)
+	if(avformat_find_stream_info(input_ctx, NULL) < 0)
 	{
 		Output::Warning("Cannot find input stream information");
 		//close();
 		return false;
 	}
 
-	ret = av_find_best_stream(m_inputCtx, AVMEDIA_TYPE_VIDEO, -1, -1, &m_decoderVideo, 0);
+	ret = av_find_best_stream(input_ctx, AVMEDIA_TYPE_VIDEO, -1, -1, &video_decoder, 0);
 	if(ret < 0)
 	{
 		Output::Warning("No suitable video stream in the input file");
@@ -581,65 +551,65 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 		return false;
 	}
 
-	m_streamVideo = ret;
-	m_video = m_inputCtx->streams[ret];
+	video_stream_index = ret;
+	video_stream = input_ctx->streams[ret];
 
-	ret = av_find_best_stream(m_inputCtx, AVMEDIA_TYPE_AUDIO, -1, -1, &m_decoderAudio, 0);
+	ret = av_find_best_stream(input_ctx, AVMEDIA_TYPE_AUDIO, -1, -1, &audio_decoder, 0);
 	if(ret >= 0)
 	{
-		m_streamAudio = ret;
-		m_audio = m_inputCtx->streams[ret];
+		audio_stream_index = ret;
+		audio_stream = input_ctx->streams[ret];
 	}
 
-	if(!(m_decoderVideoCtx = avcodec_alloc_context3(m_decoderVideo)))
+	if(!(video_decoder_ctx = avcodec_alloc_context3(video_decoder)))
 	{
 		Output::Warning("No enough memory to initialise the video decoder!");
 		//close();
 		return false;
 	}
 
-	if(!m_video->codecpar)
+	if(!video_stream->codecpar)
 	{
 		Output::Warning("FFMPEG: codec parameters aren't recognised");
 		//close();
 		return false;
 	}
 
-	if(m_audio && !(m_decoderAudioCtx = avcodec_alloc_context3(m_decoderAudio)))
+	if(audio_stream && !(audio_decoder_ctx = avcodec_alloc_context3(audio_decoder)))
 	{
 		Output::Warning("No enough memory to initialise the audio decoder!");
 		//close();
 		return false;
 	}
 
-	if(m_audio && !m_audio->codecpar)
+	if(audio_stream && !audio_stream->codecpar)
 	{
 		Output::Warning("FFMPEG: codec parameters aren't recognised");
 		//close();
 		return false;
 	}
 
-	if(avcodec_parameters_to_context(m_decoderVideoCtx, m_video->codecpar) < 0)
+	if(avcodec_parameters_to_context(video_decoder_ctx, video_stream->codecpar) < 0)
 	{
 		Output::Warning("Error of avcodec_parameters_to_context (video)");
 		//close();
 		return false;
 	}
 
-	if(m_audio && avcodec_parameters_to_context(m_decoderAudioCtx, m_audio->codecpar) < 0)
+	if(audio_stream && avcodec_parameters_to_context(audio_decoder_ctx, audio_stream->codecpar) < 0)
 	{
 		Output::Warning("Error of avcodec_parameters_to_context (audio)");
 		//close();
 		return false;
 	}
 
-	m_decoderVideoCtx->sw_pix_fmt = AV_PIX_FMT_RGBA;
-	m_decoderVideoCtx->opaque = this;
+	video_decoder_ctx->sw_pix_fmt = AV_PIX_FMT_RGBA;
+	video_decoder_ctx->opaque = this;
 
-	if(m_decoderAudioCtx)
-		m_decoderAudioCtx->opaque = this;
+	if(audio_decoder_ctx)
+		audio_decoder_ctx->opaque = this;
 
-	ret = avcodec_open2(m_decoderVideoCtx, m_decoderVideo, nullptr);
+	ret = avcodec_open2(video_decoder_ctx, video_decoder, nullptr);
 	if(ret < 0)
 	{
 		Output::Warning("Failed avcodec_open2 (video)");
@@ -647,9 +617,9 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 		return false;
 	}
 
-	if(m_audio)
+	if(audio_stream)
 	{
-		ret = avcodec_open2(m_decoderAudioCtx, m_decoderAudio, nullptr);
+		ret = avcodec_open2(audio_decoder_ctx, audio_decoder, nullptr);
 		if(ret < 0)
 		{
 			Output::Warning("Failed avcodec_open2 (audio)");
@@ -658,43 +628,38 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 		}
 	}
 
-	if(!(in_frame = av_frame_alloc()) || !(sw_frame = av_frame_alloc()))
+	if(!(in_frame = av_frame_alloc()))
 	{
 		Output::Warning("Can not alloc frame");
 		//close();
 		return false;
 	}
 
-	if(m_audio && !(m_audio_frame = av_frame_alloc()))
+	if(audio_stream && !(audio_frame = av_frame_alloc()))
 	{
 		Output::Warning("Can not alloc audio frame");
 		//close();
 		return false;
 	}
 
-	//m_freesrc = freesrc;
+	video_src_format = AV_PIX_FMT_RGBA;
 
-	m_texture_colour = AV_PIX_FMT_RGBA;
-	m_texture_w = 0;
-	m_texture_h = 0;
+	video_dst_format = AV_PIX_FMT_RGBA;
+	video_width = video_stream->codecpar->width;
+	video_height = video_stream->codecpar->height;
 
-	m_dst_colour = AV_PIX_FMT_RGBA;
-	m_dst_w = m_video->codecpar->width;
-	m_dst_h = m_video->codecpar->height;
+	video_pixel_data.resize(video_height * video_pitch);
+	memset(video_pixel_data.data(), 0, video_pixel_data.size());
 
-	m_texturePixelData.resize(m_dst_h * m_texture_pitch);
-	memset(m_texturePixelData.data(), 0, m_texturePixelData.size());
-
-	updateVideoStream();
-	updateAudioStream();
+	UpdateVideoStream();
+	UpdateAudioStream();
 
 	//av_dump_format(m_inputCtx, m_streamVideo, std::string(stream.GetName()).c_str(), 0);
 
 	// if(m_streamAudio >= 0)
 	//     av_dump_format(m_inputCtx, m_streamAudio, video_path.c_str(), 0);
 
-	m_time = 0.0;
-	m_atEnd = false;
+	at_end = false;
 
 	//m_textureMutex = SDL_CreateMutex();
 
@@ -705,20 +670,20 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 
 bool VideoDecoder::IsFinished() const
 {
-    return m_atEnd && m_audio_flushed && m_video_flushed
-           && frames.empty() && m_audio_buffer.empty();
+    return at_end && audio_flushed && video_flushed
+           && video_buffer.empty() && audio_buffer.empty();
 }
 
 void VideoDecoder::GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const {
-	frequency = m_dec_freq;
-	format = m_dec_fmt;
-	channels = m_dec_channels;
+	frequency = audio_dst_freq;
+	format = audio_dst_format_decoder;
+	channels = audio_dst_channels;
 }
 
 bool VideoDecoder::SetFormat(int frequency, AudioDecoder::Format format, int channels) {
-	m_dec_freq = frequency;
-	m_dec_fmt = format;
-	m_dec_channels = channels;
+	audio_dst_freq = frequency;
+	audio_dst_format_decoder = format;
+	audio_dst_channels = channels;
 
 	return true;
 }
@@ -727,23 +692,19 @@ int VideoDecoder::GetTicks() const {
 	return 0;
 }
 
-BitmapRef VideoDecoder::getVideoFrame()
+BitmapRef VideoDecoder::GetVideoFrame()
 {
-	//SDL_LockMutex(m_textureMutex);
-
 	// FIXME: Implement aspect ration keeping!
-
-	//SDL_UnlockMutex(m_textureMutex);
 
 	const std::lock_guard<std::mutex> lock(av_mutex);
 
-	if (frames.empty()) {
+	if (video_buffer.empty()) {
 		return {};
 	}
 
-	Output::Debug("GetFrame {} {}", frames.begin()->time, m_playback_time);
+	Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
 
-	return frames.begin()->frame;
+	return video_buffer.begin()->frame;
 }
 
 int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
@@ -751,34 +712,30 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 
 	memset(buffer, '\0', length);
 
-	int to_copy = std::min<int>(length, m_audio_buffer.size());
+	int to_copy = std::min<int>(length, audio_buffer.size());
 
-	memcpy(buffer, m_audio_buffer.data(), to_copy);
-	//std::ofstream o("/tmp/out.wav", std::ios_base::out | std::ios_base::app);
-	//o.write((const char*)stream, filled);
+	memcpy(buffer, audio_buffer.data(), to_copy);
 
-	m_audio_buffer.erase(m_audio_buffer.begin(), m_audio_buffer.begin() + to_copy);
+	audio_buffer.erase(audio_buffer.begin(), audio_buffer.begin() + to_copy);
 
 	//Output::Debug("Took {} {} {}", m_audio_buffer.size(), to_copy, length);
 
-	//m_audio_buffer.clear();
-	//Output::Debug("Took {} {} {}", filled, m_audio_buffer.size(), (filled / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_dec_freq);
 
-	auto it = frames.begin();
+	auto it = video_buffer.begin();
 
-	while (frames.size() > 1 && it != frames.end()) {
+	while (video_buffer.size() > 1 && it != video_buffer.end()) {
 		// Throw away outdated frames
-		if (it->time < m_playback_time) {
+		if (it->time < playback_time) {
 			//Output::Debug("Deleting {}", it->time);
-			it = frames.erase(it);
+			it = video_buffer.erase(it);
 		} else {
 			break;
 		}
 	}
 
-	m_playback_time += (to_copy / (double)(GetSamplesizeForFormat(m_dec_fmt) * m_dec_channels)) / m_dec_freq;
+	playback_time += (to_copy / (double)(GetSamplesizeForFormat(audio_dst_format_decoder) * audio_dst_channels)) / audio_dst_freq;
 
-	Output::Debug("PLAYBACK {}", m_playback_time);
+	Output::Debug("PLAYBACK {}", playback_time);
 
 	// FIXME: Decoder is deleted when "warming up"
 	return to_copy <= 0 ? 1 : to_copy;

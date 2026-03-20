@@ -69,9 +69,7 @@ public:
 	int GetTicks() const override;
 
 	// Video Decoder interface
-    BitmapRef getVideoFrame();
-
-    static void audio_out_stream(void *self, uint8_t *stream, int bytes);
+    BitmapRef GetVideoFrame();
 
 private:
 	Filesystem_Stream::InputStream stream;
@@ -79,113 +77,115 @@ private:
 	// Audio Decoder interface
 	int FillBuffer(uint8_t* buffer, int length) override;
 
-	friend int64_t _rw_seek(void *opaque, int64_t offset, int whence);
-	friend int _rw_read_buffer(void *opaque, uint8_t *buf, int buf_size);
-	uint8_t* in_buffer = nullptr;
-	size_t in_buffer_size = 0;
-
-	std::vector<uint8_t> m_texturePixelData;
-	AVIOContext* avio_in = nullptr;
-	bool m_freesrc = false;
-
-	SwsContext* m_video_cvt = nullptr;
-
-	AVPixelFormat   m_texture_colour = AV_PIX_FMT_NONE;
-	BitmapRef m_texture;
-	int m_texture_w = 0;
-	int m_texture_h = 0;
-	int m_texture_pitch = 0;
-
-	AVPixelFormat   m_dst_colour = AV_PIX_FMT_NONE;
-	int m_dst_w = 0;
-	int m_dst_h = 0;
-
-	double m_playback_time = 0.0;
-	double m_time = 0.0;
-	double m_timeNextFrame = 0.0;
-	bool m_atEnd = false;
-	bool m_hasVideoFrame = false;
-
-	/* ------------------------------------------ */
-	//! Input context of video stream
-	AVFormatContext *m_inputCtx = nullptr;
-	//! Number of video stream
-	int m_streamVideo = 0;
-	//! Number of audio stream
-	int m_streamAudio = -1;
-	//! Actual stream of video
-	AVStream *m_video = nullptr;
-	//! Video decoder context
-	AVCodecContext *m_decoderVideoCtx = nullptr;
-
-	//! Decoder itself
-#if LIBAVCODEC_VERSION_MAJOR >= 60
-	const AVCodec *m_decoderVideo = nullptr;
-#else
-	AVCodec *m_decoderVideo = nullptr;
-#endif
-
-#if LIBAVCODEC_VERSION_MAJOR >= 60
-	const AVCodec *m_decoderAudio = nullptr;
-#else
-	AVCodec *m_decoderAudio = nullptr;
-#endif
-	AVCodecContext *m_decoderAudioCtx = nullptr;
-
-	//! Frames to process
-	AVFrame *sw_frame = nullptr;
-	AVFrame *in_frame = nullptr;
-	//! Packet buffer
-	std::deque<AVPacket> m_audio_packet_queue;
-	std::deque<AVPacket> m_video_packet_queue;
-
-	void readPackets();
-	void processPackets();
-
-	//! Actual stream of audio
-	AVStream *m_audio = nullptr;
-	AVFrame *m_audio_frame = nullptr;
-
-	//! Converts planar audio streams to the compatible format
-	SwrContext *m_swr_ctx = nullptr;
-	enum AVSampleFormat m_sfmt = AV_SAMPLE_FMT_NONE;
-	int m_srate = 0;
-	int m_schannels = 0;
-
-	enum AVSampleFormat m_dst_sample_fmt = AV_SAMPLE_FMT_NONE;
-
-	int m_dec_freq = 12345;
-	AudioDecoder::Format m_dec_fmt = AudioDecoder::Format::S16;
-	int m_dec_channels = 2;
-
-	std::vector<uint8_t> m_merge_buffer;
-	std::vector<uint8_t> m_audio_buffer;
+	/** Queues new video and audio packets */
+	void ReadPackets();
+	/** Processed queud packets */
+	void ProcessPackets();
 
 	/**
-	 * @brief Synchronise audio converters with the stream
+	 * Synchronise audio converters with the stream
 	 * @return true if all okay, or false if error happen
-	 *
-	 * Synchronises all the audio converters if stream changes the content (this might happen if stream is a Frankenstein).
 	 */
-	bool updateAudioStream();
-	bool updateVideoStream();
+	bool UpdateAudioStream();
+	bool UpdateVideoStream();
 
-	int decode_audio_packet(AVPacket* paquet, bool &got);
-	int decode_video_packet(AVPacket* paquet, bool &got);
+	int DecodeAudioPacket(AVPacket* paquet, bool &got);
+	int DecodeVideoPacket(AVPacket* paquet, bool &got);
 
 	void ThreadFunction();
+
+	/** Buffer for avio_alloc_context */
+	uint8_t* in_buffer = nullptr;
+
+	AVIOContext* avio_in = nullptr;
+
+	/** Current playback position of the video */
+	double playback_time = 0.0;
+	/** Finished? */
+	bool at_end = false;
+	/** Finished and audio/video flushed? */
+	bool audio_flushed = false;
+	bool video_flushed = false;
+
+	/* ------------------------------------------ */
+	/** Input context of video stream */
+	AVFormatContext* input_ctx = nullptr;
+	/** Number of video stream */
+	int video_stream_index = 0;
+	/** Number of audio stream */
+	int audio_stream_index = -1;
+	/** Actual stream of video */
+	AVStream* video_stream = nullptr;
+	/** Video decoder context */
+	AVCodecContext* video_decoder_ctx = nullptr;
+
+	// Decoder itself
+#if LIBAVCODEC_VERSION_MAJOR >= 60
+	const AVCodec* video_decoder = nullptr;
+#else
+	AVCodec* video_decoder = nullptr;
+#endif
+
+#if LIBAVCODEC_VERSION_MAJOR >= 60
+	const AVCodec* audio_decoder = nullptr;
+#else
+	AVCodec* audio_decoder = nullptr;
+#endif
+	AVCodecContext* audio_decoder_ctx = nullptr;
+
+	// Frames to process
+	AVFrame* in_frame = nullptr;
+
+	// Packet buffers
+	std::deque<AVPacket> audio_packet_queue;
+	std::deque<AVPacket> video_packet_queue;
+
+	/** Video conversion handling */
+	SwsContext* video_cvt = nullptr;
+	AVPixelFormat video_src_format = AV_PIX_FMT_NONE;
+	AVPixelFormat video_dst_format = AV_PIX_FMT_NONE;
+	int video_width = 0;
+	int video_height = 0;
+	int video_pitch = 0;
+	std::vector<uint8_t> video_pixel_data;
+
+	/** Actual stream of audio */
+	AVStream* audio_stream = nullptr;
+	AVFrame* audio_frame = nullptr;
+
+	/** Converts audio streams to the compatible format */
+	SwrContext* swr_ctx = nullptr;
+
+	/** Input audio format (of the video) */
+	enum AVSampleFormat audio_src_format = AV_SAMPLE_FMT_NONE;
+	int audio_src_freq = 0;
+	int audio_src_channels = 0;
+
+	/** Output audio format (for our Audio Decoder) */
+	enum AVSampleFormat audio_dst_format = AV_SAMPLE_FMT_NONE;
+	int audio_dst_freq = 12345;
+	AudioDecoder::Format audio_dst_format_decoder = AudioDecoder::Format::S16;
+	int audio_dst_channels = 2;
+
+	std::vector<uint8_t> audio_merge_buffer;
+	/** Stores processed audio samples */
+	std::vector<uint8_t> audio_buffer;
 
 	struct VideoFrame {
 		BitmapRef frame;
 		double time;
 	};
-	std::vector<VideoFrame> frames;
+	/** Stores already processed video frames together with a timestamp */
+	std::vector<VideoFrame> video_buffer;
 
+	/** Thread handling all the processing */
 	std::thread av_thread;
-	std::mutex av_mutex;
 
-	bool m_audio_flushed = false;
-	bool m_video_flushed = false;
+	/**
+	 * Mutex for synchronisation
+	 * Only video_buffer and audio_buffer are accessed on multiple threads.
+	 */
+	std::mutex av_mutex;
 };
 
 #endif

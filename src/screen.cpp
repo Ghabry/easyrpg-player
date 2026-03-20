@@ -64,7 +64,7 @@ void Screen::Draw(Bitmap& dst) {
 
 		//if (video->hasVideoFrame())
         //{
-            auto frame = video->getVideoFrame();
+            auto frame = video->GetVideoFrame();
 			if (!frame) {
 				return;
 			}
