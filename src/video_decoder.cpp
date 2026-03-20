@@ -483,9 +483,42 @@ VideoDecoder::VideoDecoder()
 {
 }
 
-VideoDecoder::~VideoDecoder()
-{
-	//close();
+VideoDecoder::~VideoDecoder() {
+	if (swr_ctx) {
+		swr_free(&swr_ctx);
+	}
+
+	if (video_cvt) {
+		sws_freeContext(video_cvt);
+	}
+
+	if (in_frame) {
+		av_frame_free(&in_frame);
+	}
+
+	if (audio_frame) {
+		av_frame_free(&audio_frame);
+	}
+
+	for (auto& packet: audio_packet_queue) {
+        av_packet_unref(&packet);
+    }
+
+	for (auto& packet: video_packet_queue) {
+        av_packet_unref(&packet);
+    }
+
+	if (audio_decoder_ctx) {
+		avcodec_free_context(&audio_decoder_ctx);
+	}
+
+	if (video_decoder_ctx) {
+		avcodec_free_context(&video_decoder_ctx);
+	}
+
+	if (input_ctx) {
+		avformat_close_input(&input_ctx);
+	}
 }
 
 bool VideoDecoder::Seek(std::streamoff offset, std::ios_base::seekdir origin) {
@@ -691,21 +724,6 @@ int VideoDecoder::GetTicks() const {
 	return 0;
 }
 
-BitmapRef VideoDecoder::GetVideoFrame()
-{
-	// FIXME: Implement aspect ration keeping!
-
-	const std::lock_guard<std::mutex> lock(av_mutex);
-
-	if (video_buffer.empty()) {
-		return {};
-	}
-
-	Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
-
-	return video_buffer.begin()->frame;
-}
-
 int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 	const std::lock_guard<std::mutex> lock(av_mutex);
 
@@ -713,12 +731,16 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 
 	int to_copy = std::min<int>(length, audio_buffer.size());
 
+	if (playback_time == 0.0) {
+		// Decoder just started and has no data yet
+		return length;
+	}
+
 	memcpy(buffer, audio_buffer.data(), to_copy);
 
 	audio_buffer.erase(audio_buffer.begin(), audio_buffer.begin() + to_copy);
 
 	//Output::Debug("Took {} {} {}", m_audio_buffer.size(), to_copy, length);
-
 
 	auto it = video_buffer.begin();
 
@@ -732,10 +754,28 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 		}
 	}
 
-	playback_time += (to_copy / (double)(GetSamplesizeForFormat(audio_dst_format_decoder) * audio_dst_channels)) / audio_dst_freq;
+	playback_time += (to_copy / (double)(AudioDecoder::GetSamplesizeForFormat(audio_dst_format_decoder) * audio_dst_channels)) / audio_dst_freq;
 
 	Output::Debug("PLAYBACK {}", playback_time);
 
-	// FIXME: Decoder is deleted when "warming up"
-	return to_copy <= 0 ? 1 : to_copy;
+	return to_copy;
+}
+
+std::unique_ptr<VideoDecoder::AudioComponent> VideoDecoder::CreateAudioDecoder() {
+	return std::make_unique<AudioComponent>(this);
+}
+
+BitmapRef VideoDecoder::GetVideoFrame()
+{
+	// FIXME: Implement aspect ration keeping!
+
+	const std::lock_guard<std::mutex> lock(av_mutex);
+
+	if (video_buffer.empty()) {
+		return {};
+	}
+
+	Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
+
+	return video_buffer.begin()->frame;
 }

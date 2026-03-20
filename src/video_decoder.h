@@ -51,32 +51,42 @@ struct SwsContext;
 typedef struct AVIOContext AVIOContext;
 struct AVIOContext;
 
-class VideoDecoder : public AudioDecoder {
+class VideoDecoder {
 public:
 	VideoDecoder();
-	~VideoDecoder() override;
+	~VideoDecoder();
 
 	// Audio Decoder interface
-	bool Open(Filesystem_Stream::InputStream stream) override;
+	class AudioComponent : public AudioDecoder {
+		// Wrapper class because Audio API takes ownership and deletes the object
+	public:
+		AudioComponent(VideoDecoder* video_decoder) : video_decoder(video_decoder) {}
+		bool Open(Filesystem_Stream::InputStream stream) override;
+		bool Seek(std::streamoff offset, std::ios_base::seekdir origin) override;
+		bool IsFinished() const override;
+		void GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const override;
+		bool SetFormat(int frequency, AudioDecoder::Format format, int channels) override;
+		int GetTicks() const override;
+		int FillBuffer(uint8_t* buffer, int length) override;
 
-	bool Seek(std::streamoff offset, std::ios_base::seekdir origin) override;
+	private:
+		VideoDecoder* video_decoder = nullptr;
+	};
 
-	bool IsFinished() const override;
-
-	void GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const override;
-
-	bool SetFormat(int frequency, AudioDecoder::Format format, int channels) override;
-
-	int GetTicks() const override;
+	bool Open(Filesystem_Stream::InputStream stream);
+	bool Seek(std::streamoff offset, std::ios_base::seekdir origin);
+	bool IsFinished() const;
+	void GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const;
+	bool SetFormat(int frequency, AudioDecoder::Format format, int channels);
+	int GetTicks() const;
+	int FillBuffer(uint8_t* buffer, int length);
 
 	// Video Decoder interface
+	std::unique_ptr<AudioComponent> CreateAudioDecoder();
     BitmapRef GetVideoFrame();
 
 private:
 	Filesystem_Stream::InputStream stream;
-
-	// Audio Decoder interface
-	int FillBuffer(uint8_t* buffer, int length) override;
 
 	/** Queues new video and audio packets */
 	void ReadPackets();
@@ -106,7 +116,6 @@ private:
 	bool audio_flushed = false;
 	bool video_flushed = false;
 
-	/* ------------------------------------------ */
 	/** Input context of video stream */
 	AVFormatContext* input_ctx = nullptr;
 	/** Number of video stream */
@@ -189,6 +198,34 @@ private:
 	 */
 	std::mutex av_mutex;
 };
+
+inline bool VideoDecoder::AudioComponent::Open(Filesystem_Stream::InputStream stream) {
+	return video_decoder->Open(std::move(stream));
+}
+
+inline bool VideoDecoder::AudioComponent::Seek(std::streamoff offset, std::ios_base::seekdir origin) {
+	return video_decoder->Seek(offset, origin);
+}
+
+inline bool VideoDecoder::AudioComponent::IsFinished() const {
+	return video_decoder->IsFinished();
+}
+
+inline void VideoDecoder::AudioComponent::GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const {
+	video_decoder->GetFormat(frequency, format, channels);
+}
+
+inline bool VideoDecoder::AudioComponent::SetFormat(int frequency, AudioDecoder::Format format, int channels) {
+	return video_decoder->SetFormat(frequency, format, channels);
+}
+
+inline int VideoDecoder::AudioComponent::GetTicks() const {
+	return video_decoder->GetTicks();
+}
+
+inline int VideoDecoder::AudioComponent::FillBuffer(uint8_t* buffer, int length) {
+	return video_decoder->FillBuffer(buffer, length);
+}
 
 #endif
 

@@ -190,7 +190,7 @@ void Game_Screen::PlayMovie(std::string filename, int pos_x, int pos_y, int res_
 
 	decoder_video = video_dec.get();
 
-	Audio().BGM_Play(1, std::move(video_dec));
+	Audio().BGM_Play(1, video_dec->CreateAudioDecoder());
 }
 
 static double interpolate(double d, double x0, double x1)
