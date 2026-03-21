@@ -24,6 +24,7 @@
 #include <deque>
 #include <mutex>
 #include <thread>
+#include <atomic>
 #include "audio_decoder.h"
 
 extern "C"
@@ -60,7 +61,8 @@ public:
 	class AudioComponent : public AudioDecoder {
 		// Wrapper class because Audio API takes ownership and deletes the object
 	public:
-		AudioComponent(VideoDecoder* video_decoder) : video_decoder(video_decoder) {}
+		AudioComponent(VideoDecoder* video_decoder);
+		~AudioComponent();
 		bool Open(Filesystem_Stream::InputStream stream) override;
 		bool Seek(std::streamoff offset, std::ios_base::seekdir origin) override;
 		bool IsFinished() const override;
@@ -82,6 +84,12 @@ public:
 	int FillBuffer(uint8_t* buffer, int length);
 
 	// Video Decoder interface
+	/**
+	 * Create a Audio Decoder for passing to the Audio API
+	 * This function can only be called once for every VideoDecoder!
+	 *
+	 * @return audio decoder
+	 */
 	std::unique_ptr<AudioComponent> CreateAudioDecoder();
     BitmapRef GetVideoFrame() const;
 
@@ -112,6 +120,8 @@ private:
 	double playback_time = 0.0;
 	/** Finished? */
 	bool at_end = false;
+	/** Signal audio decoder to finish */
+	bool force_at_end = false;
 	/** Finished and audio/video flushed? */
 	bool audio_flushed = false;
 	bool video_flushed = false;
@@ -178,6 +188,9 @@ private:
 	/** Stores processed audio samples */
 	std::vector<uint8_t> audio_buffer;
 
+	/** Tracks whether an active refrence to the audio decoder exists */
+	std::atomic<bool> audio_decoder_active = false;
+
 	struct VideoFrame {
 		BitmapRef frame;
 		double time;
@@ -187,6 +200,7 @@ private:
 
 	/** Thread handling all the processing */
 	std::thread av_thread;
+	std::atomic<bool> av_thread_keep_running = true;
 
 	/** Function executed by av_thread */
 	void ThreadFunction();

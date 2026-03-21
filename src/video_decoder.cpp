@@ -458,7 +458,7 @@ int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 using namespace std::chrono_literals;
 
 void VideoDecoder::ThreadFunction() {
-	while (!IsFinished()) {
+	while (!IsFinished() && av_thread_keep_running.load()) {
         bool needs_more_data = false;
 
         {
@@ -480,6 +480,16 @@ void VideoDecoder::ThreadFunction() {
 }
 
 VideoDecoder::~VideoDecoder() {
+	// Wait for thread shutdown
+	av_thread_keep_running.store(false);
+	av_thread.join();
+
+	// Wait for Audio Decoder shutdown
+	force_at_end = true;
+	while (audio_decoder_active.load()) {
+		std::this_thread::sleep_for(1ms);
+	}
+
 	if (swr_ctx) {
 		swr_free(&swr_ctx);
 	}
@@ -515,8 +525,6 @@ VideoDecoder::~VideoDecoder() {
 	if (input_ctx) {
 		avformat_close_input(&input_ctx);
 	}
-
-	av_thread.join();
 }
 
 bool VideoDecoder::Seek(std::streamoff offset, std::ios_base::seekdir origin) {
@@ -679,6 +687,10 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 }
 
 bool VideoDecoder::IsFinished() const {
+	if (force_at_end) {
+		return true;
+	}
+
 	// video buffer contains the last frame
     return at_end && audio_flushed && video_flushed
            && video_buffer.size() <= 1 && audio_buffer.empty();
@@ -706,6 +718,10 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 	const std::lock_guard<std::mutex> lock(av_mutex);
 
 	memset(buffer, '\0', length);
+
+	if (force_at_end) {
+		return 0;
+	}
 
 	int to_copy = std::min<int>(length, audio_buffer.size());
 
@@ -744,6 +760,8 @@ int VideoDecoder::FillBuffer(uint8_t* buffer, int length) {
 }
 
 std::unique_ptr<VideoDecoder::AudioComponent> VideoDecoder::CreateAudioDecoder() {
+	assert(!audio_decoder_active.load());
+
 	return std::make_unique<AudioComponent>(this);
 }
 
@@ -759,4 +777,13 @@ BitmapRef VideoDecoder::GetVideoFrame() const {
 	Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
 
 	return video_buffer.begin()->frame;
+}
+
+VideoDecoder::AudioComponent::AudioComponent(VideoDecoder* video_decoder)
+	: AudioDecoder(), video_decoder(video_decoder) {
+	video_decoder->audio_decoder_active.store(true);
+}
+
+VideoDecoder::AudioComponent::~AudioComponent() {
+	video_decoder->audio_decoder_active.store(false);
 }
