@@ -367,7 +367,6 @@ add_library(${PROJECT_NAME} OBJECT
 	src/sprite_character.h
 	src/sprite_picture.h
 	src/sprite_picture.cpp
-	src/sprite_video.cpp
 	src/sprite_video.h
 	src/sprite_weapon.cpp
 	src/sprite_weapon.h
@@ -1170,6 +1169,7 @@ if(PLAYER_HAS_AUDIO)
 			target_link_libraries(${PROJECT_NAME}
 				FFmpeg::AVFORMAT FFmpeg::SWRESAMPLE FFmpeg::SWSCALE FFmpeg::AVCODEC FFmpeg::AVUTIL)
 			target_sources(${PROJECT_NAME} PRIVATE
+				src/sprite_video.cpp
 				src/video_decoder.cpp)
 		endif()
 	endif()

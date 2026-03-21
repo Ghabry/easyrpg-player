@@ -177,13 +177,10 @@ public:
 	 */
 	void OnMapScrolled(int dx, int dy);
 
-	/** @return Currently playing Movie or nullptr when nothing is playing */
-	VideoDecoder* GetMovie() const;
+	/** @return Whether a movie is playing */
+	bool IsMoviePlaying() const;
 
 	void UpdateMovie();
-
-	/** @return The viewport of the active movie */
-	Rect GetMovieRect() const;
 
 private:
 	std::unique_ptr<BattleAnimationMap> animation;
@@ -193,9 +190,9 @@ private:
 	int flash_sat;		// RPGMaker bug: this isn't saved
 	int flash_period;	// RPGMaker bug: this isn't saved
 
-	std::unique_ptr<VideoDecoder> decoder_video;
+	std::unique_ptr<VideoDecoder> movie;
 	std::string movie_filename;
-	Rect movie_rect;
+	int movie_reset = 0;
 
 protected:
 	std::vector<Particle> particles;

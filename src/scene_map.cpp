@@ -239,11 +239,6 @@ void Scene_Map::PreUpdateForegroundEvents(MapUpdateAsyncContext& actx) {
 }
 
 void Scene_Map::vUpdate() {
-	if (Main_Data::game_screen->GetMovie()) {
-		Main_Data::game_screen->UpdateMovie();
-		return;
-	}
-
 	if (activate_inn) {
 		UpdateInn();
 		return;
@@ -467,6 +462,10 @@ void Scene_Map::OnAsyncSuspend(F&& f, AsyncOp aop, bool is_preupdate) {
 		Main_Data::game_player->ReserveTeleport(aop.GetTeleportMapId(), aop.GetTeleportX(), aop.GetTeleportY(), -1, TeleportTarget::eAsyncQuickTeleport);
 
 		AsyncNext([=]() { PerformAsyncTeleport(orig_tt); });
+		return;
+	}
+
+	if (aop.GetType() == AsyncOp::ePlayMovie) {
 		return;
 	}
 

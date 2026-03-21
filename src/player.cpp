@@ -350,6 +350,14 @@ void Player::Update(bool update_scene) {
 		}
 	}
 
+	// Handle Movie playback
+	auto* screen = Main_Data::game_screen.get();
+	bool movie_playing = false;
+	if (screen && screen->IsMoviePlaying()) {
+		movie_playing = true;
+		update_scene = false;
+	}
+
 	if (update_scene) {
 		IncFrame();
 	}
@@ -369,7 +377,10 @@ void Player::Update(bool update_scene) {
 
 	auto& transition = Transition::instance();
 
-	if (transition.IsActive()) {
+	if (movie_playing) {
+		screen->UpdateMovie();
+		return;
+	} else if (transition.IsActive()) {
 		transition.Update();
 	} else {
 		// If we aren't waiting on a transition, but we are waiting for scene delay.

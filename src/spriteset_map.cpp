@@ -45,8 +45,6 @@ Spriteset_Map::Spriteset_Map() {
 		frame = std::make_unique<Frame>();
 	}
 
-	video = std::make_unique<Sprite_Video>();
-
 	ParallaxUpdated();
 
 	Refresh();

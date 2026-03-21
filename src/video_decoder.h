@@ -26,6 +26,7 @@
 #include <thread>
 #include <atomic>
 #include "audio_decoder.h"
+#include "sprite_video.h"
 
 extern "C"
 {
@@ -91,7 +92,10 @@ public:
 	 * @return audio decoder
 	 */
 	std::unique_ptr<AudioComponent> CreateAudioDecoder();
-	BitmapRef GetVideoFrame() const;
+	BitmapRef GetCurrentVideoFrame() const;
+
+	Sprite_Video& GetSprite();
+	const Sprite_Video& GetSprite() const;
 
 private:
 	Filesystem_Stream::InputStream stream;
@@ -198,6 +202,9 @@ private:
 	/** Stores already processed video frames together with a timestamp */
 	std::vector<VideoFrame> video_buffer;
 
+	/** Renders the video on the screen */
+	Sprite_Video sprite;
+
 	/** Thread handling all the processing */
 	std::thread av_thread;
 	std::atomic<bool> av_thread_keep_running = true;
@@ -239,6 +246,9 @@ inline int VideoDecoder::AudioComponent::GetTicks() const {
 inline int VideoDecoder::AudioComponent::FillBuffer(uint8_t* buffer, int length) {
 	return video_decoder->FillBuffer(buffer, length);
 }
+#else
+// Stub when no ffmpeg support
+class VideoDecoder {};
 
 #endif
 

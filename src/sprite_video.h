@@ -18,8 +18,12 @@
 #ifndef EP_SPRITE_VIDEO_H
 #define EP_SPRITE_VIDEO_H
 
+#ifdef HAVE_FFMPEG
+
 // Headers
 #include "sprite.h"
+
+class VideoDecoder;
 
 /**
  * Sprite for a video playback.
@@ -32,8 +36,17 @@ public:
 	Sprite_Video();
 	void Draw(Bitmap& dst) override;
 
-private:
+	VideoDecoder* GetVideo() const;
+	void SetVideo(VideoDecoder* video);
 
+	Rect GetVideoRect() const;
+	void SetVideoRect(const Rect& video_rect);
+
+private:
+	VideoDecoder* video = nullptr;
+	Rect video_rect;
 };
+
+#endif
 
 #endif

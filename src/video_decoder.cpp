@@ -674,10 +674,16 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 	UpdateVideoStream();
 	UpdateAudioStream();
 
-	//av_dump_format(m_inputCtx, m_streamVideo, std::string(stream.GetName()).c_str(), 0);
+	/*
+	auto video_path = std::string(stream.GetName());
+	av_dump_format(input_ctx, video_stream_index, video_path.c_str(), 0);
 
-	// if (m_streamAudio >= 0)
-	//     av_dump_format(m_inputCtx, m_streamAudio, video_path.c_str(), 0);
+	if (audio_stream) {
+		av_dump_format(input_ctx, audio_stream_index, video_path.c_str(), 0);
+	}
+	*/
+
+	sprite.SetVideo(this);
 
 	at_end = false;
 
@@ -765,7 +771,7 @@ std::unique_ptr<VideoDecoder::AudioComponent> VideoDecoder::CreateAudioDecoder()
 	return std::make_unique<AudioComponent>(this);
 }
 
-BitmapRef VideoDecoder::GetVideoFrame() const {
+BitmapRef VideoDecoder::GetCurrentVideoFrame() const {
 	// FIXME: Implement aspect ration keeping!
 
 	const std::lock_guard<std::mutex> lock(av_mutex);
@@ -777,6 +783,14 @@ BitmapRef VideoDecoder::GetVideoFrame() const {
 	Output::Debug("GetFrame {} {}", video_buffer.begin()->time, playback_time);
 
 	return video_buffer.begin()->frame;
+}
+
+Sprite_Video& VideoDecoder::GetSprite() {
+	return sprite;
+}
+
+const Sprite_Video& VideoDecoder::GetSprite() const {
+	return sprite;
 }
 
 VideoDecoder::AudioComponent::AudioComponent(VideoDecoder* video_decoder)

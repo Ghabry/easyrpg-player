@@ -18,40 +18,56 @@
 // Headers
 #include "sprite_video.h"
 #include "bitmap.h"
-#include "main_data.h"
-#include "game_screen.h"
 #include "player.h"
+#include "video_decoder.h"
 
 Sprite_Video::Sprite_Video() {
 	SetZ(Priority_Movie);
 }
 
 void Sprite_Video::Draw(Bitmap& dst) {
-	const auto* screen = Main_Data::game_screen.get();
-
-	const auto* movie = Main_Data::game_screen->GetMovie();
-	if (!movie) {
+	if (!video) {
 		return;
 	}
 
-	auto frame = movie->GetVideoFrame();
+	auto frame = video->GetCurrentVideoFrame();
 	if (!frame) {
 		return;
 	}
 
-	auto rect = screen->GetMovieRect();
-
-	if (rect.width <= 0 || rect.height <= 0 ||
+	if (video_rect.width <= 0 || video_rect.height <= 0 ||
 		frame->GetWidth() <= 0 || frame->GetHeight() <= 0) {
 		return;
 	}
 
-	SetX(Player::menu_offset_x + rect.x);
-	SetY(Player::menu_offset_y + rect.y);
-	SetZoomX(static_cast<double>(rect.width) / frame->GetWidth());
-	SetZoomY(static_cast<double>(rect.height) / frame->GetHeight());
+	if (Player::game_config.fake_resolution.Get()) {
+		SetX(Player::menu_offset_x + video_rect.x);
+		SetY(Player::menu_offset_y + video_rect.y);
+	} else {
+		SetX(video_rect.x);
+		SetY(video_rect.y);
+	}
+
+	SetZoomX(static_cast<double>(video_rect.width) / frame->GetWidth());
+	SetZoomY(static_cast<double>(video_rect.height) / frame->GetHeight());
 
 	SetBitmap(frame);
 
 	Sprite::Draw(dst);
+}
+
+VideoDecoder* Sprite_Video::GetVideo() const {
+	return video;
+}
+
+void Sprite_Video::SetVideo(VideoDecoder* video) {
+	this->video = video;
+}
+
+Rect Sprite_Video::GetVideoRect() const {
+	return video_rect;
+}
+
+void Sprite_Video::SetVideoRect(const Rect& video_rect) {
+	this->video_rect = video_rect;
 }

@@ -19,6 +19,7 @@
 #include <cmath>
 #include "audio.h"
 #include <lcf/data.h>
+#include "input.h"
 #include "player.h"
 #include "game_battle.h"
 #include "game_screen.h"
@@ -75,8 +76,7 @@ void Game_Screen::OnMapChange() {
 		data.tint_current_sat = 100;
 	}
 
-	movie_filename = "";
-	movie_rect = {};
+	movie_filename = {};
 
 	data.battleanim_active = false;
 	animation.reset();
@@ -163,19 +163,31 @@ void Game_Screen::SetWeatherEffect(int type, int strength) {
 }
 
 void Game_Screen::PlayMovie(std::string filename, int pos_x, int pos_y, int res_x, int res_y) {
-	movie_filename = std::move(filename);
-	movie_rect = { pos_x, pos_y, res_x, res_y };
+#ifdef HAVE_FFMPEG
 
-	auto is = FileFinder::OpenMovie(movie_filename);
-
-	decoder_video = std::make_unique<VideoDecoder>();
-	decoder_video->SetFormat(44100, AudioDecoder::Format::S16, 2);
-	if (!decoder_video->Open(std::move(is))) {
-		decoder_video.reset();
+	auto is = FileFinder::OpenMovie(filename);
+	if (!is) {
+		Output::Warning("Cannot play movie {}: File not found");
 		return;
 	}
 
-	Audio().BGM_Play(1, decoder_video->CreateAudioDecoder());
+	movie = std::make_unique<VideoDecoder>();
+	movie->SetFormat(44100, AudioDecoder::Format::S16, 2);
+
+	Rect movie_rect = { pos_x, pos_y, res_x, res_y };
+	movie->GetSprite().SetVideoRect(movie_rect);
+
+	if (!movie->Open(std::move(is))) {
+		movie.reset();
+		return;
+	}
+
+	movie_filename = std::move(filename);
+
+	Audio().BGM_Play(1, movie->CreateAudioDecoder());
+#else
+	(void)filename;(void)pos_x;(void)pos_y;(void)res_x;(void)res_y;
+#endif
 }
 
 static double interpolate(double d, double x0, double x1)
@@ -301,12 +313,8 @@ void Game_Screen::OnMapScrolled(int dx, int dy) {
 	data.pan_y = (data.pan_y - dy + pan_limit_y) % pan_limit_y;
 }
 
-VideoDecoder* Game_Screen::GetMovie() const {
-	return decoder_video.get();
-}
-
-Rect Game_Screen::GetMovieRect() const {
-	return movie_rect;
+bool Game_Screen::IsMoviePlaying() const {
+	return movie.get();
 }
 
 void Game_Screen::UpdateScreenEffects() {
@@ -332,11 +340,22 @@ void Game_Screen::UpdateScreenEffects() {
 }
 
 void Game_Screen::UpdateMovie() {
-	if (!movie_filename.empty() && decoder_video.get()) {
-		if (decoder_video->IsFinished()) {
-			decoder_video.reset();
+#ifdef HAVE_FFMPEG
+	if (movie.get()) {
+		if (Input::IsTriggered(Input::CANCEL)) {
+			++movie_reset;
+			if (movie_reset == 1) {
+				Output::Info("Press Cancel again to stop the movie");
+			}
+		}
+
+		if (movie->IsFinished() || movie_reset >= 2) {
+			movie_filename = {};
+			movie_reset = 0;
+			movie.reset();
 		}
 	}
+#endif
 }
 
 void Game_Screen::UpdateWeather() {

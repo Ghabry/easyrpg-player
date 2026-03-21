@@ -765,6 +765,7 @@ bool Game_Interpreter_Map::CommandPlayMovie(lcf::rpg::EventCommand const& com) {
 	Output::Warning("Couldn't play movie: {}. Movie playback not supported on this platform.", filename);
 	#else
 	Main_Data::game_screen->PlayMovie(filename, pos_x, pos_y, res_x, res_y);
+	_async_op = AsyncOp::MakePlayMovie();
 	#endif
 
 	return true;

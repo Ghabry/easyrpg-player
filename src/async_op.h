@@ -43,6 +43,7 @@ class AsyncOp {
 			eTerminateBattle,
 			eSave,
 			eLoad,
+			ePlayMovie,
 			eYield,
 			eYieldRepeat,
 			eCloneMapEvent,
@@ -77,6 +78,9 @@ class AsyncOp {
 
 		/** @return a Load async operation */
 		static AsyncOp MakeLoad(int save_slot);
+
+		/** @return a play movie async operation */
+		static AsyncOp MakePlayMovie();
 
 		/** @return a Yield for one frame to e.g. fetch an important asset */
 		static AsyncOp MakeYield();
@@ -303,6 +307,10 @@ inline AsyncOp AsyncOp::MakeSave(int save_slot, int save_result_var) {
 
 inline AsyncOp AsyncOp::MakeLoad(int save_slot) {
 	return AsyncOp(eLoad, save_slot);
+}
+
+inline AsyncOp AsyncOp::MakePlayMovie() {
+	return AsyncOp(ePlayMovie);
 }
 
 inline AsyncOp AsyncOp::MakeYield() {
