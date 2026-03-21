@@ -93,61 +93,61 @@ static int64_t vio_seek_func(void* userdata, int64_t offset, int seek_type) {
 }
 
 void VideoDecoder::ReadPackets() {
-    AVPacket pkt;
-    if (av_read_frame(input_ctx, &pkt) >= 0) {
-        if (pkt.stream_index == audio_stream_index) {
-            audio_packet_queue.push_back(pkt);
-        } else if (pkt.stream_index == video_stream_index) {
-            video_packet_queue.push_back(pkt);
-        } else {
-            av_packet_unref(&pkt);
-        }
-    } else {
-        at_end = true;
-    }
+	AVPacket pkt;
+	if (av_read_frame(input_ctx, &pkt) >= 0) {
+		if (pkt.stream_index == audio_stream_index) {
+			audio_packet_queue.push_back(pkt);
+		} else if (pkt.stream_index == video_stream_index) {
+			video_packet_queue.push_back(pkt);
+		} else {
+			av_packet_unref(&pkt);
+		}
+	} else {
+		at_end = true;
+	}
 }
 
 void VideoDecoder::ProcessPackets() {
 	// Process Audio queue
-    // Decode Audio if buffer is low
-    while (!audio_packet_queue.empty() && audio_buffer.size() < 20480) {
-        AVPacket pkt = audio_packet_queue.front();
-        audio_packet_queue.pop_front();
+	// Decode Audio if buffer is low
+	while (!audio_packet_queue.empty() && audio_buffer.size() < 20480) {
+		AVPacket pkt = audio_packet_queue.front();
+		audio_packet_queue.pop_front();
 
-        bool got;
-        DecodeAudioPacket(&pkt, got);
-        av_packet_unref(&pkt);
-    }
+		bool got;
+		DecodeAudioPacket(&pkt, got);
+		av_packet_unref(&pkt);
+	}
 
 	// Process Video queue
-    // Decode video if not enough frames
-    while (!video_packet_queue.empty() && video_buffer.size() < 10) {
-        AVPacket pkt = video_packet_queue.front();
-        video_packet_queue.pop_front();
+	// Decode video if not enough frames
+	while (!video_packet_queue.empty() && video_buffer.size() < 10) {
+		AVPacket pkt = video_packet_queue.front();
+		video_packet_queue.pop_front();
 
-        bool got;
-        DecodeVideoPacket(&pkt, got);
-        av_packet_unref(&pkt);
-    }
+		bool got;
+		DecodeVideoPacket(&pkt, got);
+		av_packet_unref(&pkt);
+	}
 
 	// Flush decoders at EOF
-    if (at_end) {
-        if (audio_packet_queue.empty() && !audio_flushed) {
-            bool got;
-            // Forces the decoder to empty its internal buffers
+	if (at_end) {
+		if (audio_packet_queue.empty() && !audio_flushed) {
+			bool got;
+			// Forces the decoder to empty its internal buffers
 			if (audio_stream) {
-            	DecodeAudioPacket(nullptr, got);
+				DecodeAudioPacket(nullptr, got);
 			}
-            audio_flushed = true;
-        }
+			audio_flushed = true;
+		}
 
-        if (video_packet_queue.empty() && !video_flushed) {
-            bool got;
-            // Flushes remaining B-frames/delayed frames
-            DecodeVideoPacket(nullptr, got);
-            video_flushed = true;
-        }
-    }
+		if (video_packet_queue.empty() && !video_flushed) {
+			bool got;
+			// Flushes remaining B-frames/delayed frames
+			DecodeVideoPacket(nullptr, got);
+			video_flushed = true;
+		}
+	}
 }
 
 bool VideoDecoder::UpdateAudioStream()
@@ -459,24 +459,24 @@ using namespace std::chrono_literals;
 
 void VideoDecoder::ThreadFunction() {
 	while (!IsFinished() && av_thread_keep_running.load()) {
-        bool needs_more_data = false;
+		bool needs_more_data = false;
 
-        {
-            const std::lock_guard<std::mutex> lock(av_mutex);
-            // buffer ca. 1 second of audio or 30 frames of video
-            if (audio_packet_queue.size() < 50 || video_packet_queue.size() < 30) {
-                needs_more_data = true;
-            }
-        }
+		{
+			const std::lock_guard<std::mutex> lock(av_mutex);
+			// buffer ca. 1 second of audio or 30 frames of video
+			if (audio_packet_queue.size() < 50 || video_packet_queue.size() < 30) {
+				needs_more_data = true;
+			}
+		}
 
-        if (needs_more_data) {
-            ReadPackets();
-        }
+		if (needs_more_data) {
+			ReadPackets();
+		}
 
-        ProcessPackets();
+		ProcessPackets();
 
-        std::this_thread::sleep_for(1ms);
-    }
+		std::this_thread::sleep_for(1ms);
+	}
 }
 
 VideoDecoder::~VideoDecoder() {
@@ -507,12 +507,12 @@ VideoDecoder::~VideoDecoder() {
 	}
 
 	for (auto& packet: audio_packet_queue) {
-        av_packet_unref(&packet);
-    }
+		av_packet_unref(&packet);
+	}
 
 	for (auto& packet: video_packet_queue) {
-        av_packet_unref(&packet);
-    }
+		av_packet_unref(&packet);
+	}
 
 	if (audio_decoder_ctx) {
 		avcodec_free_context(&audio_decoder_ctx);
@@ -692,8 +692,8 @@ bool VideoDecoder::IsFinished() const {
 	}
 
 	// video buffer contains the last frame
-    return at_end && audio_flushed && video_flushed
-           && video_buffer.size() <= 1 && audio_buffer.empty();
+	return at_end && audio_flushed && video_flushed
+		   && video_buffer.size() <= 1 && audio_buffer.empty();
 }
 
 void VideoDecoder::GetFormat(int& frequency, AudioDecoder::Format& format, int& channels) const {

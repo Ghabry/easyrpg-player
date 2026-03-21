@@ -91,7 +91,7 @@ public:
 	 * @return audio decoder
 	 */
 	std::unique_ptr<AudioComponent> CreateAudioDecoder();
-    BitmapRef GetVideoFrame() const;
+	BitmapRef GetVideoFrame() const;
 
 private:
 	Filesystem_Stream::InputStream stream;
