@@ -264,6 +264,7 @@ protected:
 	bool CommandMoveEvent(lcf::rpg::EventCommand const& com);
 	bool CommandMemorizeBGM(lcf::rpg::EventCommand const& com);
 	bool CommandPlayMemorizedBGM(lcf::rpg::EventCommand const& com);
+	bool CommandPlayMovie(lcf::rpg::EventCommand const& com);
 	bool CommandKeyInputProc(lcf::rpg::EventCommand const& com);
 	bool CommandChangeMapTileset(lcf::rpg::EventCommand const& com);
 	bool CommandChangePBG(lcf::rpg::EventCommand const& com);

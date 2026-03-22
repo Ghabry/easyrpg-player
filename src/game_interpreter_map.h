@@ -78,7 +78,6 @@ private:
 	bool CommandFlashSprite(lcf::rpg::EventCommand const& com);
 	bool CommandProceedWithMovement(lcf::rpg::EventCommand const& com);
 	bool CommandHaltAllMovement(lcf::rpg::EventCommand const& com);
-	bool CommandPlayMovie(lcf::rpg::EventCommand const& com);
 	bool CommandOpenSaveMenu(lcf::rpg::EventCommand const& com);
 	bool CommandOpenMainMenu(lcf::rpg::EventCommand const& com);
 	bool CommandOpenLoadMenu(lcf::rpg::EventCommand const& com);

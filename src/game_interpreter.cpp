@@ -726,6 +726,8 @@ bool Game_Interpreter::ExecuteCommand(lcf::rpg::EventCommand const& com) {
 			return CmdSetup<&Game_Interpreter::CommandMemorizeBGM, 0>(com);
 		case Cmd::PlayMemorizedBGM:
 			return CmdSetup<&Game_Interpreter::CommandPlayMemorizedBGM, 0>(com);
+		case Cmd::PlayMovie:
+			return CmdSetup<&Game_Interpreter::CommandPlayMovie, 5>(com);
 		case Cmd::KeyInputProc:
 			return CmdSetup<&Game_Interpreter::CommandKeyInputProc, 5>(com);
 		case Cmd::ChangeMapTileset:
@@ -3185,6 +3187,27 @@ bool Game_Interpreter::CommandMemorizeBGM(lcf::rpg::EventCommand const& /* com *
 
 bool Game_Interpreter::CommandPlayMemorizedBGM(lcf::rpg::EventCommand const& /* com */) { // code 11540
 	Main_Data::game_system->PlayMemorizedBGM();
+	return true;
+}
+
+bool Game_Interpreter::CommandPlayMovie(lcf::rpg::EventCommand const& com) { // code 11560
+	if (Game_Message::IsMessageActive()) {
+		return false;
+	}
+
+	auto filename = ToString(com.string);
+	int pos_x = ValueOrVariable(com.parameters[0], com.parameters[1]);
+	int pos_y = ValueOrVariable(com.parameters[0], com.parameters[2]);
+	int res_x = com.parameters[3];
+	int res_y = com.parameters[4];
+
+#ifndef HAVE_FFMPEG
+	Output::Warning("Couldn't play movie: {}. Movie playback not supported on this platform.", filename);
+#else
+	Main_Data::game_screen->PlayMovie(filename, pos_x, pos_y, res_x, res_y);
+	_async_op = AsyncOp::MakePlayMovie();
+#endif
+
 	return true;
 }
 
