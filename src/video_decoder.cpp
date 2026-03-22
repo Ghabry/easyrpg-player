@@ -297,7 +297,7 @@ bool VideoDecoder::UpdateVideoStream()
 	if (pixfmt == AV_PIX_FMT_NONE || w == 0 || h == 0)
 		return false;
 
-	if (w != video_width || h != video_height || pixfmt != video_dst_format || !video_cvt)
+	if (w != video_width || h != video_height || pixfmt != video_src_format || !video_cvt)
 	{
 		if (video_cvt)
 		{
@@ -312,7 +312,7 @@ bool VideoDecoder::UpdateVideoStream()
 		uint8_t *dst_data[4];
 		int dst_line_sizes[4];
 
-		int data_size = av_image_fill_arrays(dst_data, dst_line_sizes, nullptr, video_dst_format, w, h, 8);
+		int data_size = av_image_fill_arrays(dst_data, dst_line_sizes, nullptr, video_dst_format, w, h, video_buffer_align);
 		video_pitch = dst_line_sizes[0];
 		video_pixel_data.resize(data_size);
 	}
@@ -424,6 +424,7 @@ int VideoDecoder::DecodeVideoPacket(AVPacket* paquet, bool &got)
 
 		UpdateVideoStream();
 
+		// RGBA has only one plane
 		uint8_t *out[] = {video_pixel_data.data()};
 		int lines[] = {video_pitch};
 
@@ -670,6 +671,7 @@ bool VideoDecoder::Open(Filesystem_Stream::InputStream stream) {
 		return false;
 	}
 
+	video_src_format = (AVPixelFormat)video_stream->codecpar->format;
 	video_dst_format = AV_PIX_FMT_RGBA;
 	video_width = video_stream->codecpar->width;
 	video_height = video_stream->codecpar->height;
