@@ -167,7 +167,7 @@ void Game_Screen::PlayMovie(std::string filename, int pos_x, int pos_y, int res_
 
 	auto is = FileFinder::OpenMovie(filename);
 	if (!is) {
-		Output::Warning("Cannot play movie {}: File not found");
+		Output::Warning("Cannot play movie {}: File not found", filename);
 		return;
 	}
 
@@ -178,6 +178,7 @@ void Game_Screen::PlayMovie(std::string filename, int pos_x, int pos_y, int res_
 	movie->GetSprite().SetVideoRect(movie_rect);
 
 	if (!movie->Open(std::move(is))) {
+		Output::Warning("Cannot play movie {}", filename);
 		movie.reset();
 		return;
 	}

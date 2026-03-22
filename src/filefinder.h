@@ -45,7 +45,7 @@ namespace FileFinder {
 			".opus", ".oga", ".ogg", ".wav", ".mp3", ".wma");
 	constexpr const auto FONTS_TYPES = Utils::MakeSvArray(".fon", ".fnt", ".bdf", ".ttf", ".ttc", ".otf", ".woff2", ".woff");
 	constexpr const auto TEXT_TYPES = Utils::MakeSvArray(".txt", ".csv", ""); // "" = Complete Filename (incl. extension) provided by the user
-	constexpr const auto MOVIE_TYPES = Utils::MakeSvArray(".avi", ".mpg");
+	constexpr const auto MOVIE_TYPES = Utils::MakeSvArray(".avi", ".mpg", ".mp4", ".webm", ".gif");
 
 	/**
 	 * Type of the project. Used to differentiate between supported games (2kX or EasyRPG)
