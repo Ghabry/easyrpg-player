@@ -377,14 +377,15 @@ void Player::Update(bool update_scene) {
 
 	auto& transition = Transition::instance();
 
-	if (movie_playing) {
-		screen->UpdateMovie();
-		return;
-	} else if (transition.IsActive()) {
+	if (transition.IsActive()) {
 		transition.Update();
 	} else {
 		// If we aren't waiting on a transition, but we are waiting for scene delay.
 		Scene::instance->UpdateDelayFrames();
+	}
+
+	if (movie_playing) {
+		screen->UpdateMovie();
 	}
 
 	if (update_scene) {
