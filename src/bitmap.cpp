@@ -595,7 +595,7 @@ void const* Bitmap::pixels() const {
 }
 
 int Bitmap::bpp() const {
-	return (pixman_image_get_depth(bitmap.get()) + 7) / 8;
+	return (PIXMAN_FORMAT_BPP(pixman_format) + 7) / 8;
 }
 
 int Bitmap::width() const {
