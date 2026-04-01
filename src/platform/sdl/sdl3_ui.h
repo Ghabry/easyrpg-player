@@ -20,11 +20,10 @@
 
 // Headers
 #include "baseui.h"
-#include "color.h"
+#include "sdl3_render_target.h"
 #include "rect.h"
 #include "system.h"
 
-#include <array>
 #include <SDL3/SDL.h>
 
 extern "C" {
@@ -74,6 +73,7 @@ public:
 	bool OpenURL(std::string_view url) override;
 	Rect GetWindowMetrics() const override;
 	bool HandleErrorOutput(const std::string &message) override;
+	RenderTarget* GetRenderTarget() override;
 
 #ifdef SUPPORT_AUDIO
 	AudioInterface& GetAudio() override;
@@ -129,11 +129,13 @@ private:
 	DisplayMode last_display_mode;
 
 	/** Main SDL window. */
+	SDL_Window* sdl_window = nullptr;
+	SDL_Joystick *sdl_joystick = nullptr;
+
+	/** Next three items only used by the software renderer */
+	SDL_Renderer* sdl_renderer = nullptr;
 	SDL_Texture* sdl_texture_game = nullptr;
 	SDL_Texture* sdl_texture_scaled = nullptr;
-	SDL_Window* sdl_window = nullptr;
-	SDL_Renderer* sdl_renderer = nullptr;
-	SDL_Joystick *sdl_joystick = nullptr;
 
 	Rect window_mode_metrics;
 	SDL_Rect viewport = {};
@@ -149,6 +151,17 @@ private:
 #ifdef SUPPORT_AUDIO
 	std::unique_ptr<AudioInterface> audio_;
 #endif
+
+	/**
+	 * Modern SDL3_GPU API
+	 * Located in a separate class because the API is quite verbose vs. the
+	 * SDL_Renderer one.
+	 */
+	std::unique_ptr<Sdl3RenderTarget> sdl_gpu;
+	friend class Sdl3RenderTarget;
+
+	// XXX For Testing
+	const bool use_gpu_renderer = true;
 };
 
 #endif

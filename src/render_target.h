@@ -50,9 +50,6 @@ public:
 	/** @return the height of the render target */
 	virtual int GetHeight() const = 0;
 
-	/** @return render target bounds rect */
-	virtual Rect GetRect() const = 0;
-
 	/**
 	 * Blits source bitmap to this render target.
 	 *
@@ -251,6 +248,10 @@ public:
 
 	// Functions with default implementations (forwarders to other functions)
 	// Only reimplement them if there are fast paths for them
+	/** @return render target bounds rect */
+	virtual Rect GetRect() const {
+		return Rect(0, 0, GetWidth(), GetHeight());
+	}
 
 	/**
 	 * Blits source bitmap to this render target ignoring alpha.

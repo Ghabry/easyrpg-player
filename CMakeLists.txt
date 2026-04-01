@@ -575,12 +575,15 @@ endif()
 
 if(PLAYER_TARGET_PLATFORM STREQUAL "SDL3")
 	target_sources(${PROJECT_NAME} PRIVATE
+		src/platform/sdl/sdl3_render_target.cpp
+		src/platform/sdl/sdl3_render_target.h
 		src/platform/sdl/sdl3_ui.cpp
 		src/platform/sdl/sdl3_ui.h)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC USE_SDL=3)
 
 	player_find_package(NAME SDL3
 		TARGET SDL3::SDL3
+		VERSION 3.4.0
 		REQUIRED)
 
 	if(ANDROID)

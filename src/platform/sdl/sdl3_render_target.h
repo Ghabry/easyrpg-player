@@ -15,116 +15,146 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EP_SOFTWARE_RENDER_TARGET_H
-#define EP_SOFTWARE_RENDER_TARGET_H
+#ifndef EP_SDL3_UI_GPU_H
+#define EP_SDL3_UI_GPU_H
 
 #include "render_target.h"
-#include "bitmap.h"
-#include "rect.h"
-#include "color.h"
+#include <SDL3/SDL_gpu.h>
+#include <array>
+
+class Sdl3Ui;
 
 /**
- * Render Target for software rendering.
- *
- * This simply forwards everything to an underlying Bitmap.
+ * Sdl3RenderTarget class.
+ * Provides an implementation of the modern SDL3 GPU API.
  */
-class SoftwareRenderTarget : public RenderTarget {
+class Sdl3RenderTarget final : public RenderTarget {
 public:
-	explicit SoftwareRenderTarget(Bitmap& bitmap) : bitmap(bitmap) {}
+	static Sdl3RenderTarget* Create(Sdl3Ui& ui);
+
+	~Sdl3RenderTarget();
+
+	SDL_GPUDevice* gpu_device = nullptr;
+	SDL_GPUGraphicsPipeline* sprite_pipeline = nullptr;
+	SDL_GPUSampler* sprite_sampler = nullptr;
+	SDL_GPUBuffer* sprite_vertex_buffer = nullptr;
+	SDL_GPUBuffer* sprite_index_buffer = nullptr;
+
+	SDL_GPUCommandBuffer* command_buf = nullptr;
+	SDL_GPURenderPass* render_pass = nullptr;
+
+	/**
+	 * Shader configuration for the sprite shader.
+	 * Basically almost everything that is to be rendered is a rectangle with
+	 * some effects applied.
+	 */
+	struct TextureVertex {
+		float x, y, z;
+		float u, v;
+	};
+
+	struct SpriteQuad {
+		std::array<TextureVertex, 4> vertices;
+		std::array<uint16_t, 6> indices;
+	};
+	SpriteQuad sprite_quad{
+	{{
+		{ 0.0f, 0.0f, 0.0f, 0, 0}, // Top-Left
+		{ 0.0f, 1.0f, 0.0f, 0, 1}, // Bottom-Left
+		{ 1.0f, 0.0f, 0.0f, 1, 0}, // Top-Right
+		{ 1.0f, 1.0f, 0.0f, 1, 1}  // Bottom-Right
+	}},{
+		0, 1, 2, 1, 3, 2           // Triangle order
+	}};
+
+	struct SpriteUniform {
+		float x, y;
+		float width, height;
+		float screen_w, screen_h;
+		float padding[2];
+	};
+
+	SpriteUniform sprite_uniform{};
+	SDL_GPUTexture* sdl_texture = nullptr;
 
 	/**
 	 * Inherited from RenderTarget
 	 */
 	/** @{ */
-	// Access to underlying bitmap: FIXME Remove this
+	/** Indicates the start of the drawing loop */
+	void BeginDraw() override;
+
+	/** Indicates the end of the drawing loop */
+	void EndDraw() override;
+
 	Bitmap* GetBitmap() override {
-		return &bitmap;
+		return nullptr;
 	}
 
 	int GetWidth() const override {
-		return bitmap.GetWidth();
+		return 0;
 	}
 
 	int GetHeight() const override {
-		return bitmap.GetHeight();
+		return 0;
+	}
+
+	Rect GetRect() const override {
+		return {};
 	}
 
 	void Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.Blit(x, y, src, src_rect, opacity, blend_mode);
 	}
 
 	void TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.TiledBlit(ox, oy, src_rect, src, dst_rect, opacity, blend_mode);
 	}
 
 	void EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
 			bool mirror_x, bool mirror_y, Opacity const& opacity) override {
-		bitmap.EdgeMirrorBlit(x, y, src, src_rect, x, y, opacity);
 	}
 
 	void StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.StretchBlit(dst_rect, src, src_rect, opacity, blend_mode);
 	}
 
 	void FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool horizontal, bool vertical,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.FlipBlit(x, y, src, src_rect, horizontal, vertical, opacity, blend_mode);
 	}
 
 	void WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const& src, Rect const& src_rect, int depth, double phase,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.WaverBlit(x, y, zoom_x, zoom_y, src, src_rect, depth, phase, opacity, blend_mode);
 	}
 
 	void RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 			Bitmap const& src, Rect const& src_rect,
 			double angle, double zoom_x, double zoom_y,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Normal) override {
-		bitmap.RotateZoomOpacityBlit(x, y, ox, oy, src, src_rect, angle, zoom_x, zoom_y, opacity, blend_mode);
 	}
 
 	void ZoomOpacityBlit(int x, int y, int ox, int oy,
 			Bitmap const& src, Rect const& src_rect,
 			double zoom_x, double zoom_y,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.ZoomOpacityBlit(x, y, ox, oy, src, src_rect, zoom_x, zoom_y, opacity, blend_mode);
 	}
 
 	void FillRect(Rect const& dst_rect, const Color &color) override {
-		bitmap.FillRect(dst_rect, color);
 	}
 
 	void ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) override {
-		bitmap.ToneBlit(x, y, src, src_rect, tone, opacity);
 	}
 
 	void BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) override {
-		bitmap.BlendBlit(x, y, src, src_rect, color, opacity);
-	}
-
-	void BlitFast(int x, int y, Bitmap const& src, Rect const& src_rect,
-			Opacity const& opacity) override {
-		bitmap.BlitFast(x, y, src, src_rect, opacity);
-	}
-
-	void Fill(const Color &color) override {
-		bitmap.Fill(color);
-	}
-
-	void Clear() override {
-		bitmap.Clear();
-	}
-
-	void ClearRect(Rect const& dst_rect) override {
-		bitmap.ClearRect(dst_rect);
 	}
 	/** @} */
 
 private:
-	Bitmap& bitmap;
+	explicit Sdl3RenderTarget(Sdl3Ui& ui) : ui(&ui) {}
+	bool Init();
+	SDL_GPUShader* LoadShader(SDL_GPUShaderStage stage, const char* filename, int num_sampler, int num_uniform, int num_storage, int num_texture);
+
+	Sdl3Ui* ui = nullptr;
 };
 
 #endif

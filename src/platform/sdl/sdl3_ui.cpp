@@ -17,9 +17,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include "SDL3/SDL_mouse.h"
-#include "SDL3/SDL_video.h"
 #include "game_config.h"
+#include "sdl3_render_target.h"
 #include "system.h"
 #include "sdl3_ui.h"
 
@@ -38,7 +37,6 @@
 #include "icon.h"
 
 #include "color.h"
-#include "graphics.h"
 #include "keys.h"
 #include "output.h"
 #include "player.h"
@@ -169,6 +167,7 @@ Sdl3Ui::~Sdl3Ui() {
 	if (sdl_renderer) {
 		SDL_DestroyRenderer(sdl_renderer);
 	}
+	sdl_gpu.reset();
 	if (sdl_window) {
 		SDL_DestroyWindow(sdl_window);
 	}
@@ -181,6 +180,11 @@ Sdl3Ui::~Sdl3Ui() {
 }
 
 bool Sdl3Ui::vChangeDisplaySurfaceResolution(int new_width, int new_height) {
+	if (sdl_gpu) {
+		// TODO: Implement
+		return false;
+	}
+
 	SDL_Texture* new_sdl_texture_game = SDL_CreateTexture(sdl_renderer,
 		texture_format,
 		SDL_TEXTUREACCESS_STREAMING,
@@ -344,41 +348,46 @@ bool Sdl3Ui::RefreshDisplayMode() {
 
 		SetAppIcon();
 
-		sdl_renderer = SDL_CreateRenderer(sdl_window, nullptr);
-		if (!sdl_renderer) {
-			Output::Debug("SDL_CreateRenderer failed : {}", SDL_GetError());
-			return false;
-		}
-		if (vsync) {
-			SetFrameRateSynchronized(SDL_SetRenderVSync(sdl_renderer, 1));
-		} else {
-			SetFrameRateSynchronized(false);
+		if (use_gpu_renderer) {
+			sdl_gpu.reset(Sdl3RenderTarget::Create(*this));
 		}
 
-		auto renderer_sg = lcf::makeScopeGuard([&]() {
-				SDL_DestroyRenderer(sdl_renderer);
-				sdl_renderer = nullptr;
-				});
+		if (!sdl_gpu) {
+			sdl_renderer = SDL_CreateRenderer(sdl_window, nullptr);
+			if (!sdl_renderer) {
+				Output::Debug("SDL_CreateRenderer failed : {}", SDL_GetError());
+				return false;
+			}
+			if (vsync) {
+				SetFrameRateSynchronized(SDL_SetRenderVSync(sdl_renderer, 1));
+			} else {
+				SetFrameRateSynchronized(false);
+			}
+		}
 
 		texture_format = GetDefaultFormat();
 
 		Output::Debug("SDL3: Selected Pixel Format {}", SDL_GetPixelFormatName(texture_format));
 
-		// Flush display
-		SDL_RenderClear(sdl_renderer);
-		SDL_RenderPresent(sdl_renderer);
+		if (!sdl_gpu) {
+			// Flush display
+			SDL_RenderClear(sdl_renderer);
+			SDL_RenderPresent(sdl_renderer);
 
-		sdl_texture_game = SDL_CreateTexture(sdl_renderer,
-			texture_format,
-			SDL_TEXTUREACCESS_STREAMING,
-			display_width, display_height);
+			sdl_texture_game = SDL_CreateTexture(sdl_renderer,
+				texture_format,
+				SDL_TEXTUREACCESS_STREAMING,
+				display_width, display_height);
 
-		if (!sdl_texture_game) {
-			Output::Debug("SDL_CreateTexture failed : {}", SDL_GetError());
-			return false;
+			if (!sdl_texture_game) {
+				Output::Debug("SDL_CreateTexture failed : {}", SDL_GetError());
+				SDL_DestroyRenderer(sdl_renderer);
+				sdl_renderer = nullptr;
+				return false;
+			}
+
+			SDL_SetTextureScaleMode(sdl_texture_game, SDL_SCALEMODE_NEAREST);
 		}
-
-		SDL_SetTextureScaleMode(sdl_texture_game, SDL_SCALEMODE_NEAREST);
 
 #ifdef _WIN32
 		HWND window = GetWindowHandle(sdl_window);
@@ -387,7 +396,6 @@ bool Sdl3Ui::RefreshDisplayMode() {
 		DwmSetWindowAttribute(window, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, &window_rounding, sizeof(window_rounding));
 #endif
 
-		renderer_sg.Dismiss();
 		window_sg.Dismiss();
 	} else {
 		// Browser handles fast resizing for emscripten, TODO: use fullscreen API
@@ -506,6 +514,11 @@ void Sdl3Ui::ToggleStretch() {
 }
 
 void Sdl3Ui::ToggleVsync() {
+	if (sdl_gpu) {
+		// TODO
+		return;
+	}
+
 	// Modifying vsync requires recreating the renderer
 	vcfg.vsync.Toggle();
 
@@ -523,6 +536,10 @@ void Sdl3Ui::SetScreenScale(int scale) {
 }
 
 void Sdl3Ui::UpdateDisplay() {
+	if (sdl_gpu) {
+		return;
+	}
+
 #ifdef __WIIU__
 	if (vcfg.scaling_mode.Get() == ConfigEnum::ScalingMode::Bilinear && window.scale > 0.f) {
 		// Workaround WiiU bug: Bilinear uses a render target and for these the format is not converted
@@ -1265,4 +1282,8 @@ bool Sdl3Ui::OpenURL(std::string_view url) {
 	}
 
 	return true;
+}
+
+RenderTarget* Sdl3Ui::GetRenderTarget() {
+	return sdl_gpu.get();
 }
