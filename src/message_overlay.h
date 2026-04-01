@@ -23,7 +23,6 @@
 #include "color.h"
 #include "drawable.h"
 #include "memory_management.h"
-#include "tone.h"
 
 class MessageOverlayItem {
 public:
@@ -43,7 +42,7 @@ class MessageOverlay : public Drawable {
 public:
 	MessageOverlay();
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	void Update();
 

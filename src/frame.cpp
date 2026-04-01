@@ -16,13 +16,10 @@
  */
 
 // Headers
-#include <string>
-#include <vector>
 #include "cache.h"
-#include "bitmap.h"
-#include "main_data.h"
 #include "frame.h"
 #include "drawable_mgr.h"
+#include "lcf/data.h"
 
 Frame::Frame() :
 	Drawable(Priority_Frame)
@@ -41,7 +38,7 @@ void Frame::Update() {
 	// no-op
 }
 
-void Frame::Draw(Bitmap& dst) {
+void Frame::Draw(RenderTarget& dst) {
 	if (frame_bitmap) {
 		dst.Blit(0, 0, *frame_bitmap, frame_bitmap->GetRect(), 255);
 	}

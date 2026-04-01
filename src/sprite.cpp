@@ -16,10 +16,9 @@
  */
 
 // Headers
-#include <string>
 #include "sprite.h"
 #include "player.h"
-#include "util_macro.h"
+#include "render_target.h"
 #include "bitmap.h"
 #include "cache.h"
 #include "drawable_mgr.h"
@@ -31,13 +30,13 @@ Sprite::Sprite(Drawable::Flags flags) : Drawable(0, flags)
 }
 
 // Draw
-void Sprite::Draw(Bitmap& dst) {
+void Sprite::Draw(RenderTarget& dst) {
 	if (GetWidth() <= 0 || GetHeight() <= 0) return;
 
 	BlitScreen(dst);
 }
 
-void Sprite::BlitScreen(Bitmap& dst) {
+void Sprite::BlitScreen(RenderTarget& dst) {
 	if (!bitmap || (opacity_top_effect <= 0 && opacity_bottom_effect <= 0))
 		return;
 
@@ -67,7 +66,7 @@ void Sprite::BlitScreen(Bitmap& dst) {
 	BlitScreenIntern(dst, *draw_bitmap, rect);
 }
 
-void Sprite::BlitScreenIntern(Bitmap& dst, Bitmap const& draw_bitmap, Rect const& src_rect) const
+void Sprite::BlitScreenIntern(RenderTarget& dst, Bitmap const& draw_bitmap, Rect const& src_rect) const
 {
 	double zoom_x = zoom_x_effect;
 	double zoom_y = zoom_y_effect;

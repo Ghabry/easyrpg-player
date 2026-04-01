@@ -31,7 +31,7 @@ class Window : public Drawable {
 public:
 	Window(Drawable::Flags flags = Drawable::Flags::Default);
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	virtual void Update();
 	BitmapRef const& GetWindowskin() const;

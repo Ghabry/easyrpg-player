@@ -16,7 +16,6 @@
  */
 
 // Headers
-#include <string>
 #include "bitmap.h"
 #include "color.h"
 #include "game_screen.h"
@@ -29,7 +28,7 @@ Screen::Screen() : Drawable(Priority_Screen)
 	DrawableMgr::Register(this);
 }
 
-void Screen::Draw(Bitmap& dst) {
+void Screen::Draw(RenderTarget& dst) {
 	auto flash_color = Main_Data::game_screen->GetFlashColor();
 	if (flash_color.alpha > 0) {
 		if (!flash) {

@@ -16,9 +16,8 @@
  */
 
 // Headers
-#include <cmath>
+#include "render_target.h"
 #include "system.h"
-#include "player.h"
 #include "rect.h"
 #include "util_macro.h"
 #include "window.h"
@@ -74,7 +73,7 @@ void Window::SetBackgroundPreserveTransparentColor(bool preserve) {
 	bg_preserve_transparent_color = preserve;
 }
 
-void Window::Draw(Bitmap& dst) {
+void Window::Draw(RenderTarget& dst) {
 	if (width <= 0 || height <= 0) return;
 	if (x < -width || x > dst.GetWidth() || y < -height || y > dst.GetHeight()) return;
 

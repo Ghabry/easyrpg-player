@@ -21,14 +21,12 @@
 // Headers
 #include <cstdint>
 #include <vector>
-#include <map>
 #include <unordered_set>
 #include <unordered_map>
 #include "system.h"
 #include "drawable.h"
 #include "tone.h"
 #include "opacity.h"
-#include "span.h"
 
 class TilemapLayer;
 
@@ -39,7 +37,7 @@ class TilemapSubLayer : public Drawable {
 public:
 	TilemapSubLayer(TilemapLayer* tilemap, Drawable::Z_t z);
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 private:
 	TilemapLayer* tilemap = nullptr;
@@ -60,7 +58,7 @@ public:
 
 	TilemapLayer(int ilayer);
 
-	void Draw(Bitmap& dst, uint8_t z_order, int render_ox, int render_oy);
+	void Draw(RenderTarget& dst, uint8_t z_order, int render_ox, int render_oy);
 
 	BitmapRef const& GetChipset() const;
 	void SetChipset(BitmapRef const& nchipset);
@@ -120,8 +118,8 @@ private:
 	void RecreateTileDataAt(int x, int y, int tile_id);
 	void GenerateAutotileAB(short ID, short animID);
 	void GenerateAutotileD(short ID);
-	void DrawTile(Bitmap& dst, Bitmap& tile, Bitmap& tone_tile, int x, int y, int row, int col, uint32_t tone_hash, bool allow_fast_blit = true);
-	void DrawTileImpl(Bitmap& dst, Bitmap& tile, Bitmap& tone_tile, int x, int y, int row, int col, uint32_t tone_hash, ImageOpacity op, bool allow_fast_blit);
+	void DrawTile(RenderTarget& dst, Bitmap& tile, Bitmap& tone_tile, int x, int y, int row, int col, uint32_t tone_hash, bool allow_fast_blit = true);
+	void DrawTileImpl(RenderTarget& dst, Bitmap& tile, Bitmap& tone_tile, int x, int y, int row, int col, uint32_t tone_hash, ImageOpacity op, bool allow_fast_blit);
 	void RecalculateAutotile(int x, int y, int tile_id);
 
 	static const int TILES_PER_ROW = 64;

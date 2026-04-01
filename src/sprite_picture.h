@@ -34,7 +34,7 @@ public:
 	 */
 	Sprite_Picture(int pic_id, Drawable::Flags flags = Drawable::Flags::Default);
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	void OnPictureShow();
 

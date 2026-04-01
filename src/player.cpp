@@ -16,7 +16,6 @@
  */
 
 // Headers
-#include "game_constants.h"
 #include <algorithm>
 #include <cstring>
 #include <cstdlib>
@@ -43,6 +42,7 @@
 #include "filesystem_hook.h"
 #include "game_actors.h"
 #include "game_battle.h"
+#include "game_constants.h"
 #include "game_destiny.h"
 #include "game_map.h"
 #include "game_enemyparty.h"
@@ -85,6 +85,7 @@
 #include "message_overlay.h"
 #include "audio_midi.h"
 #include "maniac_patch.h"
+#include "render_target_software.h"
 
 #if defined(__ANDROID__) && !defined(USE_LIBRETRO)
 #include "platform/android/android.h"
@@ -391,7 +392,17 @@ void Player::Update(bool update_scene) {
 
 void Player::Draw() {
 	Graphics::Update();
-	Graphics::Draw(*DisplayUi->GetDisplaySurface());
+	RenderTarget* rt = DisplayUi->GetRenderTarget();
+
+	if (!rt) {
+		SoftwareRenderTarget srt(*DisplayUi->GetDisplaySurface());
+		Graphics::Draw(srt);
+	} else {
+		rt->BeginDraw();
+		Graphics::Draw(*rt);
+		rt->EndDraw();
+	}
+
 	DisplayUi->UpdateDisplay();
 }
 

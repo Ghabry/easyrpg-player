@@ -20,10 +20,8 @@
 #include "game_battler.h"
 #include "game_actor.h"
 #include "game_screen.h"
-#include "bitmap.h"
 #include "cache.h"
 #include "main_data.h"
-#include "player.h"
 #include <lcf/reader_util.h>
 #include "output.h"
 
@@ -128,7 +126,7 @@ void Sprite_Weapon::OnBattleWeaponReady(FileRequestResult* result, int32_t weapo
 	SetSrcRect(Rect(0, weapon_index * 64, 64, 64));
 }
 
-void Sprite_Weapon::Draw(Bitmap& dst) {
+void Sprite_Weapon::Draw(RenderTarget& dst) {
 	if (!attacking) {
 		return;
 	}

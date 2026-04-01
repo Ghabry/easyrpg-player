@@ -92,7 +92,7 @@ void BattleAnimation::OnBattle2SpriteReady(FileRequestResult* result) {
 	SetSrcRect(Rect(0, 0, 0, 0));
 }
 
-void BattleAnimation::DrawAt(Bitmap& dst, int x, int y) {
+void BattleAnimation::DrawAt(RenderTarget& dst, int x, int y) {
 	if (IsDone()) {
 		return;
 	}
@@ -238,7 +238,7 @@ void BattleAnimationMap::SetTarget(Game_Character& target) {
 	this->target = &target;
 }
 
-void BattleAnimationMap::Draw(Bitmap& dst) {
+void BattleAnimationMap::Draw(RenderTarget& dst) {
 	if (IsOnlySound()) {
 		return;
 	}
@@ -250,7 +250,7 @@ void BattleAnimationMap::Draw(Bitmap& dst) {
 	}
 }
 
-void BattleAnimationMap::DrawGlobal(Bitmap& dst) {
+void BattleAnimationMap::DrawGlobal(RenderTarget& dst) {
 	auto rect = Main_Data::game_screen->GetScreenEffectsRect();
 
 	for (int y = -1; y < 2; ++y) {
@@ -260,7 +260,7 @@ void BattleAnimationMap::DrawGlobal(Bitmap& dst) {
 	}
 }
 
-void BattleAnimationMap::DrawSingle(Bitmap& dst) {
+void BattleAnimationMap::DrawSingle(RenderTarget& dst) {
 	//If animation is targeted on the screen
 	if (animation.scope == lcf::rpg::Animation::Scope_screen) {
 		DrawAt(dst, Player::screen_width / 2, Player::screen_height / 2);
@@ -294,7 +294,7 @@ BattleAnimationBattle::BattleAnimationBattle(const lcf::rpg::Animation& anim, st
 	invert = set_invert;
 }
 
-void BattleAnimationBattle::Draw(Bitmap& dst) {
+void BattleAnimationBattle::Draw(RenderTarget& dst) {
 	if (IsOnlySound())
 		return;
 	if (animation.scope == lcf::rpg::Animation::Scope_screen) {
@@ -333,7 +333,7 @@ BattleAnimationBattler::BattleAnimationBattler(const lcf::rpg::Animation& anim, 
 	invert = set_invert;
 }
 
-void BattleAnimationBattler::Draw(Bitmap& dst) {
+void BattleAnimationBattler::Draw(RenderTarget& dst) {
 	if (IsOnlySound())
 		return;
 	if (animation.scope == lcf::rpg::Animation::Scope_screen) {

@@ -19,7 +19,6 @@
 #define EP_FRAME_H
 
 // Headers
-#include <string>
 #include "drawable.h"
 #include "system.h"
 #include "async_handler.h"
@@ -31,7 +30,7 @@ class Frame : public Drawable {
 public:
 	Frame();
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 	void Update();
 
 private:

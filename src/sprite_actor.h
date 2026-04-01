@@ -89,7 +89,7 @@ public:
 	int GetWidth() const override;
 	int GetHeight() const override;
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	Game_Actor* GetBattler() const;
 

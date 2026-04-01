@@ -40,7 +40,7 @@ public:
 
 	~Sprite_Enemy() override;
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	Game_Enemy* GetBattler() const;
 

@@ -15,8 +15,6 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sstream>
-
 #include "message_overlay.h"
 #include "player.h"
 #include "bitmap.h"
@@ -29,7 +27,7 @@ MessageOverlay::MessageOverlay() : Drawable(Priority_Overlay, Drawable::Flags::G
 	// Graphics::RegisterDrawable is in the Update function
 }
 
-void MessageOverlay::Draw(Bitmap& dst) {
+void MessageOverlay::Draw(RenderTarget& dst) {
 	if (!IsAnyMessageVisible() && !show_all) {
 		// Don't render overlay when no message visible
 		return;

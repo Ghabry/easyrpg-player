@@ -44,7 +44,7 @@ public:
 	bool DetectGame();
 	BitmapRef LoadLogo();
 	void DrawLogo(BitmapRef logo_img);
-	void DrawBackground(Bitmap& dst) override;
+	void DrawBackground(RenderTarget& dst) override;
 	void DrawTextOnLogo(bool verbose);
 
 	static std::vector<std::vector<uint8_t>> LoadLogos();

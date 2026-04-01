@@ -19,13 +19,9 @@
 #define EP_DRAWABLE_H
 
 #include <cstdint>
-#include <memory>
 
-class Bitmap;
 class Drawable;
-
-template <typename T>
-static constexpr bool IsDrawable = std::is_base_of<Drawable,T>::value;
+class RenderTarget;
 
 /**
  * Drawable virtual
@@ -55,7 +51,7 @@ public:
 
 	virtual ~Drawable();
 
-	virtual void Draw(Bitmap& dst) = 0;
+	virtual void Draw(RenderTarget& dst) = 0;
 
 	Z_t GetZ() const;
 
@@ -178,7 +174,7 @@ inline void Drawable::SetRenderOy(int offset_y) {
 	render_oy = offset_y;
 }
 
-// Upper 8 bit are reserved for the layer 
+// Upper 8 bit are reserved for the layer
 static constexpr uint64_t z_offset = 64 - 8;
 
 // Lower 56 Bit are free to use

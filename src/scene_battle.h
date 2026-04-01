@@ -24,7 +24,6 @@
 #include <lcf/rpg/actor.h>
 #include <lcf/rpg/enemy.h>
 
-#include "battle_animation.h"
 #include "drawable.h"
 #include "game_actor.h"
 #include "game_enemy.h"
@@ -91,7 +90,7 @@ public:
 	void Continue(SceneType prev_scene) override;
 	void TransitionIn(SceneType prev_scene) override;
 	void TransitionOut(SceneType next_scene) override;
-	void DrawBackground(Bitmap& dst) override;
+	void DrawBackground(RenderTarget& dst) override;
 
 	enum State {
 		/** Battle has started (Display encounter message) */
@@ -154,7 +153,7 @@ protected:
 
 	/**
 	 * Executed when selection an action (normal, skill, item, ...) and
-	 * (if needed) choosing an attack target was finished. 
+	 * (if needed) choosing an attack target was finished.
 	 *
 	 * @param for_battler Battler whose action was selected.
 	 */

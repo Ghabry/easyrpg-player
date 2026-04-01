@@ -18,6 +18,7 @@
 // Headers
 #include "drawable_list.h"
 #include "drawable_mgr.h"
+#include "render_target.h"
 #include <algorithm>
 #include <cassert>
 
@@ -90,7 +91,7 @@ void DrawableList::TakeFrom(DrawableList& other) noexcept {
 	other.SetClean();
 }
 
-void DrawableList::Draw(Bitmap& dst, Drawable::Z_t min_z, Drawable::Z_t max_z) {
+void DrawableList::Draw(RenderTarget& dst, Drawable::Z_t min_z, Drawable::Z_t max_z) {
 	if (IsDirty()) {
 		Sort();
 	} else {

@@ -16,11 +16,6 @@
  */
 
 // Headers
-#include <algorithm>
-#include <sstream>
-
-#include "bitmap.h"
-#include "input.h"
 #include "output.h"
 #include "player.h"
 #include "transition.h"
@@ -34,15 +29,11 @@
 #include "game_battle.h"
 #include "game_screen.h"
 #include "game_pictures.h"
-#include "battle_animation.h"
 #include <lcf/reader_util.h>
 #include "scene_battle.h"
 #include "scene_battle_rpg2k.h"
 #include "scene_battle_rpg2k3.h"
-#include "scene_gameover.h"
-#include "scene_settings.h"
 #include "scene_debug.h"
-#include "game_interpreter.h"
 #include "rand.h"
 #include "autobattle.h"
 #include "enemyai.h"
@@ -185,7 +176,7 @@ void Scene_Battle::TransitionOut(SceneType next_scene) {
 	transition.InitErase(Main_Data::game_system->GetTransition(Main_Data::game_system->Transition_EndBattleErase), this);
 }
 
-void Scene_Battle::DrawBackground(Bitmap& dst) {
+void Scene_Battle::DrawBackground(RenderTarget& dst) {
 	dst.Clear();
 }
 

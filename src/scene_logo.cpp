@@ -184,7 +184,7 @@ void Scene_Logo::DrawLogo(BitmapRef logo_img) {
 	logo->SetY((Player::screen_height - logo->GetHeight()) / 2);
 }
 
-void Scene_Logo::DrawBackground(Bitmap& dst) {
+void Scene_Logo::DrawBackground(RenderTarget& dst) {
 	dst.Clear();
 }
 

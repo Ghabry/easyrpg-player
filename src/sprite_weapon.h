@@ -20,8 +20,8 @@
 
 // Headers
 #include <cstdint>
-#include "sprite_battler.h"
 #include "async_handler.h"
+#include "sprite.h"
 
 class Game_Actor;
 
@@ -52,7 +52,7 @@ public:
 
 	void StopAttack();
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 protected:
 	void CreateSprite();

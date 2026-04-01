@@ -19,11 +19,8 @@
 #define EP_GRAPHICS_H
 
 // Headers
-#include <vector>
-#include "bitmap.h"
 #include "drawable.h"
-#include "drawable_list.h"
-#include "game_clock.h"
+#include <memory>
 
 class MessageOverlay;
 class Scene;
@@ -48,9 +45,9 @@ namespace Graphics {
 	 */
 	void Update();
 
-	void Draw(Bitmap& dst);
+	void Draw(RenderTarget& dst);
 
-	void LocalDraw(Bitmap& dst, Drawable::Z_t min_z, Drawable::Z_t max_z);
+	void LocalDraw(RenderTarget& dst, Drawable::Z_t min_z, Drawable::Z_t max_z);
 
 	std::shared_ptr<Scene> UpdateSceneCallback();
 

@@ -37,6 +37,8 @@
 struct AudioInterface;
 #endif
 
+class RenderTarget;
+
 /**
  * BaseUi base abstract class.
  */
@@ -167,6 +169,15 @@ public:
 	 * @return Information about touch input
 	 */
 	std::array<Input::TouchInput, 5>& GetTouchInput();
+
+	/**
+	 * Returns the display specific render target.
+	 * The default implementation returns a NULL pointer which causes a fallback
+	 * to the software renderer.
+	 *
+	 * @return Display specific render target.
+	 */
+	virtual RenderTarget* GetRenderTarget() { return nullptr; }
 
 	BitmapRef const& GetDisplaySurface() const;
 	BitmapRef& GetDisplaySurface();

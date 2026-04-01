@@ -20,7 +20,6 @@
 
 // Headers
 #include "system.h"
-#include "color.h"
 #include "drawable.h"
 #include "tone.h"
 
@@ -31,7 +30,7 @@ class Plane : public Drawable {
 public:
 	Plane();
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	BitmapRef const& GetBitmap() const;
 	void SetBitmap(BitmapRef const& bitmap);

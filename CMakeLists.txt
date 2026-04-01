@@ -294,6 +294,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/rect.h
 	src/registry.h
 	src/registry_wine.cpp
+	src/render_target.h
+	src/render_target_software.h
 	src/rtp.cpp
 	src/rtp.h
 	src/rtp_table.cpp

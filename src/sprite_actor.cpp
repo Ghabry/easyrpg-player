@@ -17,12 +17,10 @@
 
 // Headers
 #include "battle_animation.h"
-#include "game_enemy.h"
 #include "sprite_actor.h"
 #include "game_battler.h"
 #include "game_actor.h"
 #include "game_screen.h"
-#include "bitmap.h"
 #include "cache.h"
 #include "main_data.h"
 #include "player.h"
@@ -30,6 +28,7 @@
 #include "output.h"
 #include "feature.h"
 #include "game_battle.h"
+#include "render_target.h"
 
 Sprite_Actor::Sprite_Actor(Game_Actor* actor)
 	: Sprite_Battler(actor, actor->GetId())
@@ -276,7 +275,7 @@ void Sprite_Actor::OnBattlercharsetReady(FileRequestResult* result, int32_t batt
 	SetSrcRect(Rect(0, battler_index * 48, 48, 48));
 }
 
-void Sprite_Actor::Draw(Bitmap& dst) {
+void Sprite_Actor::Draw(RenderTarget& dst) {
 	auto* battler = GetBattler();
 	// "do_not_draw" is set to true if the CBA battler name is empty, this
 	// makes the sprite not being drawn. This fixes issue #1708.

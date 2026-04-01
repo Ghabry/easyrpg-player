@@ -23,11 +23,10 @@
 #include "input.h"
 #include "player.h"
 #include "output.h"
-#include "audio.h"
 #include "filefinder.h"
+#include "render_target.h"
 #include "transition.h"
 #include "game_actors.h"
-#include "game_interpreter.h"
 #include "game_system.h"
 #include "main_data.h"
 #include "scene_language.h"
@@ -320,7 +319,7 @@ std::shared_ptr<Scene> Scene::Find(SceneType type) {
 	return std::shared_ptr<Scene>();
 }
 
-void Scene::DrawBackground(Bitmap& dst) {
+void Scene::DrawBackground(RenderTarget& dst) {
 	dst.Fill(Main_Data::game_system->GetBackgroundColor());
 }
 

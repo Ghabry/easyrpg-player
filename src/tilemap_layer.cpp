@@ -29,6 +29,7 @@
 #include "game_system.h"
 #include "drawable_mgr.h"
 #include "baseui.h"
+#include "render_target.h"
 
 // Blocks subtiles IDs
 // Mess with this code and you will die in 3 days...
@@ -209,14 +210,14 @@ TilemapLayer::TilemapLayer(int ilayer) :
 // was created intentionally. Inlining the transparency check was measured and shown
 // to provide a performance improvement
 EP_ALWAYS_INLINE
-void TilemapLayer::DrawTile(Bitmap& dst, Bitmap& tileset, Bitmap& tone_tileset, int x, int y, int row, int col, uint32_t tone_hash, bool allow_fast_blit) {
+void TilemapLayer::DrawTile(RenderTarget& dst, Bitmap& tileset, Bitmap& tone_tileset, int x, int y, int row, int col, uint32_t tone_hash, bool allow_fast_blit) {
 	auto op = tileset.GetTileOpacity(col, row);
 	if (op != ImageOpacity::Transparent) {
 		DrawTileImpl(dst, tileset, tone_tileset, x, y, row, col, tone_hash, op, allow_fast_blit);
 	}
 }
 
-void TilemapLayer::DrawTileImpl(Bitmap& dst, Bitmap& tileset, Bitmap& tone_tileset, int x, int y, int row, int col, uint32_t tone_hash, ImageOpacity op, bool allow_fast_blit) {
+void TilemapLayer::DrawTileImpl(RenderTarget& dst, Bitmap& tileset, Bitmap& tone_tileset, int x, int y, int row, int col, uint32_t tone_hash, ImageOpacity op, bool allow_fast_blit) {
 
 	auto rect = Rect{ col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE };
 
@@ -258,7 +259,7 @@ static uint32_t MakeAbTileHash(int id, int anim_step) {
 	return static_cast<uint32_t>((id + (anim_step << 12)) | (4 << 24));
 }
 
-void TilemapLayer::Draw(Bitmap& dst, uint8_t z_order, int render_ox, int render_oy) {
+void TilemapLayer::Draw(RenderTarget& dst, uint8_t z_order, int render_ox, int render_oy) {
 	// Get the number of tiles that can be displayed on window
 	int tiles_x = (int)ceil(Player::screen_width / (float)TILE_SIZE);
 	int tiles_y = (int)ceil(Player::screen_height / (float)TILE_SIZE);
@@ -879,7 +880,7 @@ TilemapSubLayer::TilemapSubLayer(TilemapLayer* tilemap, Drawable::Z_t z) :
 	DrawableMgr::Register(this);
 }
 
-void TilemapSubLayer::Draw(Bitmap& dst) {
+void TilemapSubLayer::Draw(RenderTarget& dst) {
 	if (!tilemap->GetChipset()) {
 		return;
 	}

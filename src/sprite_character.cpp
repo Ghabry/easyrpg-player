@@ -35,7 +35,7 @@ Sprite_Character::Sprite_Character(Game_Character* character, int x_offset, int 
 	Update();
 }
 
-void Sprite_Character::Draw(Bitmap &dst) {
+void Sprite_Character::Draw(RenderTarget &dst) {
 	if (UsesCharset()) {
 		int row = character->GetFacing();
 		auto frame = character->GetAnimFrame();

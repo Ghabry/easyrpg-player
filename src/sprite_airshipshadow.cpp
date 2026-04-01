@@ -20,7 +20,6 @@
 #include "bitmap.h"
 #include "game_map.h"
 #include "game_player.h"
-#include "game_system.h"
 #include "main_data.h"
 #include "sprite_airshipshadow.h"
 #include <string>
@@ -55,7 +54,7 @@ void Sprite_AirshipShadow::RecreateShadow() {
 	GetBitmap()->Blit(0, 0, *system, Rect(128+16,32,16,16), opacity);
 }
 
-void Sprite_AirshipShadow::Draw(Bitmap &dst) {
+void Sprite_AirshipShadow::Draw(RenderTarget &dst) {
 	Game_Vehicle* airship = Game_Map::GetVehicle(Game_Vehicle::Airship);
 	const int altitude = airship->GetAltitude();
 	const int max_altitude = TILE_SIZE;

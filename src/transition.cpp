@@ -18,7 +18,6 @@
 // Headers
 #include <algorithm>
 #include <vector>
-#include <array>
 #include <cmath>
 
 #include "player.h"
@@ -28,13 +27,14 @@
 #include "game_player.h"
 #include "graphics.h"
 #include "main_data.h"
+#include "render_target.h"
+#include "render_target_software.h"
 #include "scene.h"
 #include "scene_map.h"
 #include "spriteset_map.h"
 #include "baseui.h"
 #include "drawable.h"
 #include "drawable_mgr.h"
-#include "output.h"
 #include "rand.h"
 
 int Transition::GetDefaultFrames(Transition::Type type)
@@ -189,7 +189,7 @@ void Transition::SetAttributesTransitions() {
 	}
 }
 
-void Transition::Draw(Bitmap& dst) {
+void Transition::Draw(RenderTarget& dst) {
 	if (!IsActive())
 		return;
 
@@ -395,7 +395,8 @@ void Transition::Draw(Bitmap& dst) {
 			for (int col = 0; col < w + rand; ++col) {
 				int src_col = std::clamp(((col + off) / m_size) * m_size - off, 0, w - 1);
 				m_pointer = static_cast<uint32_t*>(screen_pointer1->pixels()) + src_row * w + src_col;
-				dst.pixel_format.uint32_to_rgba(*m_pointer, m_r, m_g, m_b, m_a);
+				// FIXME RENDERTARGET Bitmap access
+				dst.GetBitmap()->pixel_format.uint32_to_rgba(*m_pointer, m_r, m_g, m_b, m_a);
 
 				Rect r(col - rand, row - rand, 1, 1);
 				dst.FillRect(r, Color(m_r, m_g, m_b, 255));
@@ -446,14 +447,18 @@ void Transition::Update() {
 			// erase -> erase is ingored
 			// any -> erase - screen1 was drawn in init.
 			assert(ToErase() && !FromErase());
-			screen1 =  Bitmap::Create(Player::screen_width, Player::screen_height, false);
-			Graphics::LocalDraw(*screen1, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
+			screen1 = Bitmap::Create(Player::screen_width, Player::screen_height, false);
+			// FIXME RENDERTARGET: Hardware acceleration
+			SoftwareRenderTarget rt1(*screen1);
+			Graphics::LocalDraw(rt1, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
 		}
 		if (ToErase()) {
 			screen2 = Bitmap::Create(Player::screen_width, Player::screen_height, Color(0, 0, 0, 255));
 		} else {
-			screen2 =  Bitmap::Create(Player::screen_width, Player::screen_height, false);
-			Graphics::LocalDraw(*screen2, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
+			screen2 = Bitmap::Create(Player::screen_width, Player::screen_height, false);
+			SoftwareRenderTarget rt2(*screen2);
+			// FIXME RENDERTARGET: Hardware acceleration
+			Graphics::LocalDraw(rt2, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
 		}
 	}
 

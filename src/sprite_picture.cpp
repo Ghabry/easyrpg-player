@@ -23,8 +23,8 @@
 #include "game_screen.h"
 #include "game_windows.h"
 #include "player.h"
-#include "bitmap.h"
 #include "game_map.h"
+#include "render_target_software.h"
 
 Sprite_Picture::Sprite_Picture(int pic_id, Drawable::Flags flags)
 	: Sprite(flags),
@@ -62,7 +62,7 @@ void Sprite_Picture::OnPictureShow() {
 }
 
 
-void Sprite_Picture::Draw(Bitmap& dst) {
+void Sprite_Picture::Draw(RenderTarget& dst) {
 	const auto& pic = Main_Data::game_pictures->GetPicture(pic_id);
 	const auto& data = pic.data;
 
@@ -75,7 +75,9 @@ void Sprite_Picture::Draw(Bitmap& dst) {
 	if (data.easyrpg_type == lcf::rpg::SavePicture::EasyRpgType_window) {
 		// Paint the Window on the Picture
 		const auto& window = Main_Data::game_windows->GetWindow(pic_id);
-		window.window->Draw(*bitmap.get());
+		// FIXME RENDERTARGET
+		SoftwareRenderTarget rt(*bitmap.get());
+		window.window->Draw(rt);
 	}
 
 	const bool is_battle = Game_Battle::IsBattleRunning();
@@ -115,7 +117,7 @@ void Sprite_Picture::Draw(Bitmap& dst) {
 				offset_x += (Player::screen_width - map_width) / 2;
 			}
 			SetX(x + offset_x);
-			
+
 			int offset_y = 0;
 			int map_height = Game_Map::GetTilesY() * TILE_SIZE;
 			if (map_height < Player::screen_height) {

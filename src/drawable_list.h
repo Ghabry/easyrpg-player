@@ -19,9 +19,11 @@
 #define EP_DRAWABLE_LIST_H
 
 #include "drawable.h"
-#include <memory>
+#include "render_target.h"
 #include <vector>
-#include <limits>
+
+template <typename T>
+static constexpr bool IsDrawable = std::is_base_of<Drawable,T>::value;
 
 /** A list of Drawable objects. These are used by the graphics engine store and
  * to render all drawable objects.
@@ -120,7 +122,7 @@ class DrawableList {
 		 *
 		 * @param dst The bitmap to draw onto
 		 */
-		void Draw(Bitmap& dst);
+		void Draw(RenderTarget& dst);
 
 		/**
 		 * Sort the list if it's dirty, then call Draw() on every drawable in order.
@@ -129,7 +131,7 @@ class DrawableList {
 		 * @param min_z Skip any drawables with z < min_z
 		 * @param max_z Skip any drawables with z > max_z
 		 */
-		void Draw(Bitmap& dst, Drawable::Z_t min_z, Drawable::Z_t max_z);
+		void Draw(RenderTarget& dst, Drawable::Z_t min_z, Drawable::Z_t max_z);
 
 	private:
 		std::vector<Drawable*> _list;
@@ -187,7 +189,7 @@ inline void DrawableList::SetClean() {
 	_dirty = false;
 }
 
-inline void DrawableList::Draw(Bitmap& dst) {
+inline void DrawableList::Draw(RenderTarget& dst) {
 	Draw(dst, std::numeric_limits<Drawable::Z_t>::min(), std::numeric_limits<Drawable::Z_t>::max());
 }
 

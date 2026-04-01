@@ -36,7 +36,7 @@ public:
 	~Sprite_Timer() override;
 
 protected:
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	int which = 0;
 

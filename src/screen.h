@@ -19,9 +19,8 @@
 #define EP_SCREEN_H
 
 // Headers
-#include <string>
-#include "bitmap.h"
 #include "drawable.h"
+#include "rect.h"
 #include "system.h"
 
 /**
@@ -36,7 +35,7 @@ class Screen : public Drawable {
 public:
 	Screen();
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	Rect GetViewport() const;
 	void SetViewport(const Rect& rect);

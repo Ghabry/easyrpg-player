@@ -19,7 +19,6 @@
 #define EP_WEATHER_H
 
 // Headers
-#include <string>
 #include "drawable.h"
 #include "system.h"
 #include "tone.h"
@@ -32,7 +31,7 @@ class Weather : public Drawable {
 public:
 	Weather();
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 	void Update();
 
 	Tone GetTone() const;
@@ -43,18 +42,18 @@ public:
 	static int GetMaxNumParticles(int weather_type);
 
 private:
-	void DrawRain(Bitmap& dst);
-	void DrawSnow(Bitmap& dst);
-	void DrawFog(Bitmap& dst);
-	void DrawSandstorm(Bitmap& dst);
+	void DrawRain(RenderTarget& dst);
+	void DrawSnow(RenderTarget& dst);
+	void DrawFog(RenderTarget& dst);
+	void DrawSandstorm(RenderTarget& dst);
 	void CreateRainParticle();
 	void CreateSnowParticle();
 	void CreateSandParticle();
 	void CreateFogOverlay();
 
-	void DrawParticles(Bitmap& dst, const Bitmap& particle, Rect rect, int abase, int tmax);
-	void DrawFogOverlay(Bitmap& dst, const Bitmap& overlay);
-	void DrawSandParticles(Bitmap& dst, const Bitmap& particle);
+	void DrawParticles(RenderTarget& dst, const Bitmap& particle, Rect rect, int abase, int tmax);
+	void DrawFogOverlay(RenderTarget& dst, const Bitmap& overlay);
+	void DrawSandParticles(RenderTarget& dst, const Bitmap& particle);
 	const Bitmap* ApplyToneEffect(const Bitmap& bitmap, Rect rect);
 
 	BitmapRef snow_bitmap;

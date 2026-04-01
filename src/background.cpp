@@ -28,6 +28,7 @@
 #include "drawable_mgr.h"
 #include "game_screen.h"
 #include "player.h"
+#include "render_target.h"
 
 Background::Background(const std::string& name) : Drawable(Priority_Background)
 {
@@ -115,7 +116,7 @@ int Background::Scale(int x) {
 	return x > 0 ? x / 64 : -(-x / 64);
 }
 
-void Background::Draw(Bitmap& dst) {
+void Background::Draw(RenderTarget& dst) {
 	Rect dst_rect = dst.GetRect();
 
 	// If the background doesn't fill the screen, center it to support custom resolutions
@@ -141,6 +142,7 @@ void Background::Draw(Bitmap& dst) {
 		dst.TiledBlit(-Scale(fg_x), -Scale(fg_y), fg_bitmap->GetRect(), *fg_bitmap, dst_rect, 255);
 
 	if (tone_effect != Tone()) {
-		dst.ToneBlit(0, 0, dst, dst.GetRect(), tone_effect, Opacity::Opaque());
+		// FIXME RENDERTARGET ToneBlit to self
+		dst.ToneBlit(0, 0, *dst.GetBitmap(), dst.GetRect(), tone_effect, Opacity::Opaque());
 	}
 }

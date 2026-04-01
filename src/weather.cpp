@@ -17,7 +17,6 @@
 
 // Headers
 #include <cstdint>
-#include <string>
 #include <vector>
 #include "bitmap.h"
 #include "color.h"
@@ -25,8 +24,6 @@
 #include "main_data.h"
 #include "weather.h"
 #include "drawable_mgr.h"
-#include "player.h"
-#include "output.h"
 #include "rand.h"
 
 Weather::Weather() :
@@ -41,7 +38,7 @@ Weather::Weather() :
 void Weather::Update() {
 }
 
-void Weather::Draw(Bitmap& dst) {
+void Weather::Draw(RenderTarget& dst) {
 	SetTone(Main_Data::game_screen->GetTone());
 
 	switch (Main_Data::game_screen->GetWeatherType()) {
@@ -166,7 +163,7 @@ void Weather::CreateRainParticle() {
 	}
 }
 
-void Weather::DrawRain(Bitmap& dst) {
+void Weather::DrawRain(RenderTarget& dst) {
 	if (!rain_bitmap) {
 		CreateRainParticle();
 	}
@@ -188,14 +185,14 @@ void Weather::CreateSnowParticle() {
 	}
 }
 
-void Weather::DrawSnow(Bitmap& dst) {
+void Weather::DrawSnow(RenderTarget& dst) {
 	if (!snow_bitmap) {
 		CreateSnowParticle();
 	}
 	DrawParticles(dst, *snow_bitmap, snow_bitmap_rect, 7, 30);
 }
 
-void Weather::DrawParticles(Bitmap& dst, const Bitmap& particle, const Rect rect, int abase, int tmax) {
+void Weather::DrawParticles(RenderTarget& dst, const Bitmap& particle, const Rect rect, int abase, int tmax) {
 	auto* bitmap = ApplyToneEffect(particle, rect);
 
 	const auto strength = Main_Data::game_screen->GetWeatherStrength();
@@ -226,7 +223,7 @@ void Weather::DrawParticles(Bitmap& dst, const Bitmap& particle, const Rect rect
 	dst.TiledBlit(-pan_rect.x + shake_x, -pan_rect.y + shake_y, surface_rect, *weather_surface, dst.GetRect(), Opacity::Opaque());
 }
 
-void Weather::DrawFog(Bitmap& dst) {
+void Weather::DrawFog(RenderTarget& dst) {
 	if (!fog_bitmap) {
 		CreateFogOverlay();
 	}
@@ -234,7 +231,7 @@ void Weather::DrawFog(Bitmap& dst) {
 	DrawFogOverlay(dst, *fog_bitmap);
 }
 
-void Weather::DrawSandstorm(Bitmap& dst) {
+void Weather::DrawSandstorm(RenderTarget& dst) {
 	if (!sand_bitmap) {
 		CreateFogOverlay();
 	}
@@ -266,7 +263,7 @@ void Weather::CreateSandParticle() {
 	}
 }
 
-void Weather::DrawSandParticles(Bitmap& dst, const Bitmap& particle_bitmap) {
+void Weather::DrawSandParticles(RenderTarget& dst, const Bitmap& particle_bitmap) {
 	const auto strength = Main_Data::game_screen->GetWeatherStrength();
 	const auto& particles = Main_Data::game_screen->GetParticles();
 
@@ -319,7 +316,7 @@ void Weather::CreateFogOverlay() {
 	}
 }
 
-void Weather::DrawFogOverlay(Bitmap& dst, const Bitmap& overlay) {
+void Weather::DrawFogOverlay(RenderTarget& dst, const Bitmap& overlay) {
 	const auto dr = dst.GetRect();
 	constexpr auto sr = overlay_bitmap_rect;
 

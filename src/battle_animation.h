@@ -84,7 +84,7 @@ protected:
 
 	virtual void FlashTargets(int r, int g, int b, int p) = 0;
 	virtual void ShakeTargets(int str, int spd, int time) = 0;
-	void DrawAt(Bitmap& dst, int x, int y);
+	void DrawAt(RenderTarget& dst, int x, int y);
 	virtual void ProcessAnimationTiming(const lcf::rpg::AnimationTiming& timing);
 	virtual void ProcessAnimationFlash(const lcf::rpg::AnimationTiming& timing);
 	void OnBattleSpriteReady(FileRequestResult* result);
@@ -109,12 +109,12 @@ class BattleAnimationMap : public BattleAnimation {
 public:
 	BattleAnimationMap(const lcf::rpg::Animation& anim, Game_Character& target, bool global);
 	void SetTarget(Game_Character& target);
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 protected:
 	void FlashTargets(int r, int g, int b, int p) override;
 	void ShakeTargets(int str, int spd, int time) override;
-	void DrawSingle(Bitmap& dst);
-	void DrawGlobal(Bitmap& dst);
+	void DrawSingle(RenderTarget& dst);
+	void DrawGlobal(RenderTarget& dst);
 
 	Game_Character* target;
 	bool global = false;
@@ -124,7 +124,7 @@ protected:
 class BattleAnimationBattle : public BattleAnimation {
 public:
 	BattleAnimationBattle(const lcf::rpg::Animation& anim, std::vector<Game_Battler*> battlers, bool only_sound = false, int cutoff_frame = -1, bool set_invert = false);
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 protected:
 	void FlashTargets(int r, int g, int b, int p) override;
 	void ShakeTargets(int str, int spd, int time) override;
@@ -134,7 +134,7 @@ protected:
 class BattleAnimationBattler : public BattleAnimation {
 public:
 	BattleAnimationBattler(const lcf::rpg::Animation& anim, std::vector<Game_Battler*> battlers, bool only_sound = false, int cutoff_frame = -1, bool set_invert = false);
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 protected:
 	void FlashTargets(int r, int g, int b, int p) override;
 	void ShakeTargets(int str, int spd, int time) override;

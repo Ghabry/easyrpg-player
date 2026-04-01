@@ -21,7 +21,6 @@
 #include "bitmap.h"
 #include "game_message.h"
 #include "game_party.h"
-#include "game_system.h"
 #include "game_battle.h"
 #include "window_message.h"
 #include <player.h>
@@ -61,7 +60,7 @@ Sprite_Timer::Sprite_Timer(int which) :
 Sprite_Timer::~Sprite_Timer() {
 }
 
-void Sprite_Timer::Draw(Bitmap& dst) {
+void Sprite_Timer::Draw(RenderTarget& dst) {
 	if (!Main_Data::game_party->GetTimerVisible(which, Game_Battle::IsBattleRunning())) {
 		return;
 	}

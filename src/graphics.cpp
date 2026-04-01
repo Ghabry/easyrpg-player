@@ -18,7 +18,6 @@
 // Headers
 #include <memory>
 #include <sstream>
-#include <chrono>
 
 #include "graphics.h"
 #include "cache.h"
@@ -29,7 +28,6 @@
 #include "scene.h"
 #include "drawable_mgr.h"
 #include "baseui.h"
-#include "game_clock.h"
 
 using namespace std::chrono_literals;
 
@@ -104,7 +102,7 @@ void Graphics::UpdateTitle() {
 #endif
 }
 
-void Graphics::Draw(Bitmap& dst) {
+void Graphics::Draw(RenderTarget& dst) {
 	auto& transition = Transition::instance();
 
 	auto min_z = std::numeric_limits<Drawable::Z_t>::min();
@@ -118,7 +116,7 @@ void Graphics::Draw(Bitmap& dst) {
 	LocalDraw(dst, min_z, max_z);
 }
 
-void Graphics::LocalDraw(Bitmap& dst, Drawable::Z_t min_z, Drawable::Z_t max_z) {
+void Graphics::LocalDraw(RenderTarget& dst, Drawable::Z_t min_z, Drawable::Z_t max_z) {
 	auto& drawable_list = DrawableMgr::GetLocalList();
 
 	if (!drawable_list.empty() && min_z == std::numeric_limits<Drawable::Z_t>::min()) {

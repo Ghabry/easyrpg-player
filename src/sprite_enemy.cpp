@@ -23,9 +23,7 @@
 #include "bitmap.h"
 #include "cache.h"
 #include "main_data.h"
-#include "player.h"
 #include <lcf/reader_util.h>
-#include "output.h"
 #include "feature.h"
 #include "game_battle.h"
 
@@ -88,7 +86,7 @@ void Sprite_Enemy::OnMonsterSpriteReady(FileRequestResult* result) {
 	ResetZ();
 }
 
-void Sprite_Enemy::Draw(Bitmap& dst) {
+void Sprite_Enemy::Draw(RenderTarget& dst) {
 
 	auto alpha = 255;
 	auto zoom = 1.0;

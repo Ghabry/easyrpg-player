@@ -21,12 +21,9 @@
 // Headers
 #include <cstdint>
 #include <vector>
-#include <string>
 #include "drawable.h"
 #include "system.h"
 #include "scene.h"
-#include "color.h"
-
 
 /**
  * Transition class.
@@ -107,7 +104,7 @@ public:
 
 	void PrependFlashes(int r, int g, int b, int power, int duration, int iterations);
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 	void Update();
 
 	bool IsActive() const;

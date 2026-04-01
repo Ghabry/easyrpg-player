@@ -32,7 +32,7 @@ class Sprite : public Drawable {
 public:
 	explicit Sprite(Drawable::Flags flags = Drawable::Flags::Default);
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	virtual int GetWidth() const;
 	virtual int GetHeight() const;
@@ -138,8 +138,8 @@ private:
 	bool current_flip_y = false;
 	bool bitmap_changed = true;
 
-	void BlitScreen(Bitmap& dst);
-	void BlitScreenIntern(Bitmap& dst, Bitmap const& draw_bitmap,
+	void BlitScreen(RenderTarget& dst);
+	void BlitScreenIntern(RenderTarget& dst, Bitmap const& draw_bitmap,
 							Rect const& src_rect) const;
 	BitmapRef Refresh(Rect& rect);
 };

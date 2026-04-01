@@ -28,9 +28,9 @@
 #include "game_map.h"
 #include "game_message.h"
 #include "game_pictures.h"
-#include "game_variables.h"
 #include "main_data.h"
 #include "pending_message.h"
+#include "render_target.h"
 #include "text.h"
 
 class DynRpgText;
@@ -107,7 +107,7 @@ public:
 		this->fixed = fixed;
 	}
 
-	void Draw(Bitmap& dst) override {
+	void Draw(RenderTarget& dst) override {
 		if (!bitmap) {
 			return;
 		}

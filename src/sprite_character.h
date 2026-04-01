@@ -41,7 +41,7 @@ public:
 	 */
 	Sprite_Character(Game_Character* character, int x_offset = 0, int y_offset = 0);
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	/**
 	 * Updates sprite state.

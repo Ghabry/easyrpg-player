@@ -15,13 +15,11 @@
  * along with EasyRPG Player. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <sstream>
-
 #include "fps_overlay.h"
 #include "game_clock.h"
 #include "bitmap.h"
+#include "render_target.h"
 #include "utils.h"
-#include "input.h"
 #include "font.h"
 #include "drawable_mgr.h"
 
@@ -62,7 +60,7 @@ bool FpsOverlay::Update() {
 	return true;
 }
 
-void FpsOverlay::Draw(Bitmap& dst) {
+void FpsOverlay::Draw(RenderTarget& dst) {
 	if (draw_fps) {
 		if (fps_dirty) {
 			std::string text = GetFpsString();

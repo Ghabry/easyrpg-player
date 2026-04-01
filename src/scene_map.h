@@ -22,7 +22,6 @@
 #include "scene.h"
 #include "spriteset_map.h"
 #include "window_message.h"
-#include "window_varlist.h"
 #include "game_clock.h"
 #include "game_map.h"
 
@@ -44,7 +43,7 @@ public:
 	void vUpdate() override;
 	void TransitionIn(SceneType prev_scene) override;
 	void TransitionOut(SceneType next_scene) override;
-	void DrawBackground(Bitmap& dst) override;
+	void DrawBackground(RenderTarget& dst) override;
 	void OnTranslationChanged() override;
 
 	std::unique_ptr<Spriteset_Map> spriteset;

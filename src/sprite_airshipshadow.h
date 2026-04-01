@@ -20,7 +20,6 @@
 
 // Headers
 #include "sprite.h"
-#include <string>
 
 /**
  * Sprite for the shadow of the airship.
@@ -32,7 +31,7 @@
 class Sprite_AirshipShadow : public Sprite {
 public:
 	Sprite_AirshipShadow(int x_offset = 0, int y_offset = 0);
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 	void Update();
 	void RecreateShadow();
 

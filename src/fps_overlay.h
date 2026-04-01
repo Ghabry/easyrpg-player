@@ -18,7 +18,6 @@
 #ifndef EP_FPS_OVERLAY_H
 #define EP_FPS_OVERLAY_H
 
-#include <deque>
 #include <string>
 #include "drawable.h"
 #include "memory_management.h"
@@ -33,7 +32,7 @@ class FpsOverlay : public Drawable {
 public:
 	FpsOverlay();
 
-	void Draw(Bitmap& dst) override;
+	void Draw(RenderTarget& dst) override;
 
 	/**
 	 * Update the fps overlay.

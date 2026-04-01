@@ -210,7 +210,7 @@ public:
 	 *
 	 * @param dst The bitmap to draw the background to.
 	 */
-	virtual void DrawBackground(Bitmap& dst);
+	virtual void DrawBackground(RenderTarget& dst);
 
 	DrawableList& GetDrawableList();
 
