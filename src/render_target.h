@@ -156,26 +156,6 @@ public:
 		Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Normal) = 0;
 
 	/**
-	 * Blits source bitmap with zoom and opacity scaling.
-	 *
-	 * @param x x position.
-	 * @param y y position.
-	 * @param ox source origin x.
-	 * @param oy source origin y.
-	 * @param src source bitmap.
-	 * @param src_rect source bitmap rectangle.
-	 * @param zoom_x x scale factor.
-	 * @param zoom_y y scale factor.
-	 * @param opacity opacity.
-	 * @param blend_mode Blend mode to use.
-	 */
-	virtual void ZoomOpacityBlit(int x, int y, int ox, int oy,
-		Bitmap const& src, Rect const& src_rect,
-		double zoom_x, double zoom_y,
-		Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) = 0;
-
-
-	/**
 	 * Fills rect with color.
 	 *
 	 * @param dst_rect destination rect.
@@ -184,6 +164,7 @@ public:
 	virtual void FillRect(Rect const& dst_rect, const Color &color) = 0;
 
 #if 0
+	// Only used by monsters on sprite creation
 	/**
 	 * Rotates bitmap hue.
 	 *
@@ -221,6 +202,7 @@ public:
 	virtual void BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) = 0;
 
 #if 0
+	// Only used by text renderer
 	/**
 	 * Blits source bitmap to this render target through a mask bitmap.
 	 *
@@ -245,6 +227,35 @@ public:
 	 */
 	virtual void MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my, Color const& color) = 0;
 #endif
+
+	struct GpuBlitOps {
+		double zoom_x = 1.0; double zoom_y = 1.0; double angle = 0.0;
+		int waver_depth = -1; double waver_phase = 0.0;
+		Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default;
+		bool flipx = false; bool flipy = false;
+		Tone tone = Tone();
+		Color flash = Color();
+	};
+
+	/**
+	 * A special blit used by the Sprite class when the renderer is hardware
+	 * accelerated.
+	 * Bypasses all the software rendered caching logic.
+	 *
+	 * @param x destination x position.
+	 * @param y destination y position.
+	 * @param ox source origin x.
+	 * @param oy source origin y.
+	 * @param src source bitmap.
+	 * @param src_rect source bitmap rectangle.
+	 * @param opacity opacity to apply.
+	 * @param ops all the other stuff required by sprites (see EffectsBlit)
+	 */
+	virtual void GpuBlit(int x, int y, int ox, int oy,
+			Bitmap const& src, Rect const& src_rect,
+			Opacity const& opacity, const GpuBlitOps& ops) {
+		(void)x; (void)y; (void)ox; (void)oy;
+		(void)src; (void)src_rect; (void)opacity; (void)ops; };
 
 	// Functions with default implementations (forwarders to other functions)
 	// Only reimplement them if there are fast paths for them
@@ -293,6 +304,28 @@ public:
 		Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) {
 			StretchBlit(GetRect(), src, src_rect, opacity, blend_mode);
 	}
+
+	/**
+	 * Blits source bitmap with zoom and opacity scaling.
+	 *
+	 * @param x x position.
+	 * @param y y position.
+	 * @param ox source origin x.
+	 * @param oy source origin y.
+	 * @param src source bitmap.
+	 * @param src_rect source bitmap rectangle.
+	 * @param zoom_x x scale factor.
+	 * @param zoom_y y scale factor.
+	 * @param opacity opacity.
+	 * @param blend_mode Blend mode to use.
+	 */
+	virtual void ZoomOpacityBlit(int x, int y, int ox, int oy,
+			Bitmap const& src, Rect const& src_rect,
+			double zoom_x, double zoom_y,
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) {
+		RotateZoomOpacityBlit(x, y, ox, oy, src, src_rect, 0.0, zoom_x, zoom_y, opacity,
+			blend_mode == Bitmap::BlendMode::Default ? Bitmap::BlendMode::Normal : blend_mode);
+	};
 
 	/**
 	 * Fills entire bitmap with color.
@@ -365,6 +398,13 @@ public:
 			Blit(x - ox, y - oy, src, src_rect, opacity, blend_mode);
 		}
 	}
+
+	bool IsHardwareAccelerated() const {
+		return is_hardware_accelerated;
+	}
+
+protected:
+	bool is_hardware_accelerated = false;
 };
 
 #endif

@@ -22,6 +22,7 @@
 
 Sdl3RenderTarget* Sdl3RenderTarget::Create(Sdl3Ui& ui) {
 	auto gpu = new Sdl3RenderTarget(ui);
+	gpu->is_hardware_accelerated = true;
 
 	if (!gpu->Init()) {
 		delete gpu;
@@ -120,26 +121,33 @@ void Sdl3RenderTarget::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect
 
 void Sdl3RenderTarget::FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool horizontal, bool vertical,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	Output::Debug("Not implemented: FlipBlit {}", src.GetId());
+	GpuBlitOps ops = {};
+	ops.flipx = horizontal;
+	ops.flipy = vertical;
+	GpuBlit(x, y, 0, 0, src, src_rect, opacity, ops);
 }
 
 void Sdl3RenderTarget::WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const& src, Rect const& src_rect, int depth, double phase,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	Output::Debug("Not implemented: WaverBlit {}", src.GetId());
+	GpuBlitOps ops = {};
+	ops.zoom_x = zoom_x;
+	ops.zoom_y = zoom_y;
+	ops.waver_depth = depth;
+	ops.waver_phase = phase;
+	ops.blend_mode = blend_mode;
+	GpuBlit(x, y, 0, 0, src, src_rect, opacity, ops);
 }
 
 void Sdl3RenderTarget::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 		Bitmap const& src, Rect const& src_rect,
 		double angle, double zoom_x, double zoom_y,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	Output::Debug("Not implemented: RotateZoomOpacityBlit {}", src.GetId());
-}
-
-void Sdl3RenderTarget::ZoomOpacityBlit(int x, int y, int ox, int oy,
-		Bitmap const& src, Rect const& src_rect,
-		double zoom_x, double zoom_y,
-		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	Output::Debug("Not implemented: ZoomOpacityBlit {}", src.GetId());
+	GpuBlitOps ops = {};
+	ops.angle = angle;
+	ops.zoom_x = zoom_x;
+	ops.zoom_y = zoom_y;
+	ops.blend_mode = blend_mode;
+	GpuBlit(x, y, ox, oy, src, src_rect, opacity, ops);
 }
 
 void Sdl3RenderTarget::FillRect(Rect const& dst_rect, const Color &color) {
@@ -172,11 +180,21 @@ void Sdl3RenderTarget::Clear() {
 }
 
 void Sdl3RenderTarget::ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) {
-	Output::Debug("Not implemented: ToneBlit {}", src.GetId());
+	GpuBlitOps ops = {};
+	ops.tone = tone;
+	GpuBlit(x, y, 0, 0, src, src_rect, opacity, ops);
 }
 
 void Sdl3RenderTarget::BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) {
-	Output::Debug("Not implemented: BlendBlit {}", src.GetId());
+	GpuBlitOps ops = {};
+	ops.flash = color;
+	GpuBlit(x, y, 0, 0, src, src_rect, opacity, ops);
+}
+
+void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
+		Bitmap const& src, Rect const& src_rect,
+		Opacity const& opacity, const GpuBlitOps& ops) {
+	Output::Debug("Not implemented: GpuBlit {}", src.GetId());
 }
 
 /*

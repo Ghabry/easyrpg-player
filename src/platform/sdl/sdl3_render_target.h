@@ -123,11 +123,6 @@ public:
 			double angle, double zoom_x, double zoom_y,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Normal) override;
 
-	void ZoomOpacityBlit(int x, int y, int ox, int oy,
-			Bitmap const& src, Rect const& src_rect,
-			double zoom_x, double zoom_y,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
-
 	void FillRect(Rect const& dst_rect, const Color &color) override;
 
 	void Clear() override;
@@ -135,6 +130,10 @@ public:
 	void ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) override;
 
 	void BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) override;
+
+	void GpuBlit(int x, int y, int ox, int oy,
+			Bitmap const& src, Rect const& src_rect,
+			Opacity const& opacity, const GpuBlitOps& ops) override;
 	/** @} */
 
 private:

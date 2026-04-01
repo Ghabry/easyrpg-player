@@ -40,6 +40,28 @@ void Sprite::BlitScreen(RenderTarget& dst) {
 	if (!bitmap || (opacity_top_effect <= 0 && opacity_bottom_effect <= 0))
 		return;
 
+	bool hardware_can_handle = dst.IsHardwareAccelerated();
+	if (hardware_can_handle) {
+		RenderTarget::GpuBlitOps op{};
+		op.zoom_x = zoom_x_effect;
+		op.zoom_y = zoom_y_effect;
+		op.angle = angle_effect;
+		op.waver_depth = waver_effect_depth;
+		op.waver_phase = waver_effect_phase;
+		op.blend_mode = static_cast<Bitmap::BlendMode>(blend_type_effect);
+		op.flipx = flipx_effect;
+		op.flipy = flipy_effect;
+		op.tone = tone_effect;
+		op.flash = flash_effect;
+
+		dst.GpuBlit(
+			x, y, ox - GetRenderOx(), oy - GetRenderOy(), *bitmap,
+			src_rect_effect.GetSubRect(src_rect),
+			Opacity(opacity_top_effect, opacity_bottom_effect, bush_effect), op
+		);
+		return;
+	}
+
 	BitmapRef draw_bitmap = Refresh(src_rect_effect);
 	if (!draw_bitmap) {
 		return;
