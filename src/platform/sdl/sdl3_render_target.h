@@ -69,16 +69,17 @@ public:
 
 	struct SpriteUniform {
 		float x, y; // u_position
-		float width, height; // u_size
+		float tex_w, tex_h; // u_tex_size
+		float dst_w, dst_h; // u_dst_size
 		float screen_w, screen_h; // u_screen_size
-		float padding[2]; // 16-byte align the vec4
 		float src_x, src_y, src_w, src_h; // u_src_rect
 	};
 
 	// Check padding requirements
 	static_assert(offsetof(SpriteUniform, x) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, width) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, tex_w) % 8 == 0);
 	static_assert(offsetof(SpriteUniform, screen_w) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, dst_w) % 8 == 0);
 	static_assert(offsetof(SpriteUniform, src_x) % 16 == 0);
 
 	/**
@@ -103,45 +104,37 @@ public:
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
 	void TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-	}
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
 	void EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
-			bool mirror_x, bool mirror_y, Opacity const& opacity) override {
-	}
+			bool mirror_x, bool mirror_y, Opacity const& opacity) override;
 
 	void StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-	}
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
 	void FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool horizontal, bool vertical,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-	}
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
 	void WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const& src, Rect const& src_rect, int depth, double phase,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-	}
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
 	void RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 			Bitmap const& src, Rect const& src_rect,
 			double angle, double zoom_x, double zoom_y,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Normal) override {
-	}
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Normal) override;
 
 	void ZoomOpacityBlit(int x, int y, int ox, int oy,
 			Bitmap const& src, Rect const& src_rect,
 			double zoom_x, double zoom_y,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-	}
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
-	void FillRect(Rect const& dst_rect, const Color &color) override {
-	}
+	void FillRect(Rect const& dst_rect, const Color &color) override;
 
-	void ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) override {
-	}
+	void Clear() override;
 
-	void BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) override {
-	}
+	void ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) override;
+
+	void BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) override;
 	/** @} */
 
 private:
@@ -150,6 +143,9 @@ private:
 	SDL_GPUShader* LoadShader(SDL_GPUShaderStage stage, const char* filename, int num_sampler, int num_uniform, int num_storage, int num_texture);
 	bool AllocTexture(Bitmap const& src);
 	void FreeTexture(Bitmap const& src);
+
+	void Render(Bitmap const& bmp, SpriteUniform uniform);
+	SpriteUniform InitUniform(Bitmap const& bmp, Rect const& src_rect);
 
 	Sdl3Ui* ui = nullptr;
 };

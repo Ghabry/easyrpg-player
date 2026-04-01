@@ -72,16 +72,7 @@ void Sdl3RenderTarget::BeginDraw() {
 		return;
 	}
 
-	// Create Color target (clears the screen)
-	SDL_GPUColorTargetInfo color_info{};
-	color_info.clear_color = {1.f, 0.f, 0.f, 1.0f}; // Opaque black (well or red for testing :))
-	color_info.load_op = SDL_GPU_LOADOP_CLEAR;
-	color_info.store_op = SDL_GPU_STOREOP_STORE;
-	color_info.texture = swapchain_texture;
-
-	// Clear the screen
-	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
-	SDL_EndGPURenderPass(render_pass);
+	Clear();
 }
 
 void Sdl3RenderTarget::EndDraw() {
@@ -105,48 +96,87 @@ void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rec
 		return;
 	}
 
-	SDL_GPUColorTargetInfo color_info{};
-	color_info.texture = swapchain_texture;
-	color_info.load_op = SDL_GPU_LOADOP_LOAD;
-	color_info.store_op = SDL_GPU_STOREOP_STORE;
-
-	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
-
-	SDL_BindGPUGraphicsPipeline(render_pass, sprite_pipeline);
-
-	// Bind Vertex buffer
-	std::array<SDL_GPUBufferBinding, 1> vertex_buffer_bindings;
-	vertex_buffer_bindings[0].buffer = sprite_vertex_buffer;
-	vertex_buffer_bindings[0].offset = 0;
-	SDL_BindGPUVertexBuffers(render_pass, 0, vertex_buffer_bindings.data(), vertex_buffer_bindings.size());
-
-	// Bind Index Buffer
-	SDL_GPUBufferBinding index_buffer_binding{sprite_index_buffer, 0};
-	SDL_BindGPUIndexBuffer(render_pass, &index_buffer_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
-
-	// Update the Uniform
-	SpriteUniform uniform = {};
+	auto uniform = InitUniform(src, src_rect);
 	uniform.x = x;
 	uniform.y = y;
-	uniform.width = src.width();
-	uniform.height = src.height();
-	uniform.screen_w = GetWidth();
-	uniform.screen_h = GetHeight();
-	uniform.src_x = src_rect.x;
-	uniform.src_y = src_rect.y;
-	uniform.src_w = src_rect.width;
-	uniform.src_h = src_rect.height;
 
-	SDL_PushGPUVertexUniformData(command_buf, 0, &uniform, sizeof(SpriteUniform));
+	Render(src, uniform);
+}
 
-	// Sprite sampler
-	SDL_GPUTextureSamplerBinding sampler_binding{reinterpret_cast<SDL_GPUTexture*>(src.GetGpuTexture()), sprite_sampler};
-	SDL_BindGPUFragmentSamplers(render_pass, 0, &sampler_binding, 1);
+void Sdl3RenderTarget::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
+		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	Output::Debug("Not implemented: TiledBlit {}", src.GetId());
+}
 
-	// Issue a draw call
-	SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);
+void Sdl3RenderTarget::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
+		bool mirror_x, bool mirror_y, Opacity const& opacity) {
+	Output::Debug("Not implemented: EdgeMirrorBlit {}", src.GetId());
+}
 
+void Sdl3RenderTarget::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
+		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	Output::Debug("Not implemented: StretchBlit {}", src.GetId());
+}
+
+void Sdl3RenderTarget::FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool horizontal, bool vertical,
+		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	Output::Debug("Not implemented: FlipBlit {}", src.GetId());
+}
+
+void Sdl3RenderTarget::WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const& src, Rect const& src_rect, int depth, double phase,
+		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	Output::Debug("Not implemented: WaverBlit {}", src.GetId());
+}
+
+void Sdl3RenderTarget::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
+		Bitmap const& src, Rect const& src_rect,
+		double angle, double zoom_x, double zoom_y,
+		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	Output::Debug("Not implemented: RotateZoomOpacityBlit {}", src.GetId());
+}
+
+void Sdl3RenderTarget::ZoomOpacityBlit(int x, int y, int ox, int oy,
+		Bitmap const& src, Rect const& src_rect,
+		double zoom_x, double zoom_y,
+		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	Output::Debug("Not implemented: ZoomOpacityBlit {}", src.GetId());
+}
+
+void Sdl3RenderTarget::FillRect(Rect const& dst_rect, const Color &color) {
+	// Create a 1x1 texture with this color
+	BitmapRef bmp = Bitmap::Create(1, 1, color);
+	if (!AllocTexture(*bmp)) {
+		return;
+	}
+
+	auto uniform = InitUniform(*bmp, bmp->GetRect());
+	uniform.x = dst_rect.x;
+	uniform.y = dst_rect.y;
+	uniform.dst_w = dst_rect.width;
+	uniform.dst_h = dst_rect.height;
+
+	Render(*bmp, uniform);
+}
+
+void Sdl3RenderTarget::Clear() {
+	// Create Color target (clears the screen)
+	SDL_GPUColorTargetInfo color_info{};
+	color_info.clear_color = {0.f, 0.f, 0.f, 1.0f}; // Opaque black
+	color_info.load_op = SDL_GPU_LOADOP_CLEAR;
+	color_info.store_op = SDL_GPU_STOREOP_STORE;
+	color_info.texture = swapchain_texture;
+
+	// Clear the screen
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
 	SDL_EndGPURenderPass(render_pass);
+}
+
+void Sdl3RenderTarget::ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) {
+	Output::Debug("Not implemented: ToneBlit {}", src.GetId());
+}
+
+void Sdl3RenderTarget::BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) {
+	Output::Debug("Not implemented: BlendBlit {}", src.GetId());
 }
 
 /*
@@ -448,4 +478,54 @@ bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp) {
 	}
 
 	return true;
+}
+
+void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
+	SDL_GPUColorTargetInfo color_info{};
+	color_info.texture = swapchain_texture;
+	color_info.load_op = SDL_GPU_LOADOP_LOAD;
+	color_info.store_op = SDL_GPU_STOREOP_STORE;
+
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
+
+	SDL_BindGPUGraphicsPipeline(render_pass, sprite_pipeline);
+
+	// Bind Vertex buffer
+	std::array<SDL_GPUBufferBinding, 1> vertex_buffer_bindings;
+	vertex_buffer_bindings[0].buffer = sprite_vertex_buffer;
+	vertex_buffer_bindings[0].offset = 0;
+	SDL_BindGPUVertexBuffers(render_pass, 0, vertex_buffer_bindings.data(), vertex_buffer_bindings.size());
+
+	// Bind Index Buffer
+	SDL_GPUBufferBinding index_buffer_binding{sprite_index_buffer, 0};
+	SDL_BindGPUIndexBuffer(render_pass, &index_buffer_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+
+	// Update the Uniform
+	SDL_PushGPUVertexUniformData(command_buf, 0, &uniform, sizeof(SpriteUniform));
+
+	// Sprite sampler
+	SDL_GPUTextureSamplerBinding sampler_binding{reinterpret_cast<SDL_GPUTexture*>(bmp.GetGpuTexture()), sprite_sampler};
+	SDL_BindGPUFragmentSamplers(render_pass, 0, &sampler_binding, 1);
+
+	// Issue a draw call
+	SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);
+
+	SDL_EndGPURenderPass(render_pass);
+}
+
+Sdl3RenderTarget::SpriteUniform Sdl3RenderTarget::InitUniform(Bitmap const& bmp, Rect const& src_rect) {
+	SpriteUniform uniform = {};
+	uniform.x = 0;
+	uniform.y = 0;
+	uniform.tex_w = bmp.width();
+	uniform.tex_h = bmp.height();
+	uniform.screen_w = GetWidth();
+	uniform.screen_h = GetHeight();
+	uniform.dst_w = src_rect.width;
+	uniform.dst_h = src_rect.height;
+	uniform.src_x = src_rect.x;
+	uniform.src_y = src_rect.y;
+	uniform.src_w = src_rect.width;
+	uniform.src_h = src_rect.height;
+	return uniform;
 }
