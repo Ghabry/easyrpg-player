@@ -125,14 +125,19 @@ void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rec
 	SDL_BindGPUIndexBuffer(render_pass, &index_buffer_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
 	// Update the Uniform
-	sprite_uniform.x = x;
-	sprite_uniform.y = y;
-	sprite_uniform.width = src.width();
-	sprite_uniform.height = src.height();
-	sprite_uniform.screen_w = GetWidth();
-	sprite_uniform.screen_h = GetHeight();
+	SpriteUniform uniform = {};
+	uniform.x = x;
+	uniform.y = y;
+	uniform.width = src.width();
+	uniform.height = src.height();
+	uniform.screen_w = GetWidth();
+	uniform.screen_h = GetHeight();
+	uniform.src_x = src_rect.x;
+	uniform.src_y = src_rect.y;
+	uniform.src_w = src_rect.width;
+	uniform.src_h = src_rect.height;
 
-	SDL_PushGPUVertexUniformData(command_buf, 0, &sprite_uniform, sizeof(SpriteUniform));
+	SDL_PushGPUVertexUniformData(command_buf, 0, &uniform, sizeof(SpriteUniform));
 
 	// Sprite sampler
 	SDL_GPUTextureSamplerBinding sampler_binding{reinterpret_cast<SDL_GPUTexture*>(src.GetGpuTexture()), sprite_sampler};

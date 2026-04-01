@@ -68,13 +68,18 @@ public:
 	}};
 
 	struct SpriteUniform {
-		float x, y;
-		float width, height;
-		float screen_w, screen_h;
-		float padding[2];
+		float x, y; // u_position
+		float width, height; // u_size
+		float screen_w, screen_h; // u_screen_size
+		float padding[2]; // 16-byte align the vec4
+		float src_x, src_y, src_w, src_h; // u_src_rect
 	};
 
-	SpriteUniform sprite_uniform{};
+	// Check padding requirements
+	static_assert(offsetof(SpriteUniform, x) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, width) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, screen_w) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, src_x) % 16 == 0);
 
 	/**
 	 * Inherited from RenderTarget
