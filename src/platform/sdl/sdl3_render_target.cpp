@@ -61,7 +61,6 @@ void Sdl3RenderTarget::BeginDraw() {
 	}
 
 	// Get the swapchain texture
-	SDL_GPUTexture* swapchain_texture;
 	Uint32 width, height;
 	if (!SDL_WaitAndAcquireGPUSwapchainTexture(command_buf, ui->sdl_window, &swapchain_texture, &width, &height)) {
 		Output::Debug("SDL_WaitAndAcquireGPUSwapchainTexture failed: {}", SDL_GetError());
@@ -80,8 +79,38 @@ void Sdl3RenderTarget::BeginDraw() {
 	color_info.store_op = SDL_GPU_STOREOP_STORE;
 	color_info.texture = swapchain_texture;
 
-	// Begin Rendering
-	render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
+	// Clear the screen
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
+	SDL_EndGPURenderPass(render_pass);
+}
+
+void Sdl3RenderTarget::EndDraw() {
+	if (command_buf) {
+		SDL_SubmitGPUCommandBuffer(command_buf);
+		command_buf = nullptr;
+	}
+}
+
+int Sdl3RenderTarget::GetWidth() const {
+	return ui->current_display_mode.width;
+}
+
+int Sdl3RenderTarget::GetHeight() const {
+	return ui->current_display_mode.height;
+}
+
+void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
+		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	if (!AllocTexture(src)) {
+		return;
+	}
+
+	SDL_GPUColorTargetInfo color_info{};
+	color_info.texture = swapchain_texture;
+	color_info.load_op = SDL_GPU_LOADOP_LOAD;
+	color_info.store_op = SDL_GPU_STOREOP_STORE;
+
+	SDL_GPURenderPass* render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
 
 	SDL_BindGPUGraphicsPipeline(render_pass, sprite_pipeline);
 
@@ -95,34 +124,24 @@ void Sdl3RenderTarget::BeginDraw() {
 	SDL_GPUBufferBinding index_buffer_binding{sprite_index_buffer, 0};
 	SDL_BindGPUIndexBuffer(render_pass, &index_buffer_binding, SDL_GPU_INDEXELEMENTSIZE_16BIT);
 
-	// TEST CODE: REMOVE LATER
 	// Update the Uniform
-	sprite_uniform.x = 0;
-	sprite_uniform.y = 0;
-	sprite_uniform.width = 16;
-	sprite_uniform.height = 16;
-	sprite_uniform.screen_w = ui->current_display_mode.width;
-	sprite_uniform.screen_h = ui->current_display_mode.height;
+	sprite_uniform.x = x;
+	sprite_uniform.y = y;
+	sprite_uniform.width = src.width();
+	sprite_uniform.height = src.height();
+	sprite_uniform.screen_w = GetWidth();
+	sprite_uniform.screen_h = GetHeight();
 
-	SDL_PushGPUFragmentUniformData(command_buf, 0, &sprite_uniform, sizeof(SpriteUniform));
+	SDL_PushGPUVertexUniformData(command_buf, 0, &sprite_uniform, sizeof(SpriteUniform));
 
-	SDL_GPUTextureSamplerBinding samplerBinding{sdl_texture, sprite_sampler};
-	SDL_BindGPUFragmentSamplers(render_pass, 0, &samplerBinding, 1);
+	// Sprite sampler
+	SDL_GPUTextureSamplerBinding sampler_binding{reinterpret_cast<SDL_GPUTexture*>(src.GetGpuTexture()), sprite_sampler};
+	SDL_BindGPUFragmentSamplers(render_pass, 0, &sampler_binding, 1);
 
-	// issue a draw call
+	// Issue a draw call
 	SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);
-}
 
-void Sdl3RenderTarget::EndDraw() {
-	if (render_pass) {
-		SDL_EndGPURenderPass(render_pass);
-		render_pass = nullptr;
-	}
-
-	if (command_buf) {
-		SDL_SubmitGPUCommandBuffer(command_buf);
-		command_buf = nullptr;
-	}
+	SDL_EndGPURenderPass(render_pass);
 }
 
 /*
@@ -202,12 +221,12 @@ bool Sdl3RenderTarget::Init() {
 	pipeline_info.vertex_input_state.vertex_attributes = vertex_attrib.data();
 
 	// Color target
-	// Configured to support alpha blending
+	// Configured to support alpha blending (premultiplied alpha)
 	std::array<SDL_GPUColorTargetDescription, 1> color_target_desc;
 	color_target_desc[0] = {};
 	color_target_desc[0].format = SDL_GetGPUSwapchainTextureFormat(gpu_device, ui->sdl_window);
 	color_target_desc[0].blend_state.enable_blend = true;
-	color_target_desc[0].blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_SRC_ALPHA;
+	color_target_desc[0].blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
 	color_target_desc[0].blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
 	color_target_desc[0].blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
 	color_target_desc[0].blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
@@ -245,7 +264,7 @@ bool Sdl3RenderTarget::Init() {
 	SDL_GPUBufferCreateInfo buffer_info{SDL_GPU_BUFFERUSAGE_VERTEX, sizeof(sprite_quad.vertices)};
 	sprite_vertex_buffer = SDL_CreateGPUBuffer(gpu_device, &buffer_info);
 	if (!sprite_vertex_buffer) {
-		Output::Debug("SDL_CreateGPUBuffer for mesh.vertices failed: {}", SDL_GetError());
+		Output::Debug("SDL_CreateGPUBuffer for vertex failed: {}", SDL_GetError());
 		return false;
 	}
 
@@ -253,43 +272,28 @@ bool Sdl3RenderTarget::Init() {
 	SDL_GPUBufferCreateInfo index_info{SDL_GPU_BUFFERUSAGE_INDEX, sizeof(sprite_quad.indices)};
 	sprite_index_buffer = SDL_CreateGPUBuffer(gpu_device, &index_info);
 	if (!sprite_index_buffer) {
-		Output::Debug("SDL_CreateGPUBuffer for mesh.indices failed: {}", SDL_GetError());
+		Output::Debug("SDL_CreateGPUBuffer for index failed: {}", SDL_GetError());
 		return false;
 	}
 
 	// Transfer description (to GPU) for sprite quad
 	SDL_GPUTransferBufferCreateInfo transfer_create_info{
 		SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,	sizeof(sprite_quad)};
-	SDL_GPUTransferBuffer* mesh_transfer_buf = SDL_CreateGPUTransferBuffer(
+	SDL_GPUTransferBuffer* sprite_transfer_buf = SDL_CreateGPUTransferBuffer(
 		gpu_device, &transfer_create_info
 	);
-	if (!mesh_transfer_buf) {
-		Output::Debug("SDL_CreateGPUBuffer for mesh_transfer_buf failed: {}", SDL_GetError());
+	if (!sprite_transfer_buf) {
+		Output::Debug("SDL_CreateGPUBuffer for sprite_transfer_buf failed: {}", SDL_GetError());
 		return false;
 	}
 
-	TextureVertex* mesh_transfer_data = (TextureVertex*)SDL_MapGPUTransferBuffer(gpu_device, mesh_transfer_buf, false);
-	memcpy(mesh_transfer_data, &sprite_quad, sizeof(sprite_quad));
-	SDL_UnmapGPUTransferBuffer(gpu_device, mesh_transfer_buf);
-
-	// Texture upload (only for testing until Blit is implemented)
-	std::array<uint8_t, 16*16*4> image_data{};
-	SDL_GPUTextureCreateInfo tex_create_info{};
-	tex_create_info.type = SDL_GPU_TEXTURETYPE_2D;
-	tex_create_info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
-	tex_create_info.width = 16;
-	tex_create_info.height = 16;
-	tex_create_info.layer_count_or_depth = 1;
-	tex_create_info.num_levels = 1;
-	tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
-	sdl_texture = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
-
-	SDL_GPUTransferBufferCreateInfo tex_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, static_cast<Uint32>(16 * 16 * 4)};
-	SDL_GPUTransferBuffer* textureTransferBuffer = SDL_CreateGPUTransferBuffer(gpu_device, &tex_buffer_info);
-	Uint8* textureTransferPtr = (Uint8*)SDL_MapGPUTransferBuffer(gpu_device, textureTransferBuffer, false);
-	SDL_memcpy(textureTransferPtr, image_data.data(), 16 * 16 * 4);
-	SDL_UnmapGPUTransferBuffer(gpu_device, textureTransferBuffer);
-	// END OF TEST CODE
+	TextureVertex* sprite_transfer_data = (TextureVertex*)SDL_MapGPUTransferBuffer(gpu_device, sprite_transfer_buf, false);
+	if (!sprite_transfer_data) {
+		Output::Debug("SDL_MapGPUTransferBuffer for sprite_transfer_buf failed: {}", SDL_GetError());
+		return false;
+	}
+	memcpy(sprite_transfer_data, &sprite_quad, sizeof(sprite_quad));
+	SDL_UnmapGPUTransferBuffer(gpu_device, sprite_transfer_buf);
 
 	// Transfer to GPU
 	SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(gpu_device);
@@ -301,27 +305,20 @@ bool Sdl3RenderTarget::Init() {
 	SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buffer);
 
 	// Upload vertices
-	SDL_GPUTransferBufferLocation vertex_location{mesh_transfer_buf, offsetof(SpriteQuad, vertices)};
+	SDL_GPUTransferBufferLocation vertex_location{sprite_transfer_buf, offsetof(SpriteQuad, vertices)};
 	SDL_GPUBufferRegion vertex_region{sprite_vertex_buffer, 0, sizeof(sprite_quad.vertices)};
 	SDL_UploadToGPUBuffer(copy_pass, &vertex_location, &vertex_region, false);
 
 	// Upload index buffer
-	SDL_GPUTransferBufferLocation index_location{mesh_transfer_buf, offsetof(SpriteQuad, indices)};
+	SDL_GPUTransferBufferLocation index_location{sprite_transfer_buf, offsetof(SpriteQuad, indices)};
 	SDL_GPUBufferRegion index_region{sprite_index_buffer, 0, sizeof(sprite_quad.indices)};
 	SDL_UploadToGPUBuffer(copy_pass, &index_location, &index_region, false);
 
-	// UPLOAD TEXTURE FOR TESTING
-	SDL_GPUTextureTransferInfo tex_transfer_info{textureTransferBuffer, 0};
-	SDL_GPUTextureRegion tex_region{};
-	tex_region.texture = sdl_texture;
-	tex_region.w = 16;
-	tex_region.h = 16;
-	tex_region.d = 1;
-	SDL_UploadToGPUTexture(copy_pass, &tex_transfer_info, &tex_region, false);
-	// END OF TEST CODE
-
 	SDL_EndGPUCopyPass(copy_pass);
-	SDL_ReleaseGPUTransferBuffer(gpu_device, mesh_transfer_buf);
+
+	SDL_SubmitGPUCommandBuffer(command_buffer);
+
+	SDL_ReleaseGPUTransferBuffer(gpu_device, sprite_transfer_buf);
 
 	return true;
 }
@@ -377,4 +374,73 @@ SDL_GPUShader* Sdl3RenderTarget::LoadShader(SDL_GPUShaderStage stage, const char
 	SDL_free(code);
 
 	return shader;
+}
+
+bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp) {
+	if (!bmp.GetGpuTexture()) {
+		SDL_GPUTextureCreateInfo tex_create_info{};
+		tex_create_info.type = SDL_GPU_TEXTURETYPE_2D;
+		tex_create_info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+		tex_create_info.width = bmp.width();
+		tex_create_info.height = bmp.height();
+		tex_create_info.layer_count_or_depth = 1;
+		tex_create_info.num_levels = 1;
+		tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+
+		SDL_GPUTexture* texture;
+		auto texture_sg = lcf::makeScopeGuard([&]() {
+			SDL_ReleaseGPUTexture(gpu_device, texture);
+		});
+
+		texture = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
+		if (!texture) {
+			Output::Debug("SDL_CreateGPUTexture for bitmap {} failed: {}", bmp.GetId(), SDL_GetError());
+			return false;
+		}
+
+		// Request a shared buffer fo upload to GPU
+		int size = bmp.pitch() * bmp.height();
+		SDL_GPUTransferBufferCreateInfo tex_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, static_cast<Uint32>(size)};
+		SDL_GPUTransferBuffer* tex_transfer_buf = SDL_CreateGPUTransferBuffer(gpu_device, &tex_buffer_info);
+		if (!tex_transfer_buf) {
+			Output::Debug("SDL_CreateGPUTransferBuffer for bitmap {} failed: {}", bmp.GetId(), SDL_GetError());
+			SDL_ReleaseGPUTransferBuffer(gpu_device, tex_transfer_buf);
+			return false;
+		}
+
+		Uint8* tex_transfer_ptr = (Uint8*)SDL_MapGPUTransferBuffer(gpu_device, tex_transfer_buf, false);
+		if (!tex_transfer_ptr) {
+			Output::Debug("SDL_MapGPUTransferBuffer for bitmap {} failed: {}", bmp.GetId(), SDL_GetError());
+			return false;
+		}
+		SDL_memcpy(tex_transfer_ptr, bmp.pixels(), size);
+		SDL_UnmapGPUTransferBuffer(gpu_device, tex_transfer_buf);
+
+		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buf);
+
+		SDL_GPUTextureTransferInfo tex_transfer_info{};
+		tex_transfer_info.transfer_buffer = tex_transfer_buf;
+		tex_transfer_info.pixels_per_row = bmp.pitch() / 4;
+		tex_transfer_info.rows_per_layer = bmp.height();
+		SDL_GPUTextureRegion tex_region{};
+		tex_region.texture = texture;
+		tex_region.w = bmp.width();
+		tex_region.h = bmp.height();
+		tex_region.d = 1;
+		SDL_UploadToGPUTexture(copy_pass, &tex_transfer_info, &tex_region, false);
+
+		SDL_EndGPUCopyPass(copy_pass);
+		SDL_ReleaseGPUTransferBuffer(gpu_device, tex_transfer_buf);
+
+		bmp.SetGpuTexture(texture, [this](Bitmap const& bmp) {
+			if (!gpu_device) {
+				// FIXME: Leaks textures on exit (device is destroyed before all textures are freed)
+				return;
+			}
+			SDL_ReleaseGPUTexture(gpu_device, reinterpret_cast<SDL_GPUTexture*>(bmp.GetGpuTexture()));
+		});
+		texture_sg.Dismiss();
+	}
+
+	return true;
 }

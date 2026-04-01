@@ -90,6 +90,12 @@ Bitmap::Bitmap(void *pixels, int width, int height, int pitch, const DynamicForm
 	Init(width, height, pixels, pitch, false);
 }
 
+Bitmap::~Bitmap() {
+	if (gpu_texture && gpu_texture_release_fn) {
+		gpu_texture_release_fn(*this);
+	}
+}
+
 Bitmap::Bitmap(Filesystem_Stream::InputStream stream, bool transparent, uint32_t flags) {
 	format = (transparent ? pixel_format : opaque_pixel_format);
 	pixman_format = find_format(format);
@@ -262,6 +268,15 @@ ImageOpacity Bitmap::ComputeImageOpacity(Rect rect) const {
 		all_opaque ? ImageOpacity::Opaque :
 		alpha_1bit ? ImageOpacity::Alpha_1Bit :
 		ImageOpacity::Alpha_8Bit;
+}
+
+void* Bitmap::GetGpuTexture() const {
+	return gpu_texture;
+}
+
+void Bitmap::SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn) const {
+	this->gpu_texture = gpu_texture;
+	this->gpu_texture_release_fn = gpu_release_fn;
 }
 
 void Bitmap::CheckPixels(uint32_t flags) {

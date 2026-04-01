@@ -108,6 +108,8 @@ public:
 	Bitmap(Bitmap const& source, Rect const& src_rect, bool transparent);
 	Bitmap(void *pixels, int width, int height, int pitch, const DynamicFormat& format);
 
+	~Bitmap();
+
 	/**
 	 * Gets the bitmap width.
 	 *
@@ -613,6 +615,10 @@ public:
 	ImageOpacity ComputeImageOpacity() const;
 	ImageOpacity ComputeImageOpacity(Rect rect) const;
 
+	using GpuTextureReleaseFn = std::function<void(Bitmap const&)>;
+	void* GetGpuTexture() const;
+	void SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn) const;
+
 protected:
 	DynamicFormat format;
 
@@ -661,6 +667,9 @@ protected:
 	 */
 	pixman_op_t GetOperator(pixman_image_t* mask = nullptr, BlendMode blend_mode = BlendMode::Default) const;
 	bool read_only = false;
+
+	mutable void* gpu_texture = nullptr;
+	mutable GpuTextureReleaseFn gpu_texture_release_fn;
 };
 
 struct ImageOut {

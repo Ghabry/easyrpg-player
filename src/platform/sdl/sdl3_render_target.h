@@ -41,7 +41,7 @@ public:
 	SDL_GPUBuffer* sprite_index_buffer = nullptr;
 
 	SDL_GPUCommandBuffer* command_buf = nullptr;
-	SDL_GPURenderPass* render_pass = nullptr;
+	SDL_GPUTexture* swapchain_texture = nullptr;
 
 	/**
 	 * Shader configuration for the sprite shader.
@@ -75,7 +75,6 @@ public:
 	};
 
 	SpriteUniform sprite_uniform{};
-	SDL_GPUTexture* sdl_texture = nullptr;
 
 	/**
 	 * Inherited from RenderTarget
@@ -91,21 +90,12 @@ public:
 		return nullptr;
 	}
 
-	int GetWidth() const override {
-		return 0;
-	}
+	int GetWidth() const override;
 
-	int GetHeight() const override {
-		return 0;
-	}
-
-	Rect GetRect() const override {
-		return {};
-	}
+	int GetHeight() const override;
 
 	void Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
-			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-	}
+			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
 	void TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
@@ -153,6 +143,8 @@ private:
 	explicit Sdl3RenderTarget(Sdl3Ui& ui) : ui(&ui) {}
 	bool Init();
 	SDL_GPUShader* LoadShader(SDL_GPUShaderStage stage, const char* filename, int num_sampler, int num_uniform, int num_storage, int num_texture);
+	bool AllocTexture(Bitmap const& src);
+	void FreeTexture(Bitmap const& src);
 
 	Sdl3Ui* ui = nullptr;
 };
