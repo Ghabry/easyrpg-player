@@ -70,32 +70,32 @@ public:
 
 	struct SpriteUniform {
 		struct {
-			/** u_position (x and y destination) */
+			/** position (x and y destination) */
 			float x, y;
-			/** u_origin (source origin) */
+			/** origin (source origin) */
 			float ox, oy;
-			/** u_tex_size (texture dimensions) */
+			/** tex_size (texture dimensions) */
 			float tex_w, tex_h;
-			/** u_dst_size (target dimensions for scaling) */
+			/** dst_size (target dimensions for scaling) */
 			float dst_w, dst_h;
-			/** u_src_rect (source texture rectangle) */
+			/** src_rect (source texture rectangle) */
 			float src_x, src_y, src_w, src_h;
-			/** u_screen_size (size of the game screen) */
+			/** screen_size (size of the game screen) */
 			float screen_w, screen_h;
-			/** u_angle (sprite rotation) */
+			/** angle (sprite rotation) */
 			float angle = 0.0, padding;
 		} vertex;
 
 		struct {
-			/** u_tone (Tone colors to apply) */
+			/** tone (Tone colors to apply) */
 			float tone_red, tone_green, tone_blue, tone_gray;
-			/** u_flash (Colors for the flash effect) */
+			/** flash (Colors for the flash effect) */
 			float flash_red, flash_green, flash_blue, flash_alpha;
-			/** u_opacity (top and bottom opacity to apply) */
+			/** opacity (top and bottom opacity to apply) */
 			float top_opacity, bottom_opacity;
-			/** u_waver (wave magnitude and phase) */
+			/** waver (wave magnitude and phase) */
 			float waver_depth = -1.0, waver_phase;
-			/** u_blend_mode (Blend mode to use for the blit) */
+			/** blend_mode (Blend mode to use for the blit) */
 			float blend_mode = -1.0, padding;
 		} fragment;
 	};
