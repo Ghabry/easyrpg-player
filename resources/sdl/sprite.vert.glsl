@@ -6,12 +6,14 @@ layout (location = 1) in vec2 a_coord;
 layout (location = 0) out vec2 v_coord;
 
 // SpriteUniform
-layout (set = 1, binding = 0) uniform SpriteBlock {
+layout (std140, set = 1, binding = 0) uniform UniformBlock {
 	vec2 u_position;
+	vec2 u_origin;
 	vec2 u_tex_size;
 	vec2 u_dst_size;
-	vec2 u_screen_size;
 	vec4 u_src_rect; // x, y, w, h
+	vec2 u_screen_size;
+	float u_angle;
 };
 
 void main() {

@@ -41,6 +41,7 @@ public:
 	SDL_GPUBuffer* sprite_index_buffer = nullptr;
 
 	SDL_GPUCommandBuffer* command_buf = nullptr;
+	SDL_GPURenderPass* render_pass = nullptr;
 	SDL_GPUTexture* swapchain_texture = nullptr;
 
 	/**
@@ -68,19 +69,51 @@ public:
 	}};
 
 	struct SpriteUniform {
-		float x, y; // u_position
-		float tex_w, tex_h; // u_tex_size
-		float dst_w, dst_h; // u_dst_size
-		float screen_w, screen_h; // u_screen_size
-		float src_x, src_y, src_w, src_h; // u_src_rect
+		struct {
+			/** u_position (x and y destination) */
+			float x, y;
+			/** u_origin (source origin) */
+			float ox, oy;
+			/** u_tex_size (texture dimensions) */
+			float tex_w, tex_h;
+			/** u_dst_size (target dimensions for scaling) */
+			float dst_w, dst_h;
+			/** u_src_rect (source texture rectangle) */
+			float src_x, src_y, src_w, src_h;
+			/** u_screen_size (size of the game screen) */
+			float screen_w, screen_h;
+			/** u_angle (sprite rotation) */
+			float angle = 0.0, padding;
+		} vertex;
+
+		struct {
+			/** u_tone (Tone colors to apply) */
+			float tone_red, tone_green, tone_blue, tone_gray;
+			/** u_flash (Colors for the flash effect) */
+			float flash_red, flash_green, flash_blue, flash_alpha;
+			/** u_opacity (top and bottom opacity to apply) */
+			float top_opacity, bottom_opacity;
+			/** u_waver (wave magnitude and phase) */
+			float waver_depth = -1.0, waver_phase;
+			/** u_blend_mode (Blend mode to use for the blit) */
+			float blend_mode = -1.0, padding;
+		} fragment;
 	};
 
 	// Check padding requirements
-	static_assert(offsetof(SpriteUniform, x) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, tex_w) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, screen_w) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, dst_w) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, src_x) % 16 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.x) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.ox) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.tex_w) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.dst_w) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.src_x) % 16 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.screen_w) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.angle) % 8 == 0);
+
+	static_assert(offsetof(SpriteUniform, fragment.tone_red) % 16 == 0);
+	static_assert(offsetof(SpriteUniform, fragment.flash_red) % 16 == 0);
+	static_assert(offsetof(SpriteUniform, fragment.top_opacity) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, fragment.waver_depth) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, fragment.blend_mode) % 8 == 0);
 
 	/**
 	 * Inherited from RenderTarget
@@ -144,7 +177,10 @@ private:
 	void FreeTexture(Bitmap const& src);
 
 	void Render(Bitmap const& bmp, SpriteUniform uniform);
-	SpriteUniform InitUniform(Bitmap const& bmp, Rect const& src_rect);
+	SpriteUniform InitUniform(Bitmap const& bmp, Rect const& src_rect, Opacity const& opacity);
+
+	void BeginOrContinueRenderPass(SDL_GPULoadOp load_op = SDL_GPU_LOADOP_LOAD);
+	void EndRenderPass();
 
 	Sdl3Ui* ui = nullptr;
 };
