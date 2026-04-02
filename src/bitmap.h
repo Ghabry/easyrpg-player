@@ -618,6 +618,7 @@ public:
 	using GpuTextureReleaseFn = std::function<void(Bitmap const&)>;
 	void* GetGpuTexture() const;
 	void SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn) const;
+	void ClearGpuTexture();
 
 protected:
 	DynamicFormat format;

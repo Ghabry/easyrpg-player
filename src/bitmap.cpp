@@ -91,9 +91,7 @@ Bitmap::Bitmap(void *pixels, int width, int height, int pitch, const DynamicForm
 }
 
 Bitmap::~Bitmap() {
-	if (gpu_texture && gpu_texture_release_fn) {
-		gpu_texture_release_fn(*this);
-	}
+	ClearGpuTexture();
 }
 
 Bitmap::Bitmap(Filesystem_Stream::InputStream stream, bool transparent, uint32_t flags) {
@@ -279,6 +277,13 @@ void Bitmap::SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn
 	this->gpu_texture_release_fn = gpu_release_fn;
 }
 
+void Bitmap::ClearGpuTexture() {
+	if (this->gpu_texture && this->gpu_texture_release_fn) {
+		this->gpu_texture_release_fn(*this);
+		this->gpu_texture = nullptr;
+	}
+}
+
 void Bitmap::CheckPixels(uint32_t flags) {
 	if (flags & Flag_System) {
 		DynamicFormat format(32,8,24,8,16,8,8,8,0,PF::Alpha);
@@ -328,6 +333,9 @@ Color Bitmap::GetColorAt(int x, int y) const {
 }
 
 void Bitmap::HueChangeBlit(int x, int y, Bitmap const& src, Rect const& src_rect_, double hue_) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	Rect dst_rect(x, y, 0, 0), src_rect = src_rect_;
 
 	if (!Rect::AdjustRectangles(src_rect, dst_rect, src.GetRect()))
@@ -387,12 +395,18 @@ Point Bitmap::TextDraw(Rect const& rect, int color, std::string_view text, Text:
 }
 
 Point Bitmap::TextDraw(int x, int y, int color, std::string_view text, Text::Alignment align) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	auto f = font ? font : Font::Default();
 	auto system = Cache::SystemOrBlack();
 	return Text::Draw(*this, x, y, *f, *system, color, text, align);
 }
 
 Point Bitmap::TextDraw(Rect const& rect, Color color, std::string_view text, Text::Alignment align) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	switch (align) {
 	case Text::AlignLeft:
 		return TextDraw(rect.x, rect.y, color, text);
@@ -418,6 +432,9 @@ Point Bitmap::TextDraw(Rect const& rect, Color color, std::string_view text, Tex
 }
 
 Point Bitmap::TextDraw(int x, int y, Color color, std::string_view text) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	auto f = font ? font : Font::Default();
 	return Text::Draw(*this, x, y, *f, color, text);
 }
@@ -654,9 +671,11 @@ namespace {
 } // anonymous namespace
 
 void Bitmap::Blit(int x, int y, Bitmap const& src, Rect const& src_rect, Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	auto mask = CreateMask(opacity, src_rect);
 
@@ -670,9 +689,11 @@ void Bitmap::Blit(int x, int y, Bitmap const& src, Rect const& src_rect, Opacity
 }
 
 void Bitmap::BlitFast(int x, int y, Bitmap const & src, Rect const & src_rect, Opacity const & opacity) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	pixman_image_composite32(PIXMAN_OP_SRC,
 		src.bitmap.get(),
@@ -694,9 +715,11 @@ void Bitmap::TiledBlit(Rect const& src_rect, Bitmap const& src, Rect const& dst_
 }
 
 void Bitmap::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect, Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	if (ox >= src_rect.width)	ox %= src_rect.width;
 	if (oy >= src_rect.height)	oy %= src_rect.height;
@@ -722,9 +745,11 @@ void Bitmap::StretchBlit(Bitmap const&  src, Rect const& src_rect, Opacity const
 }
 
 void Bitmap::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect, Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	double zoom_x = (double)src_rect.width  / dst_rect.width;
 	double zoom_y = (double)src_rect.height / dst_rect.height;
@@ -746,9 +771,11 @@ void Bitmap::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& sr
 }
 
 void Bitmap::WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const& src, Rect const& src_rect, int depth, double phase, Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	Transform xform = Transform::Scale(1.0 / zoom_x, 1.0 / zoom_y);
 
@@ -791,6 +818,9 @@ static pixman_color_t PixmanColor(const Color &color) {
 }
 
 void Bitmap::Fill(const Color &color) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	pixman_color_t pcolor = PixmanColor(color);
 
 	pixman_box32_t box = { 0, 0, width(), height() };
@@ -799,6 +829,9 @@ void Bitmap::Fill(const Color &color) {
 }
 
 void Bitmap::FillRect(Rect const& dst_rect, const Color &color) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	pixman_color_t pcolor = PixmanColor(color);
 
 	auto timage = PixmanImagePtr{pixman_image_create_solid_fill(&pcolor)};
@@ -817,10 +850,16 @@ void Bitmap::Clear() {
 		return;
 	}
 
+	assert(!read_only);
+	ClearGpuTexture();
+
 	memset(pixels(), '\0', height() * pitch());
 }
 
 void Bitmap::ClearRect(Rect const& dst_rect) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	pixman_color_t pcolor = {};
 	pixman_box32_t box = {
 		dst_rect.x,
@@ -899,9 +938,11 @@ static inline void color_tone_alpha(uint32_t &src_pixel, const Tone& tone, const
 }
 
 void Bitmap::ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	// Optimisations based on Opacity:
 	// Transparent: Nothing to do
@@ -1054,9 +1095,11 @@ void Bitmap::ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, con
 }
 
 void Bitmap::BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color& color, Opacity const& opacity) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	if (color.alpha == 0) {
 		if (&src != this)
@@ -1084,9 +1127,11 @@ void Bitmap::BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, co
 }
 
 void Bitmap::FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool horizontal, bool vertical, Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	bool has_xform = (horizontal || vertical);
 	const auto img_w = src.GetWidth();
@@ -1112,6 +1157,9 @@ void Bitmap::FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, boo
 }
 
 void Bitmap::Flip(bool horizontal, bool vertical) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	if (!horizontal && !vertical) {
 		return;
 	}
@@ -1136,6 +1184,9 @@ void Bitmap::Flip(bool horizontal, bool vertical) {
 }
 
 void Bitmap::MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my, Color const& color) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	pixman_color_t tcolor = {
 		static_cast<uint16_t>(color.red << 8),
 		static_cast<uint16_t>(color.green << 8),
@@ -1153,6 +1204,9 @@ void Bitmap::MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my
 }
 
 void Bitmap::MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my, Bitmap const& src, int sx, int sy) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	pixman_image_composite32(PIXMAN_OP_OVER,
 							 src.bitmap.get(), mask.bitmap.get(), bitmap.get(),
 							 sx, sy,
@@ -1162,6 +1216,9 @@ void Bitmap::MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my
 }
 
 void Bitmap::Blit2x(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect) {
+	assert(!read_only);
+	ClearGpuTexture();
+
 	Transform xform = Transform::Scale(0.5, 0.5);
 
 	pixman_image_set_transform(src.bitmap.get(), &xform.matrix);
@@ -1181,9 +1238,11 @@ void Bitmap::EffectsBlit(int x, int y, int ox, int oy,
 						 Opacity const& opacity,
 						 double zoom_x, double zoom_y, double angle,
 						 int waver_depth, double waver_phase, Bitmap::BlendMode blend_mode) {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	bool rotate = angle != 0.0;
 	bool scale = zoom_x != 1.0 || zoom_y != 1.0;
@@ -1208,9 +1267,11 @@ void Bitmap::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 		Bitmap const& src, Rect const& src_rect,
 		double angle, double zoom_x, double zoom_y, Opacity const& opacity, Bitmap::BlendMode blend_mode)
 {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	auto* src_img = src.bitmap.get();
 
@@ -1255,9 +1316,11 @@ void Bitmap::ZoomOpacityBlit(int x, int y, int ox, int oy,
 							 double zoom_x, double zoom_y,
 							 Opacity const& opacity, Bitmap::BlendMode blend_mode)
 {
+	assert(!read_only);
 	if (opacity.IsTransparent()) {
 		return;
 	}
+	ClearGpuTexture();
 
 	Rect dst_rect(
 		x - static_cast<int>(std::floor(ox * zoom_x)),
@@ -1313,9 +1376,11 @@ pixman_op_t Bitmap::GetOperator(pixman_image_t* mask, Bitmap::BlendMode blend_mo
 }
 
 void Bitmap::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool mirror_x, bool mirror_y, Opacity const& opacity) {
-	if (opacity.IsTransparent())
+	assert(!read_only);
+	if (opacity.IsTransparent()) {
 		return;
-
+	}
+	ClearGpuTexture();
 	auto mask = CreateMask(opacity, src_rect);
 
 	const auto dst_rect = GetRect();
