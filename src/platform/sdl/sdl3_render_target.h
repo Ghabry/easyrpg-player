@@ -24,6 +24,16 @@
 
 class Sdl3Ui;
 
+/*
+TODO
+Sharp Bilinear
+Proper Bush Depth Calculation
+Readback to CPU e.g. for Transitions
+Flash
+Blend Modes such as Multiply or Add
+Waver Effect
+*/
+
 /**
  * Sdl3RenderTarget class.
  * Provides an implementation of the modern SDL3 GPU API.
@@ -35,14 +45,7 @@ public:
 	~Sdl3RenderTarget();
 
 	SDL_GPUDevice* gpu_device = nullptr;
-	SDL_GPUGraphicsPipeline* sprite_pipeline = nullptr;
-	SDL_GPUSampler* sprite_sampler = nullptr;
-	SDL_GPUBuffer* sprite_vertex_buffer = nullptr;
-	SDL_GPUBuffer* sprite_index_buffer = nullptr;
 
-	SDL_GPUCommandBuffer* command_buf = nullptr;
-	SDL_GPURenderPass* render_pass = nullptr;
-	SDL_GPUTexture* swapchain_texture = nullptr;
 
 	/**
 	 * Shader configuration for the sprite shader.
@@ -171,6 +174,14 @@ private:
 	void EndRenderPass();
 
 	Sdl3Ui* ui = nullptr;
+	SDL_GPUGraphicsPipeline* sprite_pipeline = nullptr;
+	SDL_GPUSampler* sprite_sampler = nullptr;
+	SDL_GPUBuffer* sprite_vertex_buffer = nullptr;
+	SDL_GPUBuffer* sprite_index_buffer = nullptr;
+
+	SDL_GPUCommandBuffer* command_buf = nullptr;
+	SDL_GPURenderPass* render_pass = nullptr;
+	SDL_GPUTexture* swapchain_texture = nullptr;
 };
 
 #endif

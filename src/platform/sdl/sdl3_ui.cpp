@@ -535,28 +535,6 @@ void Sdl3Ui::SetRenderer(std::string_view tag) {
 }
 
 void Sdl3Ui::UpdateDisplay() {
-	if (use_gpu_renderer && sdl_gpu) {
-		return;
-	}
-
-#ifdef __WIIU__
-	if (vcfg.scaling_mode.Get() == ConfigEnum::ScalingMode::Bilinear && window.scale > 0.f) {
-		// Workaround WiiU bug: Bilinear uses a render target and for these the format is not converted
-		void* target_pixels;
-		int target_pitch;
-
-		SDL_LockTexture(sdl_texture_game, nullptr, &target_pixels, &target_pitch);
-		SDL_ConvertPixels(main_surface->width(), main_surface->height(), GetDefaultFormat(), main_surface->pixels(),
-			main_surface->pitch(), SDL_PIXELFORMAT_RGBA8888, target_pixels, target_pitch);
-		SDL_UnlockTexture(sdl_texture_game);
-	} else {
-		SDL_UpdateTexture(sdl_texture_game, nullptr, main_surface->pixels(), main_surface->pitch());
-	}
-#else
-	// SDL_UpdateTexture was found to be faster than SDL_LockTexture / SDL_UnlockTexture.
-	SDL_UpdateTexture(sdl_texture_game, nullptr, main_surface->pixels(), main_surface->pitch());
-#endif
-
 	if (window.size_changed && window.width > 0 && window.height > 0) {
 		// Based on SDL2 function UpdateLogicalSize
 		window.size_changed = false;
@@ -626,6 +604,28 @@ void Sdl3Ui::UpdateDisplay() {
 			}
 		}
 	}
+
+	if (use_gpu_renderer && sdl_gpu) {
+		return;
+	}
+
+#ifdef __WIIU__
+	if (vcfg.scaling_mode.Get() == ConfigEnum::ScalingMode::Bilinear && window.scale > 0.f) {
+		// Workaround WiiU bug: Bilinear uses a render target and for these the format is not converted
+		void* target_pixels;
+		int target_pitch;
+
+		SDL_LockTexture(sdl_texture_game, nullptr, &target_pixels, &target_pitch);
+		SDL_ConvertPixels(main_surface->width(), main_surface->height(), GetDefaultFormat(), main_surface->pixels(),
+			main_surface->pitch(), SDL_PIXELFORMAT_RGBA8888, target_pixels, target_pitch);
+		SDL_UnlockTexture(sdl_texture_game);
+	} else {
+		SDL_UpdateTexture(sdl_texture_game, nullptr, main_surface->pixels(), main_surface->pitch());
+	}
+#else
+	// SDL_UpdateTexture was found to be faster than SDL_LockTexture / SDL_UnlockTexture.
+	SDL_UpdateTexture(sdl_texture_game, nullptr, main_surface->pixels(), main_surface->pitch());
+#endif
 
 	SDL_RenderClear(sdl_renderer);
 	if (vcfg.scaling_mode.Get() == ConfigEnum::ScalingMode::Bilinear && window.scale > 0.f) {

@@ -703,6 +703,13 @@ void Sdl3RenderTarget::BeginOrContinueRenderPass(SDL_GPULoadOp load_op) {
 
 	render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
 
+	SDL_GPUViewport view{};
+	view.x = ui->viewport.x;
+	view.y = ui->viewport.y;
+	view.w = ui->viewport.w;
+	view.h = ui->viewport.h;
+	SDL_SetGPUViewport(render_pass, &view);
+
 	SDL_BindGPUGraphicsPipeline(render_pass, sprite_pipeline);
 
 	// Bind Vertex buffer
