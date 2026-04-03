@@ -231,14 +231,19 @@ void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 
 void Sdl3RenderTarget::GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 		Opacity const& opacity, const Tone &tone, Bitmap::BlendMode blend_mode) {
+	if (ox >= src_rect.width)	ox %= src_rect.width;
+	if (oy >= src_rect.height)	oy %= src_rect.height;
+	if (ox < 0) ox += src_rect.width  * ((-ox + src_rect.width  - 1) / src_rect.width);
+	if (oy < 0) oy += src_rect.height * ((-oy + src_rect.height - 1) / src_rect.height);
+
 	auto uniform = InitUniform(src, src_rect, opacity);
 	auto& vertex = uniform.vertex;
 	vertex.x = dst_rect.x;
 	vertex.y = dst_rect.y;
-	vertex.dst_w = dst_rect.width;
-	vertex.dst_h = dst_rect.height;
-	vertex.ox = ox;
-	vertex.oy = oy;
+	vertex.dst_w = src_rect.width;
+	vertex.dst_h = src_rect.height;
+	vertex.src_x = src_rect.x + ox;
+	vertex.src_y = src_rect.y + oy;
 
 	float rep_x = std::ceil(GetWidth() / static_cast<double>(src_rect.width));
 	float rep_y = std::ceil(GetHeight() / static_cast<double>(src_rect.height));
