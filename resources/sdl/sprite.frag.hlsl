@@ -17,7 +17,6 @@ cbuffer UniformBlock : register(b0, space3) {
 struct PSInput {
 	float4 position : SV_POSITION;
 	float2 texCoord : TEXCOORD0;
-	float2 localCoord : TEXCOORD1;
 };
 
 float3 blendSaturation(float3 base, float tone_gray) {
@@ -65,7 +64,7 @@ float4 main(PSInput input) : SV_TARGET {
 	float3 opacity = ubo.opacity.xyz / 255.0;
 
 	if (opacity.z > 0.001) {
-		texColor *= input.localCoord.y < opacity.z ? opacity.x : opacity.y;
+		texColor *= input.texCoord.y < opacity.z ? opacity.x : opacity.y;
 	} else {
 		texColor *= opacity.x;
 	}

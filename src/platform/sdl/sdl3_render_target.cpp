@@ -108,8 +108,19 @@ int Sdl3RenderTarget::GetHeight() const {
 void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
 	auto uniform = InitUniform(src, src_rect, opacity);
-	uniform.vertex.x = x;
-	uniform.vertex.y = y;
+
+	const float srw = static_cast<float>(src_rect.width);
+	const float srh = static_cast<float>(src_rect.height);
+	const float fx = static_cast<float>(x);
+	const float fy = static_cast<float>(y);
+
+	// Model Matrix
+	uniform.vertex.model_matrix = {{
+		{ srw , 0.0f, 0.0f, 0.0f }, // X (width scale)
+		{ 0.0f, srh , 0.0f, 0.0f }, // Y (height scale)
+		{ 0.0f, 0.0f, 1.0f, 0.0f }, // Z
+		{ fx  , fy  , 0.0f, 1.0f }  // Translation
+	}};
 
 	auto& frag = uniform.fragment;
 	frag.blend_mode = static_cast<float>(blend_mode);
@@ -131,10 +142,18 @@ void Sdl3RenderTarget::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
 	auto uniform = InitUniform(src, src_rect, opacity);
 	auto& vertex = uniform.vertex;
-	vertex.x = dst_rect.x;
-	vertex.y = dst_rect.y;
-	vertex.dst_w = dst_rect.width;
-	vertex.dst_h = dst_rect.height;
+
+	const float drx = static_cast<float>(dst_rect.x);
+	const float dry = static_cast<float>(dst_rect.y);
+	const float drw = static_cast<float>(dst_rect.width);
+	const float drh = static_cast<float>(dst_rect.height);
+
+	vertex.model_matrix = {{
+		{ drw , 0.0f, 0.0f, 0.0f }, // X (width scale)
+		{ 0.0f, drh , 0.0f, 0.0f }, // Y (height scale)
+		{ 0.0f, 0.0f, 1.0f, 0.0f }, // Z
+		{ drx , dry , 0.0f, 1.0f }  // Translation
+	}};
 
 	auto& frag = uniform.fragment;
 	frag.blend_mode = static_cast<float>(blend_mode);
@@ -176,15 +195,7 @@ void Sdl3RenderTarget::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 void Sdl3RenderTarget::FillRect(Rect const& dst_rect, const Color &color) {
 	// Create a 1x1 texture with this color
 	BitmapRef bmp = Bitmap::Create(1, 1, color);
-
-	auto uniform = InitUniform(*bmp, bmp->GetRect(), Opacity::Opaque());
-	auto& vertex = uniform.vertex;
-	vertex.x = dst_rect.x;
-	vertex.y = dst_rect.y;
-	vertex.dst_w = dst_rect.width;
-	vertex.dst_h = dst_rect.height;
-
-	Render(*bmp, uniform);
+	StretchBlit(dst_rect, *bmp, bmp->GetRect(), Opacity::Opaque());
 }
 
 void Sdl3RenderTarget::Clear() {
@@ -210,18 +221,43 @@ void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 		Opacity const& opacity, const GpuBlitOps& ops) {
 	auto uniform = InitUniform(src, src_rect, opacity);
 	auto& vertex = uniform.vertex;
-	vertex.x = x;
-	vertex.y = y;
-	vertex.ox = ox;
-	vertex.oy = oy;
-	vertex.angle = ops.angle;
 
-	if (ops.zoom_x != 1.0 || ops.zoom_y != 1.0) {
-		vertex.dst_w = std::floor(src_rect.width * ops.zoom_x);
-		vertex.dst_h = std::floor(src_rect.height * ops.zoom_y);
-		vertex.ox = std::floor(ox * ops.zoom_x);
-		vertex.oy = std::floor(oy * ops.zoom_y);
+	if (ops.flipx) {
+		vertex.uv_rect[0] += vertex.uv_rect[2];
+		vertex.uv_rect[2] = -vertex.uv_rect[2];
 	}
+
+	if (ops.flipy) {
+		vertex.uv_rect[1] += vertex.uv_rect[3];
+		vertex.uv_rect[3] = -vertex.uv_rect[3];
+	}
+
+	double zx = (ops.zoom_x == 0.0) ? 1.0 : ops.zoom_x;
+	double zy = (ops.zoom_y == 0.0) ? 1.0 : ops.zoom_y;
+
+	// Rotation
+	float c = static_cast<float>(std::cos(ops.angle));
+	float s = static_cast<float>(std::sin(ops.angle));
+
+	float w = static_cast<float>(src_rect.width);
+	float h = static_cast<float>(src_rect.height);
+
+	// Scale by Quad Size (w, h) and Zoom (zx, zy), then Rotate (c, s)
+	float m00 = static_cast<float>(w * zx * c);
+	float m01 = static_cast<float>(w * zx * s);
+	float m10 = static_cast<float>(-h * zy * s);
+	float m11 = static_cast<float>(h * zy * c);
+
+	// Translation
+	float m30 = static_cast<float>(x - ox * zx * c + oy * zy * s);
+	float m31 = static_cast<float>(y - ox * zx * s - oy * zy * c);
+
+	vertex.model_matrix = {{
+		{ m00 , m01 , 0.0f, 0.0f }, // X
+		{ m10 , m11 , 0.0f, 0.0f }, // Y
+		{ 0.0f, 0.0f, 1.0f, 0.0f }, // Z
+		{ m30 , m31 , 0.0f, 1.0f }  // Translation
+	}};
 
 	auto& frag = uniform.fragment;
 	frag.tone_red = ops.tone.red;
@@ -248,16 +284,28 @@ void Sdl3RenderTarget::GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bi
 
 	auto uniform = InitUniform(src, src_rect, opacity);
 	auto& vertex = uniform.vertex;
-	vertex.x = dst_rect.x;
-	vertex.y = dst_rect.y;
-	vertex.dst_w = src_rect.width;
-	vertex.dst_h = src_rect.height;
-	vertex.src_x = src_rect.x + ox;
-	vertex.src_y = src_rect.y + oy;
 
-	float rep_x = std::ceil(GetWidth() / static_cast<double>(src_rect.width));
-	float rep_y = std::ceil(GetHeight() / static_cast<double>(src_rect.height));
-	vertex.tiling = std::max(rep_x, rep_y) + 1.0f;
+	const float drx = static_cast<float>(dst_rect.x);
+	const float dry = static_cast<float>(dst_rect.y);
+	const float drw = static_cast<float>(dst_rect.width);
+	const float drh = static_cast<float>(dst_rect.height);
+
+	vertex.model_matrix = {{
+		{ drw , 0.0f, 0.0f, 0.0f }, // X (width scale)
+		{ 0.0f, drh , 0.0f, 0.0f }, // Y (height scale)
+		{ 0.0f, 0.0f, 1.0f, 0.0f }, // Z
+		{ drx , dry , 0.0f, 1.0f }  // Translation
+	}};
+
+	float tex_w = static_cast<float>(src.width());
+	float tex_h = static_cast<float>(src.height());
+
+	vertex.uv_rect = {
+		static_cast<float>(src_rect.x + ox) / tex_w, // X offset
+		static_cast<float>(src_rect.y + oy) / tex_h, // Y offset
+		static_cast<float>(dst_rect.width) / tex_w,  // stretch UV width (will repeat)
+		static_cast<float>(dst_rect.height) / tex_h  // stretch UV height (will repeat)
+	};
 
 	auto& frag = uniform.fragment;
 	frag.tone_red = tone.red;
@@ -596,16 +644,28 @@ void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
 Sdl3RenderTarget::SpriteUniform Sdl3RenderTarget::InitUniform(Bitmap const& bmp, Rect const& src_rect, Opacity const& opacity) {
 	SpriteUniform uniform = {};
 	auto& vertex = uniform.vertex;
-	vertex.tex_w = bmp.width();
-	vertex.tex_h = bmp.height();
-	vertex.screen_w = GetWidth();
-	vertex.screen_h = GetHeight();
-	vertex.dst_w = src_rect.width;
-	vertex.dst_h = src_rect.height;
-	vertex.src_x = src_rect.x;
-	vertex.src_y = src_rect.y;
-	vertex.src_w = src_rect.width;
-	vertex.src_h = src_rect.height;
+
+	const float w = GetWidth();
+	const float h = GetHeight();
+
+	// Orthographic Projection Matrix
+	// Maps pixel coordinates to Normalized Device Coordinates
+	vertex.proj_matrix = {{
+		{ 2.0f / w, 0.0f     , 0.0f, 0.0f },
+		{ 0.0f    , -2.0f / h, 0.0f, 0.0f },
+		{ 0.0f    , 0.0f     , 1.0f, 0.0f },
+		{ -1.0f   , 1.0f     , 0.0f, 1.0f }
+	}};
+
+	float tex_w = static_cast<float>(bmp.width());
+	float tex_h = static_cast<float>(bmp.height());
+
+	vertex.uv_rect = {
+		static_cast<float>(src_rect.x) / tex_w, // X offset
+		static_cast<float>(src_rect.y) / tex_h, // Y offset
+		static_cast<float>(src_rect.width) / tex_w,
+		static_cast<float>(src_rect.height) / tex_h
+	};
 
 	auto& frag = uniform.fragment;
 	frag.opacity_top = opacity.top;

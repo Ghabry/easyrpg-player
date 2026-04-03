@@ -70,22 +70,10 @@ public:
 
 	struct SpriteUniform {
 		struct {
-			/** position (x and y destination) */
-			float x, y;
-			/** origin (source origin) */
-			float ox, oy;
-			/** tex_size (texture dimensions) */
-			float tex_w, tex_h;
-			/** dst_size (target dimensions for scaling) */
-			float dst_w, dst_h;
-			/** src_rect (source texture rectangle) */
-			float src_x, src_y, src_w, src_h;
-			/** screen_size (size of the game screen) */
-			float screen_w, screen_h;
-			/** angle (sprite rotation) */
-			float angle = 0.0;
-			/** repeat (how often to repeat the texture for tiling) */
-			float tiling = 1.0;
+			std::array<std::array<float, 4>, 4> proj_matrix{};
+			std::array<std::array<float, 4>, 4> model_matrix{};
+			std::array<float, 4> uv_rect{};
+			std::array<float, 4> padding{};
 		} vertex;
 
 		struct {
@@ -103,13 +91,8 @@ public:
 	};
 
 	// Check padding requirements
-	static_assert(offsetof(SpriteUniform, vertex.x) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, vertex.ox) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, vertex.tex_w) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, vertex.dst_w) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, vertex.src_x) % 16 == 0);
-	static_assert(offsetof(SpriteUniform, vertex.screen_w) % 8 == 0);
-	static_assert(offsetof(SpriteUniform, vertex.angle) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.model_matrix) % 32 == 0);
+	static_assert(offsetof(SpriteUniform, vertex.uv_rect) % 16 == 0);
 
 	static_assert(offsetof(SpriteUniform, fragment.tone_red) % 16 == 0);
 	static_assert(offsetof(SpriteUniform, fragment.flash_red) % 16 == 0);
