@@ -114,7 +114,7 @@ struct Game_ConfigPlayer {
 };
 
 struct Game_ConfigVideo {
-	LockedConfigParam<std::string> renderer{ "Renderer", "The rendering engine", "auto" };
+	StringListConfigParam renderer{ "Renderer", "The rendering engine", "Video", "Renderer" };
 	BoolConfigParam vsync{ "V-Sync", "Toggle V-Sync mode (Recommended: ON)", "Video", "Vsync", true };
 	BoolConfigParam fullscreen{ "Fullscreen", "Toggle between fullscreen and window mode", "Video", "Fullscreen", true };
 	EnumConfigParam<ConfigEnum::ShowFps, 3> fps{

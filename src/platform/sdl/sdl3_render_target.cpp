@@ -25,8 +25,18 @@ Sdl3RenderTarget* Sdl3RenderTarget::Create(Sdl3Ui& ui) {
 	gpu->is_hardware_accelerated = true;
 
 	if (!gpu->Init()) {
+		Output::Debug("Could not initialize SDL3 Hardware Renderer");
 		delete gpu;
 		return nullptr;
+	}
+
+	SDL_PropertiesID props = SDL_GetGPUDeviceProperties(gpu->gpu_device);
+	if (props) {
+		auto name = SDL_GetStringProperty(props, SDL_PROP_GPU_DEVICE_NAME_STRING, "unknown");
+		auto driver = SDL_GetStringProperty(props, SDL_PROP_GPU_DEVICE_DRIVER_NAME_STRING, "unknown");
+		auto version = SDL_GetStringProperty(props, SDL_PROP_GPU_DEVICE_DRIVER_VERSION_STRING, "unknown");
+
+		Output::Debug("SDL3 GPU: {}, Driver: {}, Version: {}", name, driver, version);
 	}
 
 	return gpu;
@@ -288,13 +298,13 @@ bool Sdl3RenderTarget::Init() {
 
 	SDL_GPUShader* sprite_vertex_shader = LoadShader(SDL_GPU_SHADERSTAGE_VERTEX, "sprite.vert", 0, 1, 0, 0);
 	if (!sprite_vertex_shader) {
-		Output::Debug("Loading vertex shader failed: {}", SDL_GetError());
+		Output::Debug("SDL GPU: Loading vertex shader failed: {}", SDL_GetError());
 		return false;
 	}
 
 	SDL_GPUShader* sprite_fragment_shader = LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "sprite.frag", 1, 1, 0, 0);
 	if (!sprite_fragment_shader) {
-		Output::Debug("Loading fragment shader failed: {}", SDL_GetError());
+		Output::Debug("SDL GPU: Loading fragment shader failed: {}", SDL_GetError());
 		SDL_ReleaseGPUShader(gpu_device, sprite_vertex_shader);
 		return false;
 	}
@@ -482,7 +492,7 @@ SDL_GPUShader* Sdl3RenderTarget::LoadShader(SDL_GPUShaderStage stage, const char
 
 	SDL_GPUShader* shader = SDL_CreateGPUShader(gpu_device, &shader_info);
 	if (!shader) {
-		Output::Debug("Failed to create shader!");
+		Output::Debug("SDL GPU: Failed to create shader!");
 		SDL_free(code);
 		return nullptr;
 	}

@@ -447,7 +447,7 @@ void CtrUi::ToggleTouchUi() {
 }
 
 void CtrUi::vGetConfig(Game_ConfigVideo& cfg) const {
-	cfg.renderer.Lock("3DS Citro (Software)");
+	cfg.renderer.SetValues({{"3DS Citro (Software)", "auto"}});
 
 	cfg.stretch.SetOptionVisible(true);
 	cfg.touch_ui.SetOptionVisible(true);

@@ -748,11 +748,12 @@ int FilterUntilFocus(const SDL_Event* evnt) {
 }
 
 void SdlUi::vGetConfig(Game_ConfigVideo& cfg) const {
-#ifdef __wii__
-	cfg.renderer.Lock("SDL1 (Software, Wii)");
+#if defined(__wii__)
+	std::string suffix = ", Wii";
 #else
-	cfg.renderer.Lock("SDL1 (Software)");
+	std::string suffix;
 #endif
+	cfg.renderer.SetValues({{fmt::format("SDL1 (Software{})", suffix), "auto"}});
 
 	cfg.fullscreen.SetOptionVisible(toggle_fs_available);
 	cfg.pause_when_focus_lost.SetOptionVisible(toggle_fs_available);

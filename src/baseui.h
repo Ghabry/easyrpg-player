@@ -275,6 +275,16 @@ public:
 	}
 
 	/**
+	 * Changes the renderer.
+	 *
+	 * @param tag Renderer to use
+	 * @return Whether changing was a success
+	 */
+	virtual void SetRenderer(std::string_view tag) {
+		(void)tag;
+	}
+
+	/**
 	 * @return current video options.
 	 */
 	Game_ConfigVideo GetConfig() const;

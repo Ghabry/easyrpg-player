@@ -439,6 +439,12 @@ void Game_Config::LoadFromArgs(CmdlineParser& cp) {
 		long li_value = 0;
 		std::string str_value;
 
+		if (cp.ParseNext(arg, 1, "--renderer")) {
+			if (arg.ParseValue(0, str_value)) {
+				video.renderer.Set(str_value);
+			}
+			continue;
+		}
 		if (cp.ParseNext(arg, 0, {"--vsync", "--no-vsync"})) {
 			video.vsync.Set(arg.ArgIsOn());
 			continue;
@@ -591,6 +597,7 @@ void Game_Config::LoadFromStream(Filesystem_Stream::InputStream& is) {
 	}
 
 	/** VIDEO SECTION */
+	video.renderer.FromIni(ini);
 	video.vsync.FromIni(ini);
 	video.fullscreen.FromIni(ini);
 	video.fps.FromIni(ini);
@@ -690,6 +697,7 @@ void Game_Config::WriteToStream(Filesystem_Stream::OutputStream& os) const {
 	/** VIDEO SECTION */
 
 	os << "[Video]\n";
+	video.renderer.ToIni(os);
 	video.vsync.ToIni(os);
 	video.fullscreen.ToIni(os);
 	video.fps.ToIni(os);

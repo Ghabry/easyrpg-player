@@ -202,6 +202,16 @@ NOTE: When using the game browser all games will share the same save directory!
   Pause the game when the window has no focus. Can be disabled with
   *--no-pause-focus-lost*.
 
+*--renderer*::
+  Renderer to use. The hardware renderer is only available when the Player was
+  compiled with the SDL3 backend.
+  Some games are unplayable or stutter without the hardware renderer.
+
+  Possible options:
+   - 'hardware'   - Hardware accelerated rendering (faster).
+   - 'software'   - Software rendering. Use this when you encounter rendering
+                    issues.
+
 *--scaling* _MODE_::
   How the video output is scaled. Possible options:
    - 'nearest'    - Scale to screen size using nearest neighbour algorithm.

@@ -292,7 +292,7 @@ void Psp2Ui::ToggleVsync() {
 }
 
 void Psp2Ui::vGetConfig(Game_ConfigVideo& cfg) const {
-	cfg.renderer.Lock("Vita (Software)");
+	cfg.renderer.SetValues({{"Vita (Software)", "auto"}});
 
 	cfg.vsync.SetOptionVisible(true);
 	cfg.fps_limit.SetOptionVisible(true);

@@ -69,6 +69,7 @@ public:
 	void ToggleStretch() override;
 	void ToggleVsync() override;
 	void SetScreenScale(int scale) override;
+	void SetRenderer(std::string_view tag) override;
 	void vGetConfig(Game_ConfigVideo& cfg) const override;
 	bool OpenURL(std::string_view url) override;
 	Rect GetWindowMetrics() const override;
@@ -160,8 +161,7 @@ private:
 	std::unique_ptr<Sdl3RenderTarget> sdl_gpu;
 	friend class Sdl3RenderTarget;
 
-	// XXX For Testing
-	const bool use_gpu_renderer = true;
+	bool use_gpu_renderer = true;
 };
 
 #endif

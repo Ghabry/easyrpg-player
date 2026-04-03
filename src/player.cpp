@@ -1544,6 +1544,12 @@ Video options:
                        ultrawide  - 560x240 (21:9)
  --pause-focus-lost   Pause the game when the window has no focus.
                       Disable with --no-pause-focus-lost.
+ --renderer           Renderer to use. The hardware renderer is not supported on
+                      all platforms.
+                      Options:
+                       hardware - Hardware accelerated rendering.
+                       software - Software rendering. Use this when you
+                                  encounter rendering issues.
  --scaling S          How the video output is scaled.
                       Options:
                        nearest  - Scale to screen size. Fast, but causes scaling

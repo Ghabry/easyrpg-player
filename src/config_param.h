@@ -358,13 +358,6 @@ public:
 		return _valid[value];
 	}
 
-	void ReplaceValidSet(lcf::FlagSet<E> valid) {
-		_valid = std::move(valid);
-		if (this->IsOptionVisible() && !this->IsValid(this->_value)) {
-			this->_value = GetFirstValid();
-		}
-	}
-
 	void AddToValidSet(E value) {
 		_valid[value] = true;
 	}
@@ -433,6 +426,58 @@ private:
 		}
 		return E{};
 	}
+};
+
+class StringListConfigParam : public ConfigParamBase<std::string> {
+public:
+	struct Item {
+		std::string value;
+		std::string tag;
+		std::string value_description;
+
+		bool operator==(const Item& other) const {
+			return tag == other.tag;
+		}
+	};
+
+	StringListConfigParam(std::string_view name, std::string_view description, std::string_view config_section, std::string_view config_key) :
+		ConfigParamBase<std::string>(name, description, config_section, config_key, {}) {
+	}
+
+	bool vIsValid(const std::string& value) const override {
+		return true;
+	}
+
+	std::string ValueToString() const override {
+		for (const auto& value: _values) {
+			if (value.tag == _value) {
+				return value.value;
+			}
+		}
+		return {};
+	}
+
+	std::vector<Item> GetValues() const {
+		return _values;
+	}
+
+	void SetValues(std::vector<Item> values) {
+		_values = values;
+	}
+
+	bool SetFromString(std::string_view value) {
+		for (size_t i = 0; i < _values.size(); ++i) {
+			auto& v = _values[i];
+			if (value == v.tag) {
+				this->Set(v.tag);
+				return true;
+			}
+		}
+		return false;
+	}
+
+private:
+	std::vector<Item> _values;
 };
 
 class PathConfigParam : public StringConfigParam {

@@ -506,7 +506,8 @@ void NxUi::ToggleTouchUi() {
 }
 
 void NxUi::vGetConfig(Game_ConfigVideo& cfg) const {
-	cfg.renderer.Lock("Switch NX (Software)");
+	cfg.renderer.SetValues({{"Switch NX (Software)", "auto"}});
+
 	cfg.stretch.SetOptionVisible(true);
 	cfg.touch_ui.SetOptionVisible(true);
 

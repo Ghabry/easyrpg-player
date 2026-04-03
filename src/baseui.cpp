@@ -83,6 +83,13 @@ Game_ConfigVideo BaseUi::GetConfig() const {
 
 	vGetConfig(cfg);
 
+	const auto& renderer_vals = cfg.renderer.GetValues();
+	if (renderer_vals.empty()) {
+		cfg.renderer.SetOptionVisible(false);
+	} else if (renderer_vals.size() == 1) {
+		cfg.renderer.Lock(renderer_vals.begin()->tag);
+	}
+
 	Rect metrics = GetWindowMetrics();
 	cfg.window_x.Set(metrics.x);
 	cfg.window_y.Set(metrics.y);

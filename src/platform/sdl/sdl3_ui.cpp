@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include "config_param.h"
 #include "game_config.h"
 #include "sdl3_render_target.h"
 #include "system.h"
@@ -123,6 +124,8 @@ Sdl3Ui::Sdl3Ui(long width, long height, const Game_Config& cfg) : BaseUi(cfg)
 		Output::Error("Couldn't initialize SDL.\n{}\n", SDL_GetError());
 	}
 
+	use_gpu_renderer = (cfg.video.renderer.Get() == "hardware");
+
 	RequestVideoMode(width, height,
 			cfg.video.window_zoom.Get(),
 			cfg.video.fullscreen.Get(),
@@ -180,11 +183,6 @@ Sdl3Ui::~Sdl3Ui() {
 }
 
 bool Sdl3Ui::vChangeDisplaySurfaceResolution(int new_width, int new_height) {
-	if (sdl_gpu) {
-		// TODO: Implement
-		return false;
-	}
-
 	SDL_Texture* new_sdl_texture_game = SDL_CreateTexture(sdl_renderer,
 		texture_format,
 		SDL_TEXTUREACCESS_STREAMING,
@@ -348,46 +346,46 @@ bool Sdl3Ui::RefreshDisplayMode() {
 
 		SetAppIcon();
 
-		if (use_gpu_renderer) {
-			sdl_gpu.reset(Sdl3RenderTarget::Create(*this));
+		sdl_gpu.reset(Sdl3RenderTarget::Create(*this));
+
+		if (sdl_gpu) {
+			sdl_renderer = SDL_CreateGPURenderer(sdl_gpu->gpu_device, sdl_window);
+		} else {
+			sdl_renderer = SDL_CreateRenderer(sdl_window, nullptr);
 		}
 
-		if (!sdl_gpu) {
-			sdl_renderer = SDL_CreateRenderer(sdl_window, nullptr);
-			if (!sdl_renderer) {
-				Output::Debug("SDL_CreateRenderer failed : {}", SDL_GetError());
-				return false;
-			}
-			if (vsync) {
-				SetFrameRateSynchronized(SDL_SetRenderVSync(sdl_renderer, 1));
-			} else {
-				SetFrameRateSynchronized(false);
-			}
+		if (!sdl_renderer) {
+			Output::Debug("SDL_CreateRenderer failed : {}", SDL_GetError());
+			return false;
+		}
+
+		if (vsync) {
+			SetFrameRateSynchronized(SDL_SetRenderVSync(sdl_renderer, 1));
+		} else {
+			SetFrameRateSynchronized(false);
 		}
 
 		texture_format = GetDefaultFormat();
 
 		Output::Debug("SDL3: Selected Pixel Format {}", SDL_GetPixelFormatName(texture_format));
 
-		if (!sdl_gpu) {
-			// Flush display
-			SDL_RenderClear(sdl_renderer);
-			SDL_RenderPresent(sdl_renderer);
+		// Flush display
+		SDL_RenderClear(sdl_renderer);
+		SDL_RenderPresent(sdl_renderer);
 
-			sdl_texture_game = SDL_CreateTexture(sdl_renderer,
-				texture_format,
-				SDL_TEXTUREACCESS_STREAMING,
-				display_width, display_height);
+		sdl_texture_game = SDL_CreateTexture(sdl_renderer,
+			texture_format,
+			SDL_TEXTUREACCESS_STREAMING,
+			display_width, display_height);
 
-			if (!sdl_texture_game) {
-				Output::Debug("SDL_CreateTexture failed : {}", SDL_GetError());
-				SDL_DestroyRenderer(sdl_renderer);
-				sdl_renderer = nullptr;
-				return false;
-			}
-
-			SDL_SetTextureScaleMode(sdl_texture_game, SDL_SCALEMODE_NEAREST);
+		if (!sdl_texture_game) {
+			Output::Debug("SDL_CreateTexture failed : {}", SDL_GetError());
+			SDL_DestroyRenderer(sdl_renderer);
+			sdl_renderer = nullptr;
+			return false;
 		}
+
+		SDL_SetTextureScaleMode(sdl_texture_game, SDL_SCALEMODE_NEAREST);
 
 #ifdef _WIN32
 		HWND window = GetWindowHandle(sdl_window);
@@ -397,6 +395,8 @@ bool Sdl3Ui::RefreshDisplayMode() {
 #endif
 
 		window_sg.Dismiss();
+
+		Output::Debug("SDL3: Hardware rendering: {}", sdl_gpu && use_gpu_renderer);
 	} else {
 		// Browser handles fast resizing for emscripten, TODO: use fullscreen API
 #ifndef EMSCRIPTEN
@@ -514,12 +514,6 @@ void Sdl3Ui::ToggleStretch() {
 }
 
 void Sdl3Ui::ToggleVsync() {
-	if (sdl_gpu) {
-		// TODO
-		return;
-	}
-
-	// Modifying vsync requires recreating the renderer
 	vcfg.vsync.Toggle();
 
 	if (SDL_SetRenderVSync(sdl_renderer, vcfg.vsync.Get() ? 1 : 0)) {
@@ -535,8 +529,13 @@ void Sdl3Ui::SetScreenScale(int scale) {
 	window.size_changed = true;
 }
 
+void Sdl3Ui::SetRenderer(std::string_view tag) {
+	use_gpu_renderer = (tag == "hardware");
+	Output::Debug("SDL3: Set renderer to {}", tag);
+}
+
 void Sdl3Ui::UpdateDisplay() {
-	if (sdl_gpu) {
+	if (use_gpu_renderer && sdl_gpu) {
 		return;
 	}
 
@@ -1215,14 +1214,24 @@ int FilterUntilFocus(const SDL_Event* evnt) {
 
 void Sdl3Ui::vGetConfig(Game_ConfigVideo& cfg) const {
 #ifdef EMSCRIPTEN
-	cfg.renderer.Lock("SDL2 (Software, Emscripten)");
+	std::string suffix = ", Emscripten";
 #elif defined(__wii__)
-	cfg.renderer.Lock("SDL2 (Software, Wii)");
+	std::string suffix = ", Wii";
 #elif defined(__WIIU__)
-	cfg.renderer.Lock("SDL2 (Software, Wii U)");
+	std::string suffix = ", Wii U";
+	cfg.renderer.Lock("SDL3 (Software, Wii U)");
 #else
-	cfg.renderer.Lock("SDL2 (Software)");
+	std::string suffix;
 #endif
+
+	std::vector<StringListConfigParam::Item> renderers;
+	if (sdl_gpu) {
+		renderers.push_back({fmt::format("SDL3 (Hardware{})", suffix), "hardware", "Hardware rendering (faster)"});
+	}
+	renderers.push_back({fmt::format("SDL3 (Software{})", suffix), "software", "Software rendering (slower, but more compatible with old hardware)"});
+	cfg.renderer.SetValues(std::move(renderers));
+
+	cfg.renderer.Set((use_gpu_renderer && sdl_gpu) ? "hardware" : "software");
 
 	cfg.vsync.SetOptionVisible(true);
 	cfg.fullscreen.SetOptionVisible(true);
@@ -1285,5 +1294,10 @@ bool Sdl3Ui::OpenURL(std::string_view url) {
 }
 
 RenderTarget* Sdl3Ui::GetRenderTarget() {
+	if (!use_gpu_renderer) {
+		// Fallback to Software renderer
+		return nullptr;
+	}
+
 	return sdl_gpu.get();
 }

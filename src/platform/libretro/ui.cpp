@@ -229,7 +229,8 @@ Input::Keys::InputKey RetroJKey2InputKey(int button_index) {
 #endif
 
 void LibretroUi::vGetConfig(Game_ConfigVideo& cfg) const {
-	cfg.renderer.Lock("Libretro (Software)");
+	cfg.renderer.SetValues({{"Libretro (Software)", "auto"}});
+
 	cfg.game_resolution.SetOptionVisible(true);
 }
 

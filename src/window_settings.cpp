@@ -270,10 +270,44 @@ void Window_Settings::AddOption(const EnumConfigParam<T, S>& param,
 	GetFrame().options.push_back(std::move(opt));
 }
 
+template <typename Action>
+void Window_Settings::AddOption(const StringListConfigParam& param,
+			Action&& action
+	) {
+	if (!param.IsOptionVisible()) {
+		return;
+	}
+	Option opt;
+	opt.text = ToString(param.GetName());
+	opt.help = ToString(param.GetDescription());
+	opt.value_text = param.ValueToString();
+	opt.mode = eOptionPicker;
+	opt.current_value = 0;
+	opt.original_value = opt.current_value;
+	int idx = 0;
+	for (auto& s: param.GetValues()) {
+		if (param.IsValid(s.tag)) {
+			if (param.Get() == s.tag) {
+				opt.current_value = idx;
+			}
+
+			opt.options_text.push_back(s.value);
+			opt.options_index.push_back(idx);
+			opt.options_help.push_back(s.value_description);
+		}
+		++idx;
+	}
+
+	if (!param.IsLocked()) {
+		opt.action = std::forward<Action>(action);
+	}
+	GetFrame().options.push_back(std::move(opt));
+}
+
 void Window_Settings::RefreshVideo() {
 	auto cfg = DisplayUi->GetConfig();
 
-	AddOption(cfg.renderer,	[](){});
+	AddOption(cfg.renderer,	[this, cfg]() mutable { DisplayUi->SetRenderer(cfg.renderer.GetValues()[GetCurrentOption().current_value].tag); });
 	AddOption(cfg.fullscreen, [](){ DisplayUi->ToggleFullscreen(); });
 	AddOption(cfg.window_zoom, [](){ DisplayUi->ToggleZoom(); });
 	AddOption(cfg.fps, [this](){ DisplayUi->SetShowFps(static_cast<ConfigEnum::ShowFps>(GetCurrentOption().current_value)); });

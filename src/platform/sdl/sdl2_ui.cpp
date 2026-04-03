@@ -1274,16 +1274,17 @@ int FilterUntilFocus(const SDL_Event* evnt) {
 
 void Sdl2Ui::vGetConfig(Game_ConfigVideo& cfg) const {
 #ifdef EMSCRIPTEN
-	cfg.renderer.Lock("SDL2 (Software, Emscripten)");
+	std::string suffix = ", Emscripten";
 #elif defined(__wii__)
-	cfg.renderer.Lock("SDL2 (Software, Wii)");
+	std::string suffix = ", Wii";
 #elif defined(__WIIU__)
-	cfg.renderer.Lock("SDL2 (Software, Wii U)");
+	std::string suffix = ", Wii U";
 #elif defined(__PS4__)
-	cfg.renderer.Lock("SDL2 (Software, PS4)");
+	std::string suffix = ", PS4";
 #else
-	cfg.renderer.Lock("SDL2 (Software)");
+	std::string suffix;
 #endif
+	cfg.renderer.SetValues({{fmt::format("SDL2 (Software{})", suffix), "auto"}});
 
 #if SDL_VERSION_ATLEAST(2, 0, 18)
 	cfg.vsync.SetOptionVisible(true);

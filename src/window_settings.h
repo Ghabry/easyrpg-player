@@ -139,6 +139,11 @@ private:
 			Action&& action
 	);
 
+	template <typename Action>
+	void AddOption(const StringListConfigParam& param,
+			Action&& action
+	);
+
 	void RefreshInput();
 	void RefreshButtonCategory();
 	void RefreshButtonList();
