@@ -101,6 +101,9 @@ void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rec
 	uniform.vertex.x = x;
 	uniform.vertex.y = y;
 
+	auto& frag = uniform.fragment;
+	frag.blend_mode = static_cast<float>(blend_mode);
+
 	Render(src, uniform);
 }
 
@@ -119,6 +122,9 @@ void Sdl3RenderTarget::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap co
 	float rep_y = std::ceil(GetHeight() / static_cast<double>(src_rect.height));
 	vertex.tiling = std::max(rep_x, rep_y) + 1.0f;
 
+	auto& frag = uniform.fragment;
+	frag.blend_mode = static_cast<float>(blend_mode);
+
 	Render(src, uniform);
 }
 
@@ -129,7 +135,17 @@ void Sdl3RenderTarget::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect cons
 
 void Sdl3RenderTarget::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	Output::Debug("Not implemented: StretchBlit {}", src.GetId());
+	auto uniform = InitUniform(src, src_rect, opacity);
+	auto& vertex = uniform.vertex;
+	vertex.x = dst_rect.x;
+	vertex.y = dst_rect.y;
+	vertex.dst_w = dst_rect.width;
+	vertex.dst_h = dst_rect.height;
+
+	auto& frag = uniform.fragment;
+	frag.blend_mode = static_cast<float>(blend_mode);
+
+	Render(src, uniform);
 }
 
 void Sdl3RenderTarget::FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool horizontal, bool vertical,

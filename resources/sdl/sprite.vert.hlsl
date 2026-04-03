@@ -27,10 +27,16 @@ cbuffer UniformBlock : register(b0, space1) {
 VSOutput main(VSInput input) {
 	VSOutput output;
 
+	// Setup rotation matrix
+	float c = cos(ubo.angle);
+	float s = sin(ubo.angle);
+	float2x2 rot = float2x2(c, -s, s, c);
+
 	// Position the sprite and ensure that the image size is in the correct
 	// proportion to the game resolution.
 	float2 local_pos = (input.position.xy * ubo.dst_size * ubo.tiling) - ubo.origin;
-	float2 pixel_pos = local_pos + ubo.position;
+	float2 rotated_pos = mul(rot, local_pos);
+	float2 pixel_pos = rotated_pos + ubo.position;
 
 	// normalize coordinates
 	float ndc_x = (pixel_pos.x / ubo.screen_size.x) * 2.0 - 1.0;
