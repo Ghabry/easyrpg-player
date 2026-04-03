@@ -83,7 +83,9 @@ public:
 			/** screen_size (size of the game screen) */
 			float screen_w, screen_h;
 			/** angle (sprite rotation) */
-			float angle = 0.0, padding;
+			float angle = 0.0;
+			/** repeat (how often to repeat the texture for tiling) */
+			float tiling = 1.0;
 		} vertex;
 
 		struct {

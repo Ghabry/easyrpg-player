@@ -97,10 +97,6 @@ int Sdl3RenderTarget::GetHeight() const {
 
 void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	if (!AllocTexture(src)) {
-		return;
-	}
-
 	auto uniform = InitUniform(src, src_rect, opacity);
 	uniform.vertex.x = x;
 	uniform.vertex.y = y;
@@ -110,7 +106,20 @@ void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rec
 
 void Sdl3RenderTarget::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	Output::Debug("Not implemented: TiledBlit {}", src.GetId());
+	auto uniform = InitUniform(src, src_rect, opacity);
+	auto& vertex = uniform.vertex;
+	vertex.x = dst_rect.x;
+	vertex.y = dst_rect.y;
+	vertex.dst_w = dst_rect.width;
+	vertex.dst_h = dst_rect.height;
+	vertex.ox = ox;
+	vertex.oy = oy;
+
+	float rep_x = std::ceil(GetWidth() / static_cast<double>(src_rect.width));
+	float rep_y = std::ceil(GetHeight() / static_cast<double>(src_rect.height));
+	vertex.tiling = std::max(rep_x, rep_y) + 1.0f;
+
+	Render(src, uniform);
 }
 
 void Sdl3RenderTarget::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
@@ -157,9 +166,6 @@ void Sdl3RenderTarget::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 void Sdl3RenderTarget::FillRect(Rect const& dst_rect, const Color &color) {
 	// Create a 1x1 texture with this color
 	BitmapRef bmp = Bitmap::Create(1, 1, color);
-	if (!AllocTexture(*bmp)) {
-		return;
-	}
 
 	auto uniform = InitUniform(*bmp, bmp->GetRect(), Opacity::Opaque());
 	auto& vertex = uniform.vertex;
@@ -192,14 +198,6 @@ void Sdl3RenderTarget::BlendBlit(int x, int y, Bitmap const& src, Rect const& sr
 void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 		Bitmap const& src, Rect const& src_rect,
 		Opacity const& opacity, const GpuBlitOps& ops) {
-
-	if (!AllocTexture(src)) {
-		return;
-	}
-
-	static double angleInDegress = 0.0;
-	angleInDegress += 0.2;
-
 	auto uniform = InitUniform(src, src_rect, opacity);
 	auto& vertex = uniform.vertex;
 	vertex.x = x;
@@ -207,6 +205,13 @@ void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 	vertex.ox = ox;
 	vertex.oy = oy;
 	vertex.angle = ops.angle;
+
+	if (ops.zoom_x != 1.0 || ops.zoom_y != 1.0) {
+		vertex.dst_w = std::floor(src_rect.width * ops.zoom_x);
+		vertex.dst_h = std::floor(src_rect.height * ops.zoom_y);
+		vertex.ox = std::floor(ox * ops.zoom_x);
+		vertex.oy = std::floor(oy * ops.zoom_y);
+	}
 
 	auto& frag = uniform.fragment;
 	frag.tone_red = ops.tone.red;
@@ -332,9 +337,9 @@ bool Sdl3RenderTarget::Init() {
 	sampler_create_info.min_filter = SDL_GPU_FILTER_NEAREST;
 	sampler_create_info.mag_filter = SDL_GPU_FILTER_NEAREST;
 	sampler_create_info.mipmap_mode = SDL_GPU_SAMPLERMIPMAPMODE_NEAREST;
-	sampler_create_info.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-	sampler_create_info.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
-	sampler_create_info.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE;
+	sampler_create_info.address_mode_u = SDL_GPU_SAMPLERADDRESSMODE_REPEAT;
+	sampler_create_info.address_mode_v = SDL_GPU_SAMPLERADDRESSMODE_REPEAT;
+	sampler_create_info.address_mode_w = SDL_GPU_SAMPLERADDRESSMODE_REPEAT;
 	sprite_sampler = SDL_CreateGPUSampler(gpu_device, &sampler_create_info);
 	if (!sprite_sampler) {
 		Output::Debug("SDL_CreateGPUSampler failed: {}", SDL_GetError());
@@ -520,6 +525,7 @@ bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp) {
 				// FIXME: Leaks textures on exit (device is destroyed before all textures are freed)
 				return;
 			}
+			EndRenderPass();
 			SDL_ReleaseGPUTexture(gpu_device, reinterpret_cast<SDL_GPUTexture*>(bmp.GetGpuTexture()));
 		});
 		texture_sg.Dismiss();
@@ -529,6 +535,10 @@ bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp) {
 }
 
 void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
+	if (!AllocTexture(bmp)) {
+		return;
+	}
+
 	BeginOrContinueRenderPass();
 
 	// Update the Uniform

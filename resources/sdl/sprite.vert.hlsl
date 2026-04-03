@@ -16,6 +16,7 @@ struct SpriteUniforms {
 	float4 src_rect; // x, y, w, h
 	float2 screen_size;
 	float angle;
+	float tiling;
 };
 
 cbuffer UniformBlock : register(b0, space1) {
@@ -27,10 +28,10 @@ VSOutput main(VSInput input) {
 
 	// Position the sprite and ensure that the image size is in the correct
 	// proportion to the game resolution.
-	// Scaled by dst_size.
-	float2 local_pos = (input.position.xy * ubo.dst_size) - ubo.origin;
+	float2 local_pos = (input.position.xy * ubo.dst_size * ubo.tiling) - ubo.origin;
 	float2 pixel_pos = local_pos + ubo.position;
 
+	// normalize coordinates
 	float ndc_x = (pixel_pos.x / ubo.screen_size.x) * 2.0 - 1.0;
 	float ndc_y = 1.0 - (pixel_pos.y / ubo.screen_size.y) * 2.0;
 
@@ -40,7 +41,7 @@ VSOutput main(VSInput input) {
 	float2 uv_min = ubo.src_rect.xy / ubo.tex_size;
 	float2 uv_size = ubo.src_rect.zw / ubo.tex_size;
 
-	output.texCoord = uv_min + input.texCoord * uv_size;
+	output.texCoord = uv_min + (input.texCoord * ubo.tiling) * uv_size;
 
 	return output;
 }
