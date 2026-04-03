@@ -169,6 +169,9 @@ public:
 	void GpuBlit(int x, int y, int ox, int oy,
 			Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity, const GpuBlitOps& ops) override;
+
+	void GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
+		Opacity const& opacity, const Tone &tone, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 	/** @} */
 
 private:

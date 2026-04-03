@@ -32,7 +32,7 @@ Plane::Plane() : Drawable(0)
 void Plane::Draw(RenderTarget& dst) {
 	if (!bitmap) return;
 
-	if (needs_refresh) {
+	if (needs_refresh && !dst.IsHardwareAccelerated()) {
 		needs_refresh = false;
 
 		if (!tone_bitmap ||
@@ -44,7 +44,7 @@ void Plane::Draw(RenderTarget& dst) {
 		tone_bitmap->ToneBlit(0, 0, *bitmap, bitmap->GetRect(), tone_effect, Opacity::Opaque());
 	}
 
-	BitmapRef source = tone_effect == Tone() ? bitmap : tone_bitmap;
+	BitmapRef source = (tone_effect == Tone() || dst.IsHardwareAccelerated()) ? bitmap : tone_bitmap;
 
 	Rect dst_rect = dst.GetRect();
 	int src_x = -ox - GetRenderOx();
@@ -89,7 +89,11 @@ void Plane::Draw(RenderTarget& dst) {
 	}
 	src_y += shake_y;
 
-	dst.TiledBlit(src_x + offset_x, src_y, source->GetRect(), *source, dst_rect, 255);
+	if (dst.IsHardwareAccelerated()) {
+		dst.GpuTiledToneBlit(src_x + offset_x, src_y, source->GetRect(), *source, dst_rect, 255, tone_effect);
+	} else {
+		dst.TiledBlit(src_x + offset_x, src_y, source->GetRect(), *source, dst_rect, 255);
+	}
 
 	if (!Game_Map::LoopHorizontal()) {
 		// Clear out of bounds map area visible during shake

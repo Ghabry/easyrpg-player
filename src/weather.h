@@ -54,7 +54,7 @@ private:
 	void DrawParticles(RenderTarget& dst, const Bitmap& particle, Rect rect, int abase, int tmax);
 	void DrawFogOverlay(RenderTarget& dst, const Bitmap& overlay);
 	void DrawSandParticles(RenderTarget& dst, const Bitmap& particle);
-	const Bitmap* ApplyToneEffect(const Bitmap& bitmap, Rect rect);
+	const Bitmap* ApplyToneEffect(const RenderTarget& rt, const Bitmap& bitmap, const Rect& rect);
 
 	BitmapRef snow_bitmap;
 	BitmapRef rain_bitmap;

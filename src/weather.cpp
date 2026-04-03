@@ -131,7 +131,11 @@ int Weather::GetMaxNumParticles(int weather_type) {
 	return 0;
 }
 
-const Bitmap* Weather::ApplyToneEffect(const Bitmap& bitmap, Rect rect) {
+const Bitmap* Weather::ApplyToneEffect(const RenderTarget& rt, const Bitmap& bitmap, const Rect& rect) {
+	if (rt.IsHardwareAccelerated()) {
+		return &bitmap;
+	}
+
 	if (tone_effect == Tone()) {
 		return &bitmap;
 	}
@@ -193,7 +197,7 @@ void Weather::DrawSnow(RenderTarget& dst) {
 }
 
 void Weather::DrawParticles(RenderTarget& dst, const Bitmap& particle, const Rect rect, int abase, int tmax) {
-	auto* bitmap = ApplyToneEffect(particle, rect);
+	auto* bitmap = ApplyToneEffect(dst, particle, rect);
 
 	const auto strength = Main_Data::game_screen->GetWeatherStrength();
 	const auto& particles = Main_Data::game_screen->GetParticles();
@@ -220,7 +224,12 @@ void Weather::DrawParticles(RenderTarget& dst, const Bitmap& particle, const Rec
 	const auto shake_x = Main_Data::game_screen->GetShakeOffsetX();
 	const auto shake_y = Main_Data::game_screen->GetShakeOffsetY();
 	auto pan_rect = Main_Data::game_screen->GetScreenEffectsRect();
-	dst.TiledBlit(-pan_rect.x + shake_x, -pan_rect.y + shake_y, surface_rect, *weather_surface, dst.GetRect(), Opacity::Opaque());
+
+	if (dst.IsHardwareAccelerated()) {
+		dst.GpuTiledToneBlit(-pan_rect.x + shake_x, -pan_rect.y + shake_y, surface_rect, *weather_surface, dst.GetRect(), Opacity::Opaque(), tone_effect);
+	} else {
+		dst.TiledBlit(-pan_rect.x + shake_x, -pan_rect.y + shake_y, surface_rect, *weather_surface, dst.GetRect(), Opacity::Opaque());
+	}
 }
 
 void Weather::DrawFog(RenderTarget& dst) {
@@ -267,7 +276,7 @@ void Weather::DrawSandParticles(RenderTarget& dst, const Bitmap& particle_bitmap
 	const auto strength = Main_Data::game_screen->GetWeatherStrength();
 	const auto& particles = Main_Data::game_screen->GetParticles();
 
-	auto* bitmap = ApplyToneEffect(particle_bitmap, particle_bitmap.GetRect());
+	auto* bitmap = ApplyToneEffect(dst, particle_bitmap, particle_bitmap.GetRect());
 
 	const int num_particles = num_sand_particles[Utils::Clamp(strength, 0, num_strength - 1)];
 
@@ -284,7 +293,13 @@ void Weather::DrawSandParticles(RenderTarget& dst, const Bitmap& particle_bitmap
 			sand_particle_rect.height
 		};
 
-		dst.Blit(p.x, p.y, *bitmap, rect, p.alpha);
+		if (dst.IsHardwareAccelerated()) {
+			RenderTarget::GpuBlitOps ops{};
+			ops.tone = tone_effect;
+			dst.GpuBlit(p.x, p.y, 0, 0, *bitmap, rect, p.alpha, ops);
+		} else {
+			dst.Blit(p.x, p.y, *bitmap, rect, p.alpha);
+		}
 	}
 }
 
@@ -320,7 +335,7 @@ void Weather::DrawFogOverlay(RenderTarget& dst, const Bitmap& overlay) {
 	const auto dr = dst.GetRect();
 	constexpr auto sr = overlay_bitmap_rect;
 
-	auto* src = ApplyToneEffect(overlay, sr);
+	auto* src = ApplyToneEffect(dst, overlay, sr);
 
 	auto strength = Utils::Clamp(Main_Data::game_screen->GetWeatherStrength(), 0, num_opacities - 1);
 	int back_opacity = fog_opacity[0][strength];
@@ -345,8 +360,13 @@ void Weather::DrawFogOverlay(RenderTarget& dst, const Bitmap& overlay) {
 	// Back layer never moves vertically
 	const int by = shake_y;
 
-	dst.TiledBlit(bx, by, sr, *src, dr, back_opacity);
-	dst.TiledBlit(fx, fy, sr, *src, dr, front_opacity);
+	if (dst.IsHardwareAccelerated()) {
+		dst.GpuTiledToneBlit(bx, by, sr, *src, dr, back_opacity, tone_effect);
+		dst.GpuTiledToneBlit(fx, fy, sr, *src, dr, front_opacity, tone_effect);
+	} else {
+		dst.TiledBlit(bx, by, sr, *src, dr, back_opacity);
+		dst.TiledBlit(fx, fy, sr, *src, dr, front_opacity);
+	}
 }
 
 void Weather::SetTone(Tone tone) {

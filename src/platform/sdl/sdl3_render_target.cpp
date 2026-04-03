@@ -109,23 +109,7 @@ void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rec
 
 void Sdl3RenderTarget::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
-	auto uniform = InitUniform(src, src_rect, opacity);
-	auto& vertex = uniform.vertex;
-	vertex.x = dst_rect.x;
-	vertex.y = dst_rect.y;
-	vertex.dst_w = dst_rect.width;
-	vertex.dst_h = dst_rect.height;
-	vertex.ox = ox;
-	vertex.oy = oy;
-
-	float rep_x = std::ceil(GetWidth() / static_cast<double>(src_rect.width));
-	float rep_y = std::ceil(GetHeight() / static_cast<double>(src_rect.height));
-	vertex.tiling = std::max(rep_x, rep_y) + 1.0f;
-
-	auto& frag = uniform.fragment;
-	frag.blend_mode = static_cast<float>(blend_mode);
-
-	Render(src, uniform);
+	GpuTiledToneBlit(ox, oy, src_rect, src, dst_rect, opacity, Tone(), blend_mode);
 }
 
 void Sdl3RenderTarget::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
@@ -241,6 +225,31 @@ void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 	frag.waver_depth = ops.waver_depth;
 	frag.waver_phase = ops.waver_phase;
 	frag.blend_mode = static_cast<float>(ops.blend_mode);
+
+	Render(src, uniform);
+}
+
+void Sdl3RenderTarget::GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
+		Opacity const& opacity, const Tone &tone, Bitmap::BlendMode blend_mode) {
+	auto uniform = InitUniform(src, src_rect, opacity);
+	auto& vertex = uniform.vertex;
+	vertex.x = dst_rect.x;
+	vertex.y = dst_rect.y;
+	vertex.dst_w = dst_rect.width;
+	vertex.dst_h = dst_rect.height;
+	vertex.ox = ox;
+	vertex.oy = oy;
+
+	float rep_x = std::ceil(GetWidth() / static_cast<double>(src_rect.width));
+	float rep_y = std::ceil(GetHeight() / static_cast<double>(src_rect.height));
+	vertex.tiling = std::max(rep_x, rep_y) + 1.0f;
+
+	auto& frag = uniform.fragment;
+	frag.tone_red = tone.red;
+	frag.tone_green = tone.green;
+	frag.tone_blue = tone.blue;
+	frag.tone_gray = tone.gray;
+	frag.blend_mode = static_cast<float>(blend_mode);
 
 	Render(src, uniform);
 }

@@ -223,6 +223,13 @@ void TilemapLayer::DrawTileImpl(RenderTarget& dst, Bitmap& tileset, Bitmap& tone
 
 	auto* src = &tileset;
 
+	if (dst.IsHardwareAccelerated()) {
+		RenderTarget::GpuBlitOps ops{};
+		ops.tone = tone;
+		dst.GpuBlit(x, y, 0, 0, *src, rect, 255, ops);
+		return;
+	}
+
 	// Create tone changed tile
 	if (tone != Tone()) {
 		if (chipset_tone_tiles.insert(tone_hash).second) {

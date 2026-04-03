@@ -135,6 +135,16 @@ void Background::Draw(RenderTarget& dst) {
 	dst_rect.x += Main_Data::game_screen->GetShakeOffsetX();
 	dst_rect.y += Main_Data::game_screen->GetShakeOffsetY();
 
+	if (dst.IsHardwareAccelerated()) {
+		if (bg_bitmap)
+			dst.GpuTiledToneBlit(-Scale(bg_x), -Scale(bg_y), bg_bitmap->GetRect(), *bg_bitmap, dst_rect, 255, tone_effect);
+
+		if (fg_bitmap)
+			dst.GpuTiledToneBlit(-Scale(fg_x), -Scale(fg_y), fg_bitmap->GetRect(), *fg_bitmap, dst_rect, 255, tone_effect);
+
+		return;
+	}
+
 	if (bg_bitmap)
 		dst.TiledBlit(-Scale(bg_x), -Scale(bg_y), bg_bitmap->GetRect(), *bg_bitmap, dst_rect, 255);
 
@@ -142,7 +152,6 @@ void Background::Draw(RenderTarget& dst) {
 		dst.TiledBlit(-Scale(fg_x), -Scale(fg_y), fg_bitmap->GetRect(), *fg_bitmap, dst_rect, 255);
 
 	if (tone_effect != Tone()) {
-		// FIXME RENDERTARGET ToneBlit to self
 		dst.ToneBlit(0, 0, *dst.GetBitmap(), dst.GetRect(), tone_effect, Opacity::Opaque());
 	}
 }

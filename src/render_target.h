@@ -257,6 +257,26 @@ public:
 		(void)x; (void)y; (void)ox; (void)oy;
 		(void)src; (void)src_rect; (void)opacity; (void)ops; };
 
+	/**
+	 * Blits source bitmap in tiles to this render target.
+	 * Was added because most of the drawables that cache the Tone use TiledBlit.
+	 * Makes updating the code easier.
+	 *
+	 * @param ox tile start x offset.
+	 * @param oy tile start y offset.
+	 * @param src_rect source bitmap rect.
+	 * @param src source bitmap.
+	 * @param dst_rect destination rect.
+	 * @param opacity opacity for blending.
+	 * @param tone tone to apply.
+	 * @param blend_mode Blend mode to use.
+	 */
+	virtual void GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
+		Opacity const& opacity, const Tone &tone, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) {
+			(void)tone;
+			TiledBlit(0, 0, src_rect, src, dst_rect, opacity, blend_mode);
+	}
+
 	// Functions with default implementations (forwarders to other functions)
 	// Only reimplement them if there are fast paths for them
 	/** @return render target bounds rect */
