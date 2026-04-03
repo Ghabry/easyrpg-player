@@ -94,11 +94,11 @@ public:
 			/** flash (Colors for the flash effect) */
 			float flash_red, flash_green, flash_blue, flash_alpha;
 			/** opacity (top and bottom opacity to apply) */
-			float top_opacity, bottom_opacity;
+			float opacity_top, opacity_bottom, opacity_split, padding;
 			/** waver (wave magnitude and phase) */
 			float waver_depth = -1.0, waver_phase;
 			/** blend_mode (Blend mode to use for the blit) */
-			float blend_mode = -1.0, padding;
+			float blend_mode = -1.0, padding2;
 		} fragment;
 	};
 
@@ -113,7 +113,7 @@ public:
 
 	static_assert(offsetof(SpriteUniform, fragment.tone_red) % 16 == 0);
 	static_assert(offsetof(SpriteUniform, fragment.flash_red) % 16 == 0);
-	static_assert(offsetof(SpriteUniform, fragment.top_opacity) % 8 == 0);
+	static_assert(offsetof(SpriteUniform, fragment.opacity_top) % 16 == 0);
 	static_assert(offsetof(SpriteUniform, fragment.waver_depth) % 8 == 0);
 	static_assert(offsetof(SpriteUniform, fragment.blend_mode) % 8 == 0);
 

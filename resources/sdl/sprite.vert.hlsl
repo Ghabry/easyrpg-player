@@ -6,6 +6,7 @@ struct VSInput {
 struct VSOutput {
 	float4 position : SV_POSITION;
 	float2 texCoord : TEXCOORD0;
+	float2 localCoord : TEXCOORD1;
 };
 
 struct SpriteUniforms {
@@ -42,6 +43,7 @@ VSOutput main(VSInput input) {
 	float2 uv_size = ubo.src_rect.zw / ubo.tex_size;
 
 	output.texCoord = uv_min + (input.texCoord * ubo.tiling) * uv_size;
+	output.localCoord = input.texCoord;
 
 	return output;
 }

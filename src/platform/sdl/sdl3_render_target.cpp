@@ -568,8 +568,12 @@ Sdl3RenderTarget::SpriteUniform Sdl3RenderTarget::InitUniform(Bitmap const& bmp,
 	vertex.src_h = src_rect.height;
 
 	auto& frag = uniform.fragment;
-	frag.top_opacity = opacity.top;
-	frag.bottom_opacity = opacity.bottom;
+	frag.opacity_top = opacity.top;
+	frag.opacity_bottom = opacity.bottom;
+
+	if (opacity.IsSplit()) {
+		frag.opacity_split = 255.0f - static_cast<float>(opacity.split) / src_rect.height * 255.0f;
+	}
 
 	Tone tone;
 	frag.tone_red = tone.red;
