@@ -388,6 +388,9 @@ void Transition::Draw(RenderTarget& dst) {
 		// in this case the nearest pixel of the image is choosen (edge handling = extend)
 		int off = (m_size / 2);
 
+		// Use an intermediate Bitmap (software rendering) because the Mosaic does
+		// width * height draws. This floods the GPU with lots of one pixel draws.
+		BitmapRef temp = Bitmap::Create(w, h, false);
 		for (int row = 0; row < h + rand; ++row) {
 			int src_row = std::clamp(((row + off) / m_size) * m_size - off, 0, h - 1);
 
@@ -397,9 +400,10 @@ void Transition::Draw(RenderTarget& dst) {
 				dst.GetBitmap()->pixel_format.uint32_to_rgba(*m_pointer, m_r, m_g, m_b, m_a);
 
 				Rect r(col - rand, row - rand, 1, 1);
-				dst.FillRect(r, Color(m_r, m_g, m_b, 255));
+				temp->FillRect(r, Color(m_r, m_g, m_b, 255));
 			}
 		}
+		dst.BlitFast(0, 0, *temp, temp->GetRect(), Opacity::Opaque());
 		break;
 	}
 	case TransitionWaveIn:
