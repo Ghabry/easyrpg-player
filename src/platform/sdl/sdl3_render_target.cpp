@@ -224,11 +224,6 @@ void Sdl3RenderTarget::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap co
 	GpuTiledToneBlit(ox, oy, src_rect, src, dst_rect, opacity, Tone(), blend_mode);
 }
 
-void Sdl3RenderTarget::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
-		bool mirror_x, bool mirror_y, Opacity const& opacity) {
-	Output::Debug("Not implemented: EdgeMirrorBlit {}", src.GetId());
-}
-
 void Sdl3RenderTarget::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
 	auto uniform = InitUniform(src, src_rect, opacity);

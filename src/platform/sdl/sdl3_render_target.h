@@ -125,9 +125,6 @@ public:
 	void TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 
-	void EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
-			bool mirror_x, bool mirror_y, Opacity const& opacity) override;
-
 	void StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 

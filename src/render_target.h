@@ -110,6 +110,8 @@ public:
 	virtual void TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) = 0;
 
+#if 0
+	// Only used by weather when rendering to a bitmap
 	/**
 	 * Blits source bitmap to this render target, making clones across the edges if src crossed a boundary of this.
 	 *
@@ -123,6 +125,7 @@ public:
 	 */
 	virtual void EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
 		bool mirror_x, bool mirror_y, Opacity const& opacity) = 0;
+#endif
 
 	/**
 	 * Blits source bitmap stretched to this render target.

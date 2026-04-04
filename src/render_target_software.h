@@ -71,11 +71,6 @@ public:
 		target->TiledBlit(ox, oy, src_rect, src, dst_rect, opacity, blend_mode);
 	}
 
-	void EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
-			bool mirror_x, bool mirror_y, Opacity const& opacity) override {
-		target->EdgeMirrorBlit(x, y, src, src_rect, x, y, opacity);
-	}
-
 	void StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
 		target->StretchBlit(dst_rect, src, src_rect, opacity, blend_mode);
