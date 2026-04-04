@@ -75,7 +75,10 @@ void Sprite_Picture::Draw(RenderTarget& dst) {
 	if (data.easyrpg_type == lcf::rpg::SavePicture::EasyRpgType_window) {
 		// Paint the Window on the Picture
 		const auto& window = Main_Data::game_windows->GetWindow(pic_id);
-		// FIXME RENDERTARGET
+		// Simpler to do this in a software rendering context:
+		// Windows are fast to render and its currently not possible to switch
+		// to a render texture with BeginDrawTexture when another drawing was
+		// already started.
 		SoftwareRenderTarget rt(*bitmap.get());
 		window.window->Draw(rt);
 	}

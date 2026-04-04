@@ -28,7 +28,6 @@ class Sdl3Ui;
 
 /*
 TODO
-Readback to CPU e.g. for Transitions
 Blend Modes such as Multiply or Add
 Waver Effect
 */
