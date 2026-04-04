@@ -136,7 +136,6 @@ private:
 	/** Next three items only used by the software renderer */
 	SDL_Renderer* sdl_renderer = nullptr;
 	SDL_Texture* sdl_texture_game = nullptr;
-	SDL_Texture* sdl_texture_scaled = nullptr;
 
 	Rect window_mode_metrics;
 	SDL_Rect viewport = {};
