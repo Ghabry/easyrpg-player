@@ -358,14 +358,18 @@ void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 	}};
 
 	auto& frag = uniform.fragment;
-	frag.tone_red = ops.tone.red;
-	frag.tone_green = ops.tone.green;
-	frag.tone_blue = ops.tone.blue;
-	frag.tone_gray = ops.tone.gray;
-	frag.flash_red = ops.flash.red;
-	frag.flash_green = ops.flash.green;
-	frag.flash_blue = ops.flash.blue;
-	frag.flash_alpha = ops.flash.alpha;
+	frag.tone = {
+		static_cast<float>(ops.tone.red),
+		static_cast<float>(ops.tone.green),
+		static_cast<float>(ops.tone.blue),
+		static_cast<float>(ops.tone.gray)
+	};
+	frag.flash = {
+		static_cast<float>(ops.flash.red),
+		static_cast<float>(ops.flash.green),
+		static_cast<float>(ops.flash.blue),
+		static_cast<float>(ops.flash.alpha)
+	};
 	frag.waver_depth = ops.waver_depth;
 	frag.waver_phase = ops.waver_phase;
 	frag.blend_mode = static_cast<float>(ops.blend_mode);
@@ -406,10 +410,12 @@ void Sdl3RenderTarget::GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bi
 	};
 
 	auto& frag = uniform.fragment;
-	frag.tone_red = tone.red;
-	frag.tone_green = tone.green;
-	frag.tone_blue = tone.blue;
-	frag.tone_gray = tone.gray;
+	frag.tone = {
+		static_cast<float>(tone.red),
+		static_cast<float>(tone.green),
+		static_cast<float>(tone.blue),
+		static_cast<float>(tone.gray)
+	};
 	frag.blend_mode = static_cast<float>(blend_mode);
 
 	Render(src, uniform);
@@ -893,16 +899,20 @@ Sdl3RenderTarget::SpriteUniform Sdl3RenderTarget::InitUniform(Bitmap const& bmp,
 	}
 
 	Tone tone;
-	frag.tone_red = tone.red;
-	frag.tone_green = tone.green;
-	frag.tone_blue = tone.blue;
-	frag.tone_gray = tone.gray;
+	frag.tone = {
+		static_cast<float>(tone.red),
+		static_cast<float>(tone.green),
+		static_cast<float>(tone.blue),
+		static_cast<float>(tone.gray)
+	};
 
 	Color color;
-	frag.flash_red = color.red;
-	frag.flash_green = color.green;
-	frag.flash_blue = color.blue;
-	frag.flash_alpha = color.alpha;
+	frag.flash = {
+		static_cast<float>(color.red),
+		static_cast<float>(color.green),
+		static_cast<float>(color.blue),
+		static_cast<float>(color.alpha)
+	};
 
 	return uniform;
 }

@@ -79,9 +79,9 @@ public:
 
 		struct {
 			/** tone (Tone colors to apply) */
-			float tone_red, tone_green, tone_blue, tone_gray;
+			std::array<float, 4> tone;
 			/** flash (Colors for the flash effect) */
-			float flash_red, flash_green, flash_blue, flash_alpha;
+			std::array<float, 4> flash;
 			/** opacity (top and bottom opacity to apply) */
 			float opacity_top, opacity_bottom, opacity_split, padding;
 			/** waver (wave magnitude and phase) */
@@ -95,8 +95,8 @@ public:
 	static_assert(offsetof(SpriteUniform, vertex.model_matrix) % 32 == 0);
 	static_assert(offsetof(SpriteUniform, vertex.uv_rect) % 16 == 0);
 
-	static_assert(offsetof(SpriteUniform, fragment.tone_red) % 16 == 0);
-	static_assert(offsetof(SpriteUniform, fragment.flash_red) % 16 == 0);
+	static_assert(offsetof(SpriteUniform, fragment.tone) % 16 == 0);
+	static_assert(offsetof(SpriteUniform, fragment.flash) % 16 == 0);
 	static_assert(offsetof(SpriteUniform, fragment.opacity_top) % 16 == 0);
 	static_assert(offsetof(SpriteUniform, fragment.waver_depth) % 8 == 0);
 	static_assert(offsetof(SpriteUniform, fragment.blend_mode) % 8 == 0);
