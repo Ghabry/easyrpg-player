@@ -28,10 +28,7 @@ class Sdl3Ui;
 
 /*
 TODO
-Sharp Bilinear
-Proper Bush Depth Calculation
 Readback to CPU e.g. for Transitions
-Flash
 Blend Modes such as Multiply or Add
 Waver Effect
 */

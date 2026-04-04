@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT-0
+
 Texture2D<float4> main_tex : register(t0, space2);
 SamplerState tex_sampler : register(s0, space2);
 
@@ -17,6 +19,7 @@ cbuffer UniformBlock : register(b0, space3) {
 struct PSInput {
 	float4 position : SV_POSITION;
 	float2 texCoord : TEXCOORD0;
+	float2 localCoord : TEXCOORD1;
 };
 
 float3 blendSaturation(float3 base, float tone_gray) {
@@ -46,7 +49,7 @@ float3 blendHardLight(float3 base, float3 blend) {
 float4 main(PSInput input) : SV_TARGET {
 	float4 texColor = main_tex.Sample(tex_sampler, input.texCoord);
 
-	if (texColor.a > 0.001) {
+	if (texColor.a > 0.0) {
 		float4 tone = ubo.tone / 255.0;
 		float3 neutralTone = 128.0 / 255.0;
 
@@ -59,12 +62,19 @@ float4 main(PSInput input) : SV_TARGET {
 			float3 hardLightResult = blendHardLight(texColor.rgb, tone.rgb);
 			texColor.rgb = lerp(texColor.rgb, hardLightResult, texColor.a);
 		}
+
+		// Apply Flash effect
+		if (ubo.flash.a > 0.0) {
+			float3 flashColor = ubo.flash.rgb / 255.0;
+			float flashStrength = ubo.flash.a / 255.0;
+			texColor.rgb = lerp(texColor.rgb, flashColor, flashStrength * texColor.a);
+		}
 	}
 
 	float3 opacity = ubo.opacity.xyz / 255.0;
 
-	if (opacity.z > 0.001) {
-		texColor *= input.texCoord.y < opacity.z ? opacity.x : opacity.y;
+	if (opacity.z > 0.0) {
+		texColor *= input.localCoord.y < opacity.z ? opacity.x : opacity.y;
 	} else {
 		texColor *= opacity.x;
 	}

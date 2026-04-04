@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT-0
+
 struct VSInput {
 	float3 position : TEXCOORD0;
 	float2 texCoord : TEXCOORD1;
@@ -6,6 +8,7 @@ struct VSInput {
 struct VSOutput {
 	float4 position : SV_POSITION;
 	float2 texCoord : TEXCOORD0;
+	float2 localCoord : TEXCOORD1;
 };
 
 struct SpriteUniforms {
@@ -27,6 +30,8 @@ VSOutput main(VSInput input) {
 	output.position = mul(ubo.proj_matrix, world_pos);
 
 	output.texCoord = input.texCoord * ubo.uv_rect.zw + ubo.uv_rect.xy;
+
+	output.localCoord = input.texCoord;
 
 	return output;
 }
