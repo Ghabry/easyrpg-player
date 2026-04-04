@@ -18,9 +18,11 @@
 #ifndef EP_SDL3_UI_GPU_H
 #define EP_SDL3_UI_GPU_H
 
+#include "color.h"
 #include "render_target.h"
 #include <SDL3/SDL_gpu.h>
 #include <array>
+#include <unordered_map>
 
 class Sdl3Ui;
 
@@ -182,6 +184,8 @@ private:
 	SDL_GPUCommandBuffer* command_buf = nullptr;
 	SDL_GPURenderPass* render_pass = nullptr;
 	SDL_GPUTexture* swapchain_texture = nullptr;
+
+	std::unordered_map<Color, BitmapRef> fill_cache;
 };
 
 #endif

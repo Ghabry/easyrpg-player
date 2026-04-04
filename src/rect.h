@@ -164,4 +164,16 @@ inline void Rect::Halve() {
 	height /= 2;
 }
 
+namespace std {
+	template <> struct hash<Rect> {
+		size_t operator()(const Rect& r) const noexcept {
+			return (static_cast<size_t>(r.x) << 24) |
+				(static_cast<size_t>(r.y) << 16) |
+				(static_cast<size_t>(r.width) << 8) |
+				(static_cast<size_t>(r.height));
+		}
+	};
+}
+
+
 #endif

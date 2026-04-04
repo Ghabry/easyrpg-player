@@ -194,8 +194,15 @@ void Sdl3RenderTarget::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 
 void Sdl3RenderTarget::FillRect(Rect const& dst_rect, const Color &color) {
 	// Create a 1x1 texture with this color
-	BitmapRef bmp = Bitmap::Create(1, 1, color);
-	StretchBlit(dst_rect, *bmp, bmp->GetRect(), Opacity::Opaque());
+	// Cached to avoid hundreds of reallocations
+	auto it = fill_cache.find(color);
+	if (it == fill_cache.end()) {
+		BitmapRef bmp = Bitmap::Create(1, 1, color);
+		fill_cache[color] = bmp;
+		StretchBlit(dst_rect, *bmp, bmp->GetRect(), Opacity::Opaque());
+	} else {
+		StretchBlit(dst_rect, *(it->second), it->second->GetRect(), Opacity::Opaque());
+	}
 }
 
 void Sdl3RenderTarget::Clear() {

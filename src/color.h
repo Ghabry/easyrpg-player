@@ -88,4 +88,15 @@ constexpr Color::Color(uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) 
 	alpha(alpha) {
 }
 
+namespace std {
+	template <> struct hash<Color> {
+		size_t operator()(const Color& c) const noexcept {
+			return (static_cast<size_t>(c.red) << 24) |
+				(static_cast<size_t>(c.green) << 16) |
+				(static_cast<size_t>(c.blue) << 8) |
+				(static_cast<size_t>(c.alpha));
+		}
+	};
+}
+
 #endif
