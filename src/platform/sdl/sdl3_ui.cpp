@@ -225,6 +225,12 @@ bool Sdl3Ui::vChangeDisplaySurfaceResolution(int new_width, int new_height) {
 	return true;
 }
 
+void Sdl3Ui::vCaptureScreen() {
+	if (sdl_gpu && use_gpu_renderer) {
+		sdl_gpu->CopyToBitmap(*main_surface);
+	}
+}
+
 void Sdl3Ui::RequestVideoMode(int width, int height, int zoom, bool fullscreen, bool vsync) {
 	BeginDisplayModeChange();
 

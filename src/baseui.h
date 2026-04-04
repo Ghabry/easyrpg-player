@@ -299,6 +299,10 @@ protected:
 	void SetIsFullscreen(bool value);
 	virtual void vGetConfig(Game_ConfigVideo& cfg) const = 0;
 	virtual bool vChangeDisplaySurfaceResolution(int new_width, int new_height);
+	/**
+	 * Notification for GPU renderers to copy back into main_surface
+	 */
+	virtual void vCaptureScreen() {}
 
 	Game_ConfigVideo vcfg;
 

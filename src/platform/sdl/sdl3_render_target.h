@@ -161,6 +161,7 @@ public:
 
 	bool ChangeDisplaySurfaceResolution(int new_width, int new_height);
 	void ViewportChanged();
+	bool CopyToBitmap(Bitmap const& target);
 
 private:
 	explicit Sdl3RenderTarget(Sdl3Ui& ui) : ui(&ui) {}

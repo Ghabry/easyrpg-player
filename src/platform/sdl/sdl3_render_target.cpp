@@ -409,6 +409,71 @@ void Sdl3RenderTarget::ViewportChanged() {
 	}
 }
 
+bool Sdl3RenderTarget::CopyToBitmap(Bitmap const& target) {
+	assert(!command_buf);
+
+	command_buf = SDL_AcquireGPUCommandBuffer(gpu_device);
+	if (!command_buf) {
+		Output::Debug("SDL_AcquireGPUCommandBuffer failed: {}", SDL_GetError());
+		return false;
+	}
+
+	SDL_GPUCopyPass* dl_copy_pass = SDL_BeginGPUCopyPass(command_buf);
+
+	int size = ui->main_surface->pitch() * ui->main_surface->height();
+	SDL_GPUTransferBufferCreateInfo dl_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, static_cast<Uint32>(size)};
+	SDL_GPUTransferBuffer* dl_transfer_buf = SDL_CreateGPUTransferBuffer(gpu_device, &dl_buffer_info);
+	if (!dl_transfer_buf) {
+		Output::Debug("SDL_CreateGPUTransferBuffer for download failed:", SDL_GetError());
+		return false;
+	}
+
+	SDL_GPUTextureRegion dl_region{};
+	dl_region.texture = texture_game;
+	dl_region.w = GetWidth();
+	dl_region.h = GetHeight();
+	dl_region.d = 1;
+
+	SDL_GPUTextureTransferInfo dl_transfer_info{};
+	dl_transfer_info.transfer_buffer = dl_transfer_buf;
+	dl_transfer_info.pixels_per_row = ui->main_surface->pitch() / 4;
+	dl_transfer_info.rows_per_layer = ui->main_surface->height();
+
+	SDL_DownloadFromGPUTexture(dl_copy_pass, &dl_region, &dl_transfer_info);
+
+	SDL_EndGPUCopyPass(dl_copy_pass);
+
+	SDL_GPUFence* fence = SDL_SubmitGPUCommandBufferAndAcquireFence(command_buf);
+	command_buf = nullptr;
+
+	if (!fence) {
+		SDL_ReleaseGPUTransferBuffer(gpu_device, dl_transfer_buf);
+		Output::Debug("SDL_SubmitGPUCommandBufferAndAcquireFence for download failed:", SDL_GetError());
+		return false;
+	}
+
+	if (!SDL_WaitForGPUFences(gpu_device, true, &fence, 1)) {
+		SDL_ReleaseGPUTransferBuffer(gpu_device, dl_transfer_buf);
+		Output::Debug("SDL_WaitForGPUFences for download failed:", SDL_GetError());
+		return false;
+	}
+	SDL_ReleaseGPUFence(gpu_device, fence);
+
+	// Compare the original bytes to the copied bytes
+	uint8_t* downloaded_data = reinterpret_cast<uint8_t*>(SDL_MapGPUTransferBuffer(
+		gpu_device,
+		dl_transfer_buf,
+		false
+	));
+
+	memcpy(ui->main_surface->pixels(), downloaded_data, size);
+
+	SDL_UnmapGPUTransferBuffer(gpu_device, dl_transfer_buf);
+	SDL_ReleaseGPUTransferBuffer(gpu_device, dl_transfer_buf);
+
+	return true;
+}
+
 /*
 Based on TexturedQuad.c and TexturedAnimatedQuad.c from
 https://github.com/TheSpydog/SDL_gpu_examples by

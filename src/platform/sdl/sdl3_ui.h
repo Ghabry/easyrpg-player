@@ -59,6 +59,7 @@ public:
 	 */
 	/** @{ */
 	bool vChangeDisplaySurfaceResolution(int new_width, int new_height) override;
+	void vCaptureScreen() override;
 	void ToggleFullscreen() override;
 	void ToggleZoom() override;
 	void UpdateDisplay() override;
