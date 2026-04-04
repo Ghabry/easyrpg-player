@@ -61,6 +61,14 @@ Sdl3RenderTarget::~Sdl3RenderTarget() {
 		SDL_ReleaseGPUGraphicsPipeline(gpu_device, sprite_pipeline);
 	}
 
+	if (texture_game) {
+		SDL_ReleaseGPUTexture(gpu_device, texture_game);
+	}
+
+	if (texture_game_scaled) {
+		SDL_ReleaseGPUTexture(gpu_device, texture_game_scaled);
+	}
+
 	if (gpu_device) {
 		SDL_DestroyGPUDevice(gpu_device);
 	}
@@ -74,8 +82,7 @@ void Sdl3RenderTarget::BeginDraw() {
 	}
 
 	// Get the swapchain texture
-	Uint32 width, height;
-	if (!SDL_WaitAndAcquireGPUSwapchainTexture(command_buf, ui->sdl_window, &swapchain_texture, &width, &height)) {
+	if (!SDL_WaitAndAcquireGPUSwapchainTexture(command_buf, ui->sdl_window, &swapchain_texture, &swapchain_width, &swapchain_height)) {
 		Output::Debug("SDL_WaitAndAcquireGPUSwapchainTexture failed: {}", SDL_GetError());
 		return;
 	}
@@ -90,6 +97,44 @@ void Sdl3RenderTarget::BeginDraw() {
 
 void Sdl3RenderTarget::EndDraw() {
 	EndRenderPass();
+
+	SDL_GPUBlitInfo blit_info = {};
+
+	blit_info.source.texture = texture_game;
+	blit_info.source.w = GetWidth();
+	blit_info.source.h = GetHeight();
+
+	blit_info.load_op = SDL_GPU_LOADOP_DONT_CARE;
+	blit_info.filter = SDL_GPU_FILTER_NEAREST;
+
+	if (texture_game_scaled && ui->vcfg.scaling_mode.Get() == ConfigEnum::ScalingMode::Bilinear) {
+		blit_info.destination.texture = texture_game_scaled;
+		blit_info.destination.x = 0;
+		blit_info.destination.y = 0;
+		blit_info.destination.w = scaled_width;
+		blit_info.destination.h = scaled_height;
+
+		SDL_BlitGPUTexture(command_buf, &blit_info);
+
+		blit_info.source.texture = texture_game_scaled;
+		blit_info.source.w = scaled_width;
+		blit_info.source.h = scaled_height;
+		blit_info.filter = SDL_GPU_FILTER_LINEAR;
+	}
+
+	blit_info.destination.texture = swapchain_texture;
+	blit_info.destination.x = ui->viewport.x;
+	blit_info.destination.y = ui->viewport.y;
+	blit_info.destination.w = ui->viewport.w;
+	blit_info.destination.h = ui->viewport.h;
+
+	if (blit_info.destination.w == 0 || blit_info.destination.h == 0) {
+		// fail-safe (viewport is 0 on startup)
+		blit_info.destination.w = 1;
+		blit_info.destination.h = 1;
+	}
+
+	SDL_BlitGPUTexture(command_buf, &blit_info);
 
 	if (command_buf) {
 		SDL_SubmitGPUCommandBuffer(command_buf);
@@ -324,6 +369,46 @@ void Sdl3RenderTarget::GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bi
 	Render(src, uniform);
 }
 
+bool Sdl3RenderTarget::ChangeDisplaySurfaceResolution(int new_width, int new_height) {
+	SDL_GPUTextureCreateInfo tex_create_info = tex_create_info_default;
+	tex_create_info.width = new_width;
+	tex_create_info.height = new_height;
+	tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+	SDL_GPUTexture* new_texture_game = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
+	if (!new_texture_game) {
+		Output::Debug("SDL_CreateGPUTexture for new_texture_game failed: {}", SDL_GetError());
+		return false;
+	}
+
+	SDL_ReleaseGPUTexture(gpu_device, texture_game);
+	texture_game = new_texture_game;
+
+	return true;
+}
+
+void Sdl3RenderTarget::ViewportChanged() {
+	if (ui->vcfg.scaling_mode.Get() == ConfigEnum::ScalingMode::Bilinear && ui->window.scale > 0.f) {
+		if (texture_game_scaled) {
+			SDL_ReleaseGPUTexture(gpu_device, texture_game_scaled);
+			scaled_height = 0;
+			scaled_width = 0;
+		}
+
+		// Create render target texture for the scaled game scene
+		SDL_GPUTextureCreateInfo tex_create_info = tex_create_info_default;
+		tex_create_info.width = GetWidth() * static_cast<int>(ceilf(ui->window.scale));
+		tex_create_info.height = GetHeight() * static_cast<int>(ceilf(ui->window.scale));
+		tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+		texture_game_scaled = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
+		if (!texture_game_scaled) {
+			Output::Debug("SDL_CreateGPUTexture for texture_game_scaled failed: {}", SDL_GetError());
+			return;
+		}
+		scaled_width = tex_create_info.width;
+		scaled_height = tex_create_info.height;
+	}
+}
+
 /*
 Based on TexturedQuad.c and TexturedAnimatedQuad.c from
 https://github.com/TheSpydog/SDL_gpu_examples by
@@ -337,6 +422,12 @@ bool Sdl3RenderTarget::Init() {
 #else
 	const bool gpu_debug = true;
 #endif
+
+	// Good defaults for most textures
+	tex_create_info_default.type = SDL_GPU_TEXTURETYPE_2D;
+	tex_create_info_default.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+	tex_create_info_default.layer_count_or_depth = 1;
+	tex_create_info_default.num_levels = 1;
 
 	gpu_device = SDL_CreateGPUDevice(
 		SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_DXIL,
@@ -476,6 +567,17 @@ bool Sdl3RenderTarget::Init() {
 	memcpy(sprite_transfer_data, &sprite_quad, sizeof(sprite_quad));
 	SDL_UnmapGPUTransferBuffer(gpu_device, sprite_transfer_buf);
 
+	// Create render target texture for the game scene
+	SDL_GPUTextureCreateInfo tex_create_info = tex_create_info_default;
+	tex_create_info.width = GetWidth();
+	tex_create_info.height = GetHeight();
+	tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+	texture_game = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
+	if (!texture_game) {
+		Output::Debug("SDL_CreateGPUTexture for texture_game failed: {}", SDL_GetError());
+		return false;
+	}
+
 	// Transfer to GPU
 	SDL_GPUCommandBuffer* command_buffer = SDL_AcquireGPUCommandBuffer(gpu_device);
 	if (!command_buffer) {
@@ -561,25 +663,20 @@ bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp) {
 	if (!bmp.GetGpuTexture()) {
 		EndRenderPass();
 
-		SDL_GPUTextureCreateInfo tex_create_info{};
-		tex_create_info.type = SDL_GPU_TEXTURETYPE_2D;
-		tex_create_info.format = SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM;
+		SDL_GPUTextureCreateInfo tex_create_info = tex_create_info_default;
 		tex_create_info.width = bmp.width();
 		tex_create_info.height = bmp.height();
-		tex_create_info.layer_count_or_depth = 1;
-		tex_create_info.num_levels = 1;
 		tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
 
-		SDL_GPUTexture* texture;
-		auto texture_sg = lcf::makeScopeGuard([&]() {
-			SDL_ReleaseGPUTexture(gpu_device, texture);
-		});
-
-		texture = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
+		SDL_GPUTexture* texture = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
 		if (!texture) {
 			Output::Debug("SDL_CreateGPUTexture for bitmap {} failed: {}", bmp.GetId(), SDL_GetError());
 			return false;
 		}
+
+		auto texture_sg = lcf::makeScopeGuard([&]() {
+			SDL_ReleaseGPUTexture(gpu_device, texture);
+		});
 
 		// Request a shared buffer fo upload to GPU
 		int size = bmp.pitch() * bmp.height();
@@ -703,19 +800,12 @@ void Sdl3RenderTarget::BeginOrContinueRenderPass(SDL_GPULoadOp load_op) {
 	}
 
 	SDL_GPUColorTargetInfo color_info{};
-	color_info.texture = swapchain_texture;
+	color_info.texture = texture_game;
 	color_info.clear_color = {0.f, 0.f, 0.f, 1.0f}; // Opaque black
 	color_info.load_op = load_op;
 	color_info.store_op = SDL_GPU_STOREOP_STORE;
 
 	render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
-
-	SDL_GPUViewport view{};
-	view.x = ui->viewport.x;
-	view.y = ui->viewport.y;
-	view.w = ui->viewport.w;
-	view.h = ui->viewport.h;
-	SDL_SetGPUViewport(render_pass, &view);
 
 	SDL_BindGPUGraphicsPipeline(render_pass, sprite_pipeline);
 

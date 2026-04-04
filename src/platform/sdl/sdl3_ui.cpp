@@ -190,6 +190,12 @@ bool Sdl3Ui::vChangeDisplaySurfaceResolution(int new_width, int new_height) {
 		return false;
 	}
 
+	if (sdl_gpu) {
+		if (!sdl_gpu->ChangeDisplaySurfaceResolution(new_width, new_height)) {
+			return false;
+		}
+	}
+
 	if (sdl_texture_game) {
 		SDL_DestroyTexture(sdl_texture_game);
 	}
@@ -534,8 +540,13 @@ void Sdl3Ui::SetScreenScale(int scale) {
 }
 
 void Sdl3Ui::SetRenderer(std::string_view tag) {
+	bool before = use_gpu_renderer;
+
 	use_gpu_renderer = (tag == "hardware");
-	Output::Debug("SDL3: Set renderer to {}", tag);
+
+	if (use_gpu_renderer != before) {
+		Output::Debug("SDL3: Set renderer to {}", tag);
+	}
 }
 
 void Sdl3Ui::UpdateDisplay() {
@@ -565,9 +576,9 @@ void Sdl3Ui::UpdateDisplay() {
 		if (vcfg.scaling_mode.Get() == ConfigEnum::ScalingMode::Integer) {
 			// Integer division on purpose
 			if (want_aspect > real_aspect) {
-				window.scale = static_cast<float>(win_width / main_surface->width());
+				window.scale = static_cast<float>(static_cast<int>(win_width / main_surface->width()));
 			} else {
-				window.scale = static_cast<float>(win_height / main_surface->height());
+				window.scale = static_cast<float>(static_cast<int>(win_height / main_surface->height()));
 			}
 
 			viewport.w = static_cast<int>(ceilf(main_surface->width() * window.scale));
@@ -595,6 +606,10 @@ void Sdl3Ui::UpdateDisplay() {
 			viewport.x = (win_width - viewport.w) / 2 + border_x;
 			do_stretch();
 			SDL_SetRenderViewport(sdl_renderer, &viewport);
+		}
+
+		if (sdl_gpu) {
+			sdl_gpu->ViewportChanged();
 		}
 	}
 

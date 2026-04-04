@@ -162,6 +162,9 @@ public:
 		Opacity const& opacity, const Tone &tone, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override;
 	/** @} */
 
+	bool ChangeDisplaySurfaceResolution(int new_width, int new_height);
+	void ViewportChanged();
+
 private:
 	explicit Sdl3RenderTarget(Sdl3Ui& ui) : ui(&ui) {}
 	bool Init();
@@ -184,6 +187,13 @@ private:
 	SDL_GPUCommandBuffer* command_buf = nullptr;
 	SDL_GPURenderPass* render_pass = nullptr;
 	SDL_GPUTexture* swapchain_texture = nullptr;
+	Uint32 swapchain_width, swapchain_height;
+
+	SDL_GPUTexture* texture_game = nullptr;
+	SDL_GPUTexture* texture_game_scaled = nullptr;
+	Uint32 scaled_width = 0, scaled_height = 0;
+
+	SDL_GPUTextureCreateInfo tex_create_info_default{};
 
 	std::unordered_map<Color, BitmapRef> fill_cache;
 };
