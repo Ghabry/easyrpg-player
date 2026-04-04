@@ -34,7 +34,9 @@ struct Opacity {
 	constexpr Opacity() = default;
 
 	constexpr Opacity(int opacity) :
-		Opacity(opacity, opacity, 0) {}
+		Opacity(opacity, opacity, 0) {
+			assert(opacity >= 0 && opacity <= 255);
+		}
 
 	constexpr Opacity(int top_opacity, int bottom_opacity, int split) :
 		top(top_opacity), bottom(bottom_opacity), split(split) {}

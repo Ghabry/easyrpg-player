@@ -28,7 +28,6 @@
 #include "graphics.h"
 #include "main_data.h"
 #include "render_target.h"
-#include "render_target_software.h"
 #include "scene.h"
 #include "scene_map.h"
 #include "spriteset_map.h"
@@ -209,13 +208,13 @@ void Transition::Draw(RenderTarget& dst) {
 		return;
 	}
 
-	int tf_off = total_frames - 1;
+	int tf_off = std::max(1, total_frames - 1);
 
 	switch (transition_type) {
 	case TransitionFadeIn:
 	case TransitionFadeOut:
 		dst.Blit(0, 0, *screen1, screen1->GetRect(), 255);
-		dst.Blit(0, 0, *screen2, screen2->GetRect(), 255 * (current_frame + 1) / (total_frames - 2));
+		dst.Blit(0, 0, *screen2, screen2->GetRect(), std::min(255, 255 * (current_frame + 1) / (total_frames - 2)));
 		break;
 	case TransitionRandomBlocks:
 	case TransitionRandomBlocksDown:
