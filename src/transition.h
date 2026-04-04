@@ -105,7 +105,7 @@ public:
 	void PrependFlashes(int r, int g, int b, int power, int duration, int iterations);
 
 	void Draw(RenderTarget& dst) override;
-	void Update();
+	void Update(RenderTarget* dst);
 
 	bool IsActive() const;
 	bool IsErasedNotActive() const;

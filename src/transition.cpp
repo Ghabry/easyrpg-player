@@ -395,7 +395,6 @@ void Transition::Draw(RenderTarget& dst) {
 			for (int col = 0; col < w + rand; ++col) {
 				int src_col = std::clamp(((col + off) / m_size) * m_size - off, 0, w - 1);
 				m_pointer = static_cast<uint32_t*>(screen_pointer1->pixels()) + src_row * w + src_col;
-				// FIXME RENDERTARGET Bitmap access
 				dst.GetBitmap()->pixel_format.uint32_to_rgba(*m_pointer, m_r, m_g, m_b, m_a);
 
 				Rect r(col - rand, row - rand, 1, 1);
@@ -427,7 +426,7 @@ void Transition::Draw(RenderTarget& dst) {
 	}
 }
 
-void Transition::Update() {
+void Transition::Update(RenderTarget* dst) {
 	if (!IsActive()) {
 		return;
 	}
@@ -448,17 +447,19 @@ void Transition::Update() {
 			// any -> erase - screen1 was drawn in init.
 			assert(ToErase() && !FromErase());
 			screen1 = Bitmap::Create(Player::screen_width, Player::screen_height, false);
-			// FIXME RENDERTARGET: Hardware acceleration
-			SoftwareRenderTarget rt1(*screen1);
-			Graphics::LocalDraw(rt1, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
+			if (dst->BeginDrawTexture(*screen1)) {
+				Graphics::LocalDraw(*dst, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
+				dst->EndDrawTexture();
+			}
 		}
 		if (ToErase()) {
 			screen2 = Bitmap::Create(Player::screen_width, Player::screen_height, Color(0, 0, 0, 255));
 		} else {
 			screen2 = Bitmap::Create(Player::screen_width, Player::screen_height, false);
-			SoftwareRenderTarget rt2(*screen2);
-			// FIXME RENDERTARGET: Hardware acceleration
-			Graphics::LocalDraw(rt2, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
+			if (dst->BeginDrawTexture(*screen2)) {
+				Graphics::LocalDraw(*dst, std::numeric_limits<Drawable::Z_t>::min(), GetZ() - 1);
+				dst->EndDrawTexture();
+			}
 		}
 	}
 

@@ -1280,7 +1280,7 @@ bool Sdl3Ui::OpenURL(std::string_view url) {
 	return true;
 }
 
-RenderTarget* Sdl3Ui::GetRenderTarget() {
+RenderTarget* Sdl3Ui::vGetRenderTarget() {
 	if (!use_gpu_renderer) {
 		// Fallback to Software renderer
 		return nullptr;

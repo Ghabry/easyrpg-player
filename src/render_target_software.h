@@ -26,11 +26,14 @@
 /**
  * Render Target for software rendering.
  *
- * This simply forwards everything to an underlying Bitmap.
+ * This simply forwards everything to an underlying Bitmap which simulates the
+ * screen.
  */
 class SoftwareRenderTarget : public RenderTarget {
 public:
-	explicit SoftwareRenderTarget(Bitmap& bitmap) : bitmap(bitmap) {}
+	explicit SoftwareRenderTarget(Bitmap& screen_bitmap) : screen_bitmap(screen_bitmap) {
+		target = &screen_bitmap;
+	}
 
 	/**
 	 * Inherited from RenderTarget
@@ -38,93 +41,103 @@ public:
 	/** @{ */
 	// Access to underlying bitmap: FIXME Remove this
 	Bitmap* GetBitmap() override {
-		return &bitmap;
+		return target;
 	}
 
+	bool BeginDrawTexture(Bitmap& target) override {
+		this->target = &target;
+		return true;
+	}
+
+	void EndDrawTexture() override {
+		this->target = &screen_bitmap;
+	};
+
 	int GetWidth() const override {
-		return bitmap.GetWidth();
+		return target->GetWidth();
 	}
 
 	int GetHeight() const override {
-		return bitmap.GetHeight();
+		return target->GetHeight();
 	}
 
 	void Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.Blit(x, y, src, src_rect, opacity, blend_mode);
+		target->Blit(x, y, src, src_rect, opacity, blend_mode);
 	}
 
 	void TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.TiledBlit(ox, oy, src_rect, src, dst_rect, opacity, blend_mode);
+		target->TiledBlit(ox, oy, src_rect, src, dst_rect, opacity, blend_mode);
 	}
 
 	void EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rect,
 			bool mirror_x, bool mirror_y, Opacity const& opacity) override {
-		bitmap.EdgeMirrorBlit(x, y, src, src_rect, x, y, opacity);
+		target->EdgeMirrorBlit(x, y, src, src_rect, x, y, opacity);
 	}
 
 	void StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.StretchBlit(dst_rect, src, src_rect, opacity, blend_mode);
+		target->StretchBlit(dst_rect, src, src_rect, opacity, blend_mode);
 	}
 
 	void FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, bool horizontal, bool vertical,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.FlipBlit(x, y, src, src_rect, horizontal, vertical, opacity, blend_mode);
+		target->FlipBlit(x, y, src, src_rect, horizontal, vertical, opacity, blend_mode);
 	}
 
 	void WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const& src, Rect const& src_rect, int depth, double phase,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.WaverBlit(x, y, zoom_x, zoom_y, src, src_rect, depth, phase, opacity, blend_mode);
+		target->WaverBlit(x, y, zoom_x, zoom_y, src, src_rect, depth, phase, opacity, blend_mode);
 	}
 
 	void RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 			Bitmap const& src, Rect const& src_rect,
 			double angle, double zoom_x, double zoom_y,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Normal) override {
-		bitmap.RotateZoomOpacityBlit(x, y, ox, oy, src, src_rect, angle, zoom_x, zoom_y, opacity, blend_mode);
+		target->RotateZoomOpacityBlit(x, y, ox, oy, src, src_rect, angle, zoom_x, zoom_y, opacity, blend_mode);
 	}
 
 	void ZoomOpacityBlit(int x, int y, int ox, int oy,
 			Bitmap const& src, Rect const& src_rect,
 			double zoom_x, double zoom_y,
 			Opacity const& opacity, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) override {
-		bitmap.ZoomOpacityBlit(x, y, ox, oy, src, src_rect, zoom_x, zoom_y, opacity, blend_mode);
+		target->ZoomOpacityBlit(x, y, ox, oy, src, src_rect, zoom_x, zoom_y, opacity, blend_mode);
 	}
 
 	void FillRect(Rect const& dst_rect, const Color &color) override {
-		bitmap.FillRect(dst_rect, color);
+		target->FillRect(dst_rect, color);
 	}
 
 	void ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) override {
-		bitmap.ToneBlit(x, y, src, src_rect, tone, opacity);
+		target->ToneBlit(x, y, src, src_rect, tone, opacity);
 	}
 
 	void BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Color &color, Opacity const& opacity) override {
-		bitmap.BlendBlit(x, y, src, src_rect, color, opacity);
+		target->BlendBlit(x, y, src, src_rect, color, opacity);
 	}
 
 	void BlitFast(int x, int y, Bitmap const& src, Rect const& src_rect,
 			Opacity const& opacity) override {
-		bitmap.BlitFast(x, y, src, src_rect, opacity);
+		target->BlitFast(x, y, src, src_rect, opacity);
 	}
 
 	void Fill(const Color &color) override {
-		bitmap.Fill(color);
+		target->Fill(color);
 	}
 
 	void Clear() override {
-		bitmap.Clear();
+		target->Clear();
 	}
 
 	void ClearRect(Rect const& dst_rect) override {
-		bitmap.ClearRect(dst_rect);
+		target->ClearRect(dst_rect);
 	}
 	/** @} */
 
 private:
-	Bitmap& bitmap;
+	Bitmap& screen_bitmap;
+	Bitmap* target = nullptr;
 };
 
 #endif

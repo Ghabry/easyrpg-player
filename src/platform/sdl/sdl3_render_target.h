@@ -106,14 +106,14 @@ public:
 	 * Inherited from RenderTarget
 	 */
 	/** @{ */
-	/** Indicates the start of the drawing loop */
-	void BeginDraw() override;
+	bool BeginDrawScreen() override;
+	void EndDrawScreen() override;
 
-	/** Indicates the end of the drawing loop */
-	void EndDraw() override;
+	bool BeginDrawTexture(Bitmap& target) override;
+	void EndDrawTexture() override;
 
 	Bitmap* GetBitmap() override {
-		return nullptr;
+		return bitmap_target;
 	}
 
 	int GetWidth() const override;
@@ -161,13 +161,13 @@ public:
 
 	bool ChangeDisplaySurfaceResolution(int new_width, int new_height);
 	void ViewportChanged();
-	bool CopyToBitmap(Bitmap const& target);
+	bool CopyToBitmap(Bitmap& target);
 
 private:
 	explicit Sdl3RenderTarget(Sdl3Ui& ui) : ui(&ui) {}
 	bool Init();
 	SDL_GPUShader* LoadShader(SDL_GPUShaderStage stage, const char* filename, int num_sampler, int num_uniform, int num_storage, int num_texture);
-	bool AllocTexture(Bitmap const& src);
+	bool AllocTexture(Bitmap const& src, bool is_rendertarget = false);
 	void FreeTexture(Bitmap const& src);
 
 	void Render(Bitmap const& bmp, SpriteUniform uniform);
@@ -186,6 +186,9 @@ private:
 	SDL_GPURenderPass* render_pass = nullptr;
 	SDL_GPUTexture* swapchain_texture = nullptr;
 	Uint32 swapchain_width, swapchain_height;
+
+	SDL_GPUTexture* texture_target = nullptr;
+	Bitmap* bitmap_target = nullptr;
 
 	SDL_GPUTexture* texture_game = nullptr;
 	SDL_GPUTexture* texture_game_scaled = nullptr;

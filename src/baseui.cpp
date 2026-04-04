@@ -19,6 +19,7 @@
 #include "baseui.h"
 #include "bitmap.h"
 #include "player.h"
+#include "render_target_software.h"
 
 #if USE_SDL==3
 #  include "platform/sdl/sdl3_ui.h"
@@ -128,4 +129,18 @@ bool BaseUi::ChangeDisplaySurfaceResolution(int new_width, int new_height) {
 	}
 
 	return vChangeDisplaySurfaceResolution(new_width, new_height);
+}
+
+RenderTarget* BaseUi::GetRenderTarget() {
+	auto rt = vGetRenderTarget();
+	if (rt) {
+		return rt;
+	}
+
+	if (!software_render_target.get() ||
+		software_render_target->GetBitmap() != main_surface.get()) {
+		software_render_target.reset(new SoftwareRenderTarget(*main_surface));
+	}
+
+	return software_render_target.get();
 }

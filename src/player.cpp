@@ -371,7 +371,7 @@ void Player::Update(bool update_scene) {
 	auto& transition = Transition::instance();
 
 	if (transition.IsActive()) {
-		transition.Update();
+		transition.Update(DisplayUi->GetRenderTarget());
 	} else {
 		// If we aren't waiting on a transition, but we are waiting for scene delay.
 		Scene::instance->UpdateDelayFrames();
@@ -394,13 +394,9 @@ void Player::Draw() {
 	Graphics::Update();
 	RenderTarget* rt = DisplayUi->GetRenderTarget();
 
-	if (!rt) {
-		SoftwareRenderTarget srt(*DisplayUi->GetDisplaySurface());
-		Graphics::Draw(srt);
-	} else {
-		rt->BeginDraw();
+	if (rt->BeginDrawScreen()) {
 		Graphics::Draw(*rt);
-		rt->EndDraw();
+		rt->EndDrawScreen();
 	}
 
 	DisplayUi->UpdateDisplay();

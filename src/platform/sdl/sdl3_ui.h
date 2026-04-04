@@ -75,7 +75,7 @@ public:
 	bool OpenURL(std::string_view url) override;
 	Rect GetWindowMetrics() const override;
 	bool HandleErrorOutput(const std::string &message) override;
-	RenderTarget* GetRenderTarget() override;
+	RenderTarget* vGetRenderTarget() override;
 
 #ifdef SUPPORT_AUDIO
 	AudioInterface& GetAudio() override;

@@ -74,29 +74,41 @@ Sdl3RenderTarget::~Sdl3RenderTarget() {
 	}
 }
 
-void Sdl3RenderTarget::BeginDraw() {
+bool Sdl3RenderTarget::BeginDrawScreen() {
+	assert(!command_buf);
+
 	command_buf = SDL_AcquireGPUCommandBuffer(gpu_device);
 	if (!command_buf) {
 		Output::Debug("SDL_AcquireGPUCommandBuffer failed: {}", SDL_GetError());
-		return;
+		return false;
 	}
 
 	// Get the swapchain texture
 	if (!SDL_WaitAndAcquireGPUSwapchainTexture(command_buf, ui->sdl_window, &swapchain_texture, &swapchain_width, &swapchain_height)) {
 		Output::Debug("SDL_WaitAndAcquireGPUSwapchainTexture failed: {}", SDL_GetError());
-		return;
+		SDL_SubmitGPUCommandBuffer(command_buf);
+		command_buf = nullptr;
+		return false;
 	}
+
 	if (!swapchain_texture) {
 		// End frame early (can happen when the window is e.g. in the background)
 		SDL_SubmitGPUCommandBuffer(command_buf);
-		return;
+		command_buf = nullptr;
+		return false;
 	}
 
+	texture_target = texture_game;
+
 	Clear();
+
+	return true;
 }
 
-void Sdl3RenderTarget::EndDraw() {
+void Sdl3RenderTarget::EndDrawScreen() {
 	EndRenderPass();
+
+	assert(command_buf);
 
 	SDL_GPUBlitInfo blit_info = {};
 
@@ -136,18 +148,52 @@ void Sdl3RenderTarget::EndDraw() {
 
 	SDL_BlitGPUTexture(command_buf, &blit_info);
 
-	if (command_buf) {
-		SDL_SubmitGPUCommandBuffer(command_buf);
-		command_buf = nullptr;
+	SDL_SubmitGPUCommandBuffer(command_buf);
+	command_buf = nullptr;
+	texture_target = nullptr;
+}
+
+bool Sdl3RenderTarget::BeginDrawTexture(Bitmap& target) {
+	if (!AllocTexture(target, true)) {
+		return false;
 	}
+
+	assert(!command_buf);
+
+	command_buf = SDL_AcquireGPUCommandBuffer(gpu_device);
+	if (!command_buf) {
+		Output::Debug("SDL_AcquireGPUCommandBuffer failed: {}", SDL_GetError());
+		return false;
+	}
+
+	bitmap_target = &target;
+	texture_target = reinterpret_cast<SDL_GPUTexture*>(target.GetGpuTexture());
+
+	Clear();
+
+	return true;
+}
+
+void Sdl3RenderTarget::EndDrawTexture() {
+	EndRenderPass();
+
+	assert(command_buf);
+
+	SDL_SubmitGPUCommandBuffer(command_buf);
+	command_buf = nullptr;
+
+	CopyToBitmap(*bitmap_target);
+
+	texture_target = nullptr;
+	bitmap_target = nullptr;
 }
 
 int Sdl3RenderTarget::GetWidth() const {
-	return ui->current_display_mode.width;
+	return bitmap_target ? bitmap_target->width() : ui->current_display_mode.width;
 }
 
 int Sdl3RenderTarget::GetHeight() const {
-	return ui->current_display_mode.height;
+	return bitmap_target ? bitmap_target->height() : ui->current_display_mode.height;
 }
 
 void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
@@ -409,7 +455,7 @@ void Sdl3RenderTarget::ViewportChanged() {
 	}
 }
 
-bool Sdl3RenderTarget::CopyToBitmap(Bitmap const& target) {
+bool Sdl3RenderTarget::CopyToBitmap(Bitmap& target) {
 	assert(!command_buf);
 
 	command_buf = SDL_AcquireGPUCommandBuffer(gpu_device);
@@ -420,7 +466,7 @@ bool Sdl3RenderTarget::CopyToBitmap(Bitmap const& target) {
 
 	SDL_GPUCopyPass* dl_copy_pass = SDL_BeginGPUCopyPass(command_buf);
 
-	int size = ui->main_surface->pitch() * ui->main_surface->height();
+	int size = target.pitch() * target.height();
 	SDL_GPUTransferBufferCreateInfo dl_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, static_cast<Uint32>(size)};
 	SDL_GPUTransferBuffer* dl_transfer_buf = SDL_CreateGPUTransferBuffer(gpu_device, &dl_buffer_info);
 	if (!dl_transfer_buf) {
@@ -429,15 +475,15 @@ bool Sdl3RenderTarget::CopyToBitmap(Bitmap const& target) {
 	}
 
 	SDL_GPUTextureRegion dl_region{};
-	dl_region.texture = texture_game;
-	dl_region.w = GetWidth();
-	dl_region.h = GetHeight();
+	dl_region.texture = texture_target ? texture_target : texture_game;
+	dl_region.w = target.width();
+	dl_region.h = target.height();
 	dl_region.d = 1;
 
 	SDL_GPUTextureTransferInfo dl_transfer_info{};
 	dl_transfer_info.transfer_buffer = dl_transfer_buf;
-	dl_transfer_info.pixels_per_row = ui->main_surface->pitch() / 4;
-	dl_transfer_info.rows_per_layer = ui->main_surface->height();
+	dl_transfer_info.pixels_per_row = target.pitch() / 4;
+	dl_transfer_info.rows_per_layer = target.height();
 
 	SDL_DownloadFromGPUTexture(dl_copy_pass, &dl_region, &dl_transfer_info);
 
@@ -459,14 +505,13 @@ bool Sdl3RenderTarget::CopyToBitmap(Bitmap const& target) {
 	}
 	SDL_ReleaseGPUFence(gpu_device, fence);
 
-	// Compare the original bytes to the copied bytes
 	uint8_t* downloaded_data = reinterpret_cast<uint8_t*>(SDL_MapGPUTransferBuffer(
 		gpu_device,
 		dl_transfer_buf,
 		false
 	));
 
-	memcpy(ui->main_surface->pixels(), downloaded_data, size);
+	memcpy(target.pixels(), downloaded_data, size);
 
 	SDL_UnmapGPUTransferBuffer(gpu_device, dl_transfer_buf);
 	SDL_ReleaseGPUTransferBuffer(gpu_device, dl_transfer_buf);
@@ -724,7 +769,7 @@ SDL_GPUShader* Sdl3RenderTarget::LoadShader(SDL_GPUShaderStage stage, const char
 	return shader;
 }
 
-bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp) {
+bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp, bool is_rendertarget) {
 	if (!bmp.GetGpuTexture()) {
 		EndRenderPass();
 
@@ -732,6 +777,9 @@ bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp) {
 		tex_create_info.width = bmp.width();
 		tex_create_info.height = bmp.height();
 		tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER;
+		if (is_rendertarget) {
+			tex_create_info.usage |= SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+		}
 
 		SDL_GPUTexture* texture = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
 		if (!texture) {
@@ -865,7 +913,7 @@ void Sdl3RenderTarget::BeginOrContinueRenderPass(SDL_GPULoadOp load_op) {
 	}
 
 	SDL_GPUColorTargetInfo color_info{};
-	color_info.texture = texture_game;
+	color_info.texture = texture_target;
 	color_info.clear_color = {0.f, 0.f, 0.f, 1.0f}; // Opaque black
 	color_info.load_op = load_op;
 	color_info.store_op = SDL_GPU_STOREOP_STORE;

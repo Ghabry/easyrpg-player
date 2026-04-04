@@ -20,9 +20,11 @@
 
 // Headers
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <bitset>
 
+#include "render_target_software.h"
 #include "system.h"
 #include "color.h"
 #include "font.h"
@@ -177,7 +179,7 @@ public:
 	 *
 	 * @return Display specific render target.
 	 */
-	virtual RenderTarget* GetRenderTarget() { return nullptr; }
+	RenderTarget* GetRenderTarget();
 
 	BitmapRef const& GetDisplaySurface() const;
 	BitmapRef& GetDisplaySurface();
@@ -303,6 +305,7 @@ protected:
 	 * Notification for GPU renderers to copy back into main_surface
 	 */
 	virtual void vCaptureScreen() {}
+	virtual RenderTarget* vGetRenderTarget() { return nullptr; }
 
 	Game_ConfigVideo vcfg;
 
@@ -356,6 +359,9 @@ protected:
 
 	/** Used by the F2 toggle: Remembers which configuration (ON or Overlay) was used */
 	ConfigEnum::ShowFps original_fps_show_state = ConfigEnum::ShowFps::OFF;
+
+	/** Software render target used when not hardware rendering */
+	std::unique_ptr<SoftwareRenderTarget> software_render_target;
 };
 
 /** Global DisplayUi variable. */

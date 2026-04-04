@@ -27,6 +27,11 @@
  * This can be either a hardware accelerated target or a software renderer.
  * Is used by the graphics class to render all the sprites onto the screen.
  *
+ * Usage:
+ * 1. Call Begin*() to set the render target
+ * 2. Do all the drawing
+ * 3. Call matching End*() to finish the drawing
+ *
  * Implementation note:
  * Some functions are disabled through a preprocessor.
  * These are currently only used in a software rendering context.
@@ -35,14 +40,42 @@ class RenderTarget {
 public:
 	virtual ~RenderTarget() = default;
 
-	// FIXME: Remove this function
-	virtual Bitmap* GetBitmap() = 0;
+	/**
+	 * Starts a screen render pass.
+	 * When this returns false the render pass must be skipped.
+	 * This can happen when the window is minimized.
+	 *
+	 * @return true if drawing should proceed, false otherwise
+	 */
+	virtual bool BeginDrawScreen() { return true; }
 
-	/** Indicates the start of the drawing loop */
-	virtual void BeginDraw() {}
+	/**
+	 * Starts rendering to a specific texture.
+	 * Can be called standalone, or nested inside a BeginDrawScreen block.
+	 *
+	 * @return true when rendering to the texture is possible
+	 */
+	virtual bool BeginDrawTexture(Bitmap& target) = 0;
+
+	/**
+	 * Finish rendering to a specific texture.
+	 */
+	virtual void EndDrawTexture() = 0;
+
+	/**
+	 * Ends a screen render pass.
+	 */
+	virtual void EndDrawScreen() {}
 
 	/** Indicates the end of the drawing loop */
 	virtual void EndDraw() {}
+
+	/**
+	 * Returns the bitmap passed to BeginDrawTexture.
+	 *
+	 * @return render target of the texture
+	 */
+	virtual Bitmap* GetBitmap() = 0;
 
 	/** @return the width of the render target */
 	virtual int GetWidth() const = 0;
