@@ -3,6 +3,26 @@
 Texture2D<float4> main_tex : register(t0, space2);
 SamplerState tex_sampler : register(s0, space2);
 
+// Must match Bitmap::BlendMode
+static const int BlendMode_Default = 0;
+static const int BlendMode_Normal = 1;
+static const int BlendMode_NormalWithoutAlpha = 2;
+static const int BlendMode_XOR = 3;
+static const int BlendMode_Additive = 4;
+static const int BlendMode_Multiply = 5;
+static const int BlendMode_Overlay = 6;
+static const int BlendMode_Saturate = 7;
+static const int BlendMode_Darken = 8;
+static const int BlendMode_Lighten = 9;
+static const int BlendMode_ColorDodge = 10;
+static const int BlendMode_ColorBurn = 11;
+static const int BlendMode_Difference = 12;
+static const int BlendMode_Exclusion = 13;
+static const int BlendMode_SoftLight = 14;
+static const int BlendMode_HardLight = 15;
+// Custom shader feature to fill with a custom color (passed in "tone")
+static const int BlendMode_Fill = 100;
+
 struct SpriteUniforms {
 	float4 tone;
 	float4 flash;
@@ -47,8 +67,36 @@ float3 blendHardLight(float3 base, float3 blend) {
 	return lerp(multiplyResult, screenResult, step(0.5, blend));
 }
 
+float2 applyWaver(float2 texCoord, float2 localCoord, float4 uv_rect, float depth, float phase) {
+	if (depth <= 0.0) {
+		return texCoord;
+	}
+
+	uint tex_w, tex_h;
+	main_tex.GetDimensions(tex_w, tex_h);
+
+	float height = uv_rect.w * tex_h;
+
+	float sy = (localCoord.y * height) * (6.28318530718 / 32.0);
+	float offset = round(-2.0 * depth * sin(phase + sy));
+
+	float2 wave_uv = texCoord;
+	wave_uv.x += offset / (float)tex_w;
+
+	return wave_uv;
+}
+
 float4 main(PSInput input) : SV_TARGET {
-	float4 texColor = main_tex.Sample(tex_sampler, input.texCoord);
+	float4 texColor = main_tex.Sample(tex_sampler, wave_uv);
+
+	if (ubo.blend_mode == BlendMode_Fill) {
+		return ubo.tone;
+	}
+
+	// Calc UV with waver applied
+	float2 wave_uv = applyWaver(input.texCoord, input.localCoord, input.uv_rect, ubo.waver_depth, ubo.waver_phase);
+
+	float4 texColor = main_tex.Sample(tex_sampler, wave_uv);
 
 	if (texColor.a > 0.0) {
 		float4 tone = ubo.tone / 255.0;
@@ -79,6 +127,20 @@ float4 main(PSInput input) : SV_TARGET {
 	} else {
 		texColor *= opacity.x;
 	}
+/*
+	texColor.r = round(texColor.r * 31.0) / 31.0;
+	texColor.g = round(texColor.g * 63.0) / 63.0;
+	texColor.b = round(texColor.b * 31.0) / 31.0;
 
+	if (texColor.a < 1.0) {
+		// Calculate a subtle bit-loss penalty for 5-bit channels
+		// Maximum penalty occurs around 50% opacity.
+		float bitLoss = (1.0 - texColor.a) * (1.0 / 31.0);
+
+		// Subtract the penalty from Red and Blue to simulate integer rounding down
+		texColor.r = max(0.0, texColor.r - bitLoss);
+		texColor.b = max(0.0, texColor.b - bitLoss);
+	}
+*/
 	return texColor;
 }

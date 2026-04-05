@@ -168,15 +168,18 @@ public:
 		Additive,
 		Multiply,
 		Overlay,
+		Screen,
 		Saturate,
 		Darken,
 		Lighten,
+		Substract,
 		ColorDodge,
 		ColorBurn,
 		Difference,
 		Exclusion,
 		SoftLight,
-		HardLight
+		HardLight,
+		LAST
 	};
 
 	/**

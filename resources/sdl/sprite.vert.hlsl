@@ -9,6 +9,7 @@ struct VSOutput {
 	float4 position : SV_POSITION;
 	float2 texCoord : TEXCOORD0;
 	float2 localCoord : TEXCOORD1;
+	float4 uv_rect : TEXCOORD2;
 };
 
 struct SpriteUniforms {
@@ -32,6 +33,7 @@ VSOutput main(VSInput input) {
 	output.texCoord = input.texCoord * ubo.uv_rect.zw + ubo.uv_rect.xy;
 
 	output.localCoord = input.texCoord;
+	output.uv_rect = ubo.uv_rect;
 
 	return output;
 }

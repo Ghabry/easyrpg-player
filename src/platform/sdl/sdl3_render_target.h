@@ -28,7 +28,6 @@ class Sdl3Ui;
 
 /*
 TODO
-Blend Modes such as Multiply or Add
 Waver Effect
 */
 
@@ -169,11 +168,14 @@ private:
 	void Render(Bitmap const& bmp, SpriteUniform uniform);
 	SpriteUniform InitUniform(Bitmap const& bmp, Rect const& src_rect, Opacity const& opacity);
 
-	void BeginOrContinueRenderPass(SDL_GPULoadOp load_op = SDL_GPU_LOADOP_LOAD);
+	void BeginOrContinueRenderPass(SDL_GPUGraphicsPipeline* pipeline, SDL_GPULoadOp load_op = SDL_GPU_LOADOP_LOAD);
 	void EndRenderPass();
 
 	Sdl3Ui* ui = nullptr;
 	SDL_GPUGraphicsPipeline* sprite_pipeline = nullptr;
+	SDL_GPUGraphicsPipeline* blend_pipeline = nullptr;
+	SDL_GPUGraphicsPipeline* bound_pipeline = nullptr;
+
 	SDL_GPUSampler* sprite_sampler = nullptr;
 	SDL_GPUBuffer* sprite_vertex_buffer = nullptr;
 	SDL_GPUBuffer* sprite_index_buffer = nullptr;
@@ -185,6 +187,10 @@ private:
 
 	SDL_GPUTexture* texture_target = nullptr;
 	Bitmap* bitmap_target = nullptr;
+
+	/** Intermediate texture used when applying blend effects */
+	SDL_GPUTexture* texture_blend = nullptr;
+	Uint32 blend_width = 0, blend_height = 0;
 
 	SDL_GPUTexture* texture_game = nullptr;
 	SDL_GPUTexture* texture_game_scaled = nullptr;

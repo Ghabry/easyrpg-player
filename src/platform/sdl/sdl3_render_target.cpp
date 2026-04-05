@@ -61,12 +61,20 @@ Sdl3RenderTarget::~Sdl3RenderTarget() {
 		SDL_ReleaseGPUGraphicsPipeline(gpu_device, sprite_pipeline);
 	}
 
+	if (blend_pipeline) {
+		SDL_ReleaseGPUGraphicsPipeline(gpu_device, blend_pipeline);
+	}
+
 	if (texture_game) {
 		SDL_ReleaseGPUTexture(gpu_device, texture_game);
 	}
 
 	if (texture_game_scaled) {
 		SDL_ReleaseGPUTexture(gpu_device, texture_game_scaled);
+	}
+
+	if (texture_blend) {
+		SDL_ReleaseGPUTexture(gpu_device, texture_blend);
 	}
 
 	if (gpu_device) {
@@ -294,7 +302,7 @@ void Sdl3RenderTarget::FillRect(Rect const& dst_rect, const Color &color) {
 void Sdl3RenderTarget::Clear() {
 	EndRenderPass();
 
-	BeginOrContinueRenderPass(SDL_GPU_LOADOP_CLEAR);
+	BeginOrContinueRenderPass(sprite_pipeline, SDL_GPU_LOADOP_CLEAR);
 }
 
 void Sdl3RenderTarget::ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, const Tone &tone, Opacity const& opacity) {
@@ -566,6 +574,13 @@ bool Sdl3RenderTarget::Init() {
 		return false;
 	}
 
+	SDL_GPUShader* blend_fragment_shader = LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "blend.frag", 2, 1, 0, 0);
+	if (!blend_fragment_shader) {
+		Output::Debug("SDL GPU: Loading blend fragment shader failed: {}", SDL_GetError());
+		SDL_ReleaseGPUShader(gpu_device, blend_fragment_shader);
+		return false;
+	}
+
 	// Create the graphics pipeline for our sprite shader
 	// This uploads the shader and the sprite quad to the GPU for later usage
 	SDL_GPUGraphicsPipelineCreateInfo pipeline_info{};
@@ -604,30 +619,39 @@ bool Sdl3RenderTarget::Init() {
 	pipeline_info.vertex_input_state.vertex_attributes = vertex_attrib.data();
 
 	// Color target
-	// Configured to support alpha blending (premultiplied alpha)
 	std::array<SDL_GPUColorTargetDescription, 1> color_target_desc;
 	color_target_desc[0] = {};
 	color_target_desc[0].format = SDL_GetGPUSwapchainTextureFormat(gpu_device, ui->sdl_window);
+	pipeline_info.target_info.num_color_targets = color_target_desc.size();
+	pipeline_info.target_info.color_target_descriptions = color_target_desc.data();
+
+	// Setup sprite pipeline (using premultiplied alpha)
 	color_target_desc[0].blend_state.enable_blend = true;
 	color_target_desc[0].blend_state.src_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
 	color_target_desc[0].blend_state.dst_color_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
 	color_target_desc[0].blend_state.color_blend_op = SDL_GPU_BLENDOP_ADD;
 	color_target_desc[0].blend_state.src_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE;
-	color_target_desc[0].blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ZERO;
+	color_target_desc[0].blend_state.dst_alpha_blendfactor = SDL_GPU_BLENDFACTOR_ONE_MINUS_SRC_ALPHA;
 	color_target_desc[0].blend_state.alpha_blend_op = SDL_GPU_BLENDOP_ADD;
-
-	pipeline_info.target_info.num_color_targets = color_target_desc.size();
-	pipeline_info.target_info.color_target_descriptions = color_target_desc.data();
-
 	sprite_pipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipeline_info);
 	if (!sprite_pipeline) {
 		Output::Debug("SDL_CreateGPUGraphicsPipeline failed: {}", SDL_GetError());
 		return false;
 	}
 
-	// Shaders can be deleted after creating the pipeline
+	// Blend pipeline is fortunately the same just with a different shader and no alpha blending
+	pipeline_info.fragment_shader = blend_fragment_shader;
+	color_target_desc[0].blend_state.enable_blend = false;
+	blend_pipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipeline_info);
+	if (!blend_pipeline) {
+		Output::Debug("SDL_CreateGPUGraphicsPipeline failed: {}", SDL_GetError());
+		return false;
+	}
+
+	// Shaders can be deleted after creating the pipelines
 	SDL_ReleaseGPUShader(gpu_device, sprite_vertex_shader);
 	SDL_ReleaseGPUShader(gpu_device, sprite_fragment_shader);
+	SDL_ReleaseGPUShader(gpu_device, blend_fragment_shader);
 
 	// Texture Sampler
 	SDL_GPUSamplerCreateInfo sampler_create_info{};
@@ -845,15 +869,77 @@ void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
 		return;
 	}
 
-	BeginOrContinueRenderPass();
+	// Determine which blending to do
+	auto blend_mode = static_cast<int>(uniform.fragment.blend_mode);
+	if (blend_mode == static_cast<int>(Bitmap::BlendMode::Default)) {
+		blend_mode = static_cast<int>(Bitmap::BlendMode::Normal);
+	}
+	bool is_complex_blend = (blend_mode > static_cast<int>(Bitmap::BlendMode::NormalWithoutAlpha));
+
+	// Sprite sampler
+	std::array<SDL_GPUTextureSamplerBinding, 2> sampler_bindings;
+	sampler_bindings[0].texture = reinterpret_cast<SDL_GPUTexture*>(bmp.GetGpuTexture());
+	sampler_bindings[0].sampler = sprite_sampler;
+	Uint32 num_samplers = 1;
+
+	// Handle the blend modes
+	if (is_complex_blend) {
+		EndRenderPass();
+
+		// Ensure to have a blend target that is large enough
+		if (!texture_blend || blend_width < GetWidth() || blend_height < GetHeight()) {
+			if (texture_blend) {
+				SDL_ReleaseGPUTexture(gpu_device, texture_blend);
+			}
+			SDL_GPUTextureCreateInfo tex_create_info = tex_create_info_default;
+			tex_create_info.width = GetWidth();
+			tex_create_info.height = GetHeight();
+			tex_create_info.usage = SDL_GPU_TEXTUREUSAGE_SAMPLER | SDL_GPU_TEXTUREUSAGE_COLOR_TARGET;
+			texture_blend = SDL_CreateGPUTexture(gpu_device, &tex_create_info);
+			if (!texture_blend) {
+				Output::Debug("SDL_CreateGPUTexture for texture_blend failed: {}", SDL_GetError());
+				return;
+			}
+		}
+
+		// Copy from the current render target (before we draw over it) to the blend texture
+		// This one becomes the input for the blend effects
+		SDL_GPUCopyPass* copy_pass = SDL_BeginGPUCopyPass(command_buf);
+		SDL_GPUTextureLocation src_loc{};
+		src_loc.texture = texture_target;
+		SDL_GPUTextureLocation dst_loc{};
+		dst_loc.texture = texture_blend;
+		SDL_CopyGPUTextureToTexture(copy_pass, &src_loc, &dst_loc, GetWidth(), GetHeight(), 1, false);
+		SDL_EndGPUCopyPass(copy_pass);
+
+		BeginOrContinueRenderPass(blend_pipeline);
+
+		// Update the Uniform
+		SDL_PushGPUVertexUniformData(command_buf, 0, &uniform.vertex, sizeof(SpriteUniform::vertex));
+		SDL_PushGPUFragmentUniformData(command_buf, 0, &uniform.fragment, sizeof(SpriteUniform::fragment));
+
+		// Sprite sampler (with the scene provided in texture_blend)
+		sampler_bindings[1].texture = texture_blend;
+		sampler_bindings[1].sampler = sprite_sampler;
+		SDL_BindGPUFragmentSamplers(render_pass, 0, sampler_bindings.data(), 2);
+
+		// Issue a draw call
+		SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);
+
+		EndRenderPass();
+
+		BeginOrContinueRenderPass(blend_pipeline);
+
+		num_samplers = 2;
+	} else {
+		BeginOrContinueRenderPass(sprite_pipeline);
+	}
 
 	// Update the Uniform
 	SDL_PushGPUVertexUniformData(command_buf, 0, &uniform.vertex, sizeof(SpriteUniform::vertex));
 	SDL_PushGPUFragmentUniformData(command_buf, 0, &uniform.fragment, sizeof(SpriteUniform::fragment));
 
-	// Sprite sampler
-	SDL_GPUTextureSamplerBinding sampler_binding{reinterpret_cast<SDL_GPUTexture*>(bmp.GetGpuTexture()), sprite_sampler};
-	SDL_BindGPUFragmentSamplers(render_pass, 0, &sampler_binding, 1);
+    SDL_BindGPUFragmentSamplers(render_pass, 0, sampler_bindings.data(), num_samplers);
 
 	// Issue a draw call
 	SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);
@@ -912,9 +998,14 @@ Sdl3RenderTarget::SpriteUniform Sdl3RenderTarget::InitUniform(Bitmap const& bmp,
 	return uniform;
 }
 
-void Sdl3RenderTarget::BeginOrContinueRenderPass(SDL_GPULoadOp load_op) {
+void Sdl3RenderTarget::BeginOrContinueRenderPass(SDL_GPUGraphicsPipeline* pipeline, SDL_GPULoadOp load_op) {
 	if (render_pass) {
-		return;
+		if (pipeline != bound_pipeline) {
+			// Start a new render pass using the new pipeline
+			EndRenderPass();
+		} else {
+			return;
+		}
 	}
 
 	SDL_GPUColorTargetInfo color_info{};
@@ -925,7 +1016,8 @@ void Sdl3RenderTarget::BeginOrContinueRenderPass(SDL_GPULoadOp load_op) {
 
 	render_pass = SDL_BeginGPURenderPass(command_buf, &color_info, 1, nullptr);
 
-	SDL_BindGPUGraphicsPipeline(render_pass, sprite_pipeline);
+	SDL_BindGPUGraphicsPipeline(render_pass, pipeline);
+	bound_pipeline = pipeline;
 
 	// Bind Vertex buffer
 	std::array<SDL_GPUBufferBinding, 1> vertex_buffer_bindings;

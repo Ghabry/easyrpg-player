@@ -1347,6 +1347,8 @@ pixman_op_t Bitmap::GetOperator(pixman_image_t* mask, Bitmap::BlendMode blend_mo
 				return PIXMAN_OP_OVERLAY;
 			case BlendMode::Saturate:
 				return PIXMAN_OP_SATURATE;
+			case BlendMode::Screen:
+				return PIXMAN_OP_SCREEN;
 			case BlendMode::Darken:
 				return PIXMAN_OP_DARKEN;
 			case BlendMode::Lighten:
@@ -1364,7 +1366,8 @@ pixman_op_t Bitmap::GetOperator(pixman_image_t* mask, Bitmap::BlendMode blend_mo
 			case BlendMode::HardLight:
 				return PIXMAN_OP_HARD_LIGHT;
 			default:
-				return PIXMAN_OP_CLEAR;
+				// Fallback
+				return PIXMAN_OP_OVER;
 		}
 	}
 
