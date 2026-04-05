@@ -81,8 +81,8 @@ public:
 			std::array<float, 4> tone;
 			/** flash (Colors for the flash effect) */
 			std::array<float, 4> flash;
-			/** opacity (top and bottom opacity to apply) */
-			float opacity_top, opacity_bottom, opacity_split, padding;
+			/** opacity (top and bottom opacity to apply), whether image has transparency */
+			float opacity_top, opacity_bottom, opacity_split, transparent;
 			/** waver (wave magnitude and phase) */
 			float waver_depth = -1.0, waver_phase;
 			/** blend_mode (Blend mode to use for the blit) */

@@ -172,7 +172,6 @@ public:
 		Saturate,
 		Darken,
 		Lighten,
-		Substract,
 		ColorDodge,
 		ColorBurn,
 		Difference,

@@ -6,7 +6,7 @@ SamplerState tex_sampler : register(s0, space2);
 struct SpriteUniforms {
 	float4 tone;
 	float4 flash;
-	float4 opacity; // top, bottom, split
+	float4 opacity; // top, bottom, split, image has alpha
 	float waver_depth;
 	float waver_phase;
 	float blend_mode;
@@ -49,6 +49,11 @@ float3 blendHardLight(float3 base, float3 blend) {
 
 float4 main(PSInput input) : SV_TARGET {
 	float4 texColor = main_tex.Sample(tex_sampler, input.texCoord);
+
+	// Image is opaque
+	if (ubo.opacity.a == 0.0) {
+		texColor.a = 1.0;
+	}
 
 	if (texColor.a > 0.0) {
 		float4 tone = ubo.tone / 255.0;

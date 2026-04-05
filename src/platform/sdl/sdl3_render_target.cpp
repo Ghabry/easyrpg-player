@@ -871,9 +871,6 @@ void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
 
 	// Determine which blending to do
 	auto blend_mode = static_cast<int>(uniform.fragment.blend_mode);
-	if (blend_mode == static_cast<int>(Bitmap::BlendMode::Default)) {
-		blend_mode = static_cast<int>(Bitmap::BlendMode::Normal);
-	}
 	bool is_complex_blend = (blend_mode > static_cast<int>(Bitmap::BlendMode::NormalWithoutAlpha));
 
 	// Sprite sampler
@@ -978,6 +975,8 @@ Sdl3RenderTarget::SpriteUniform Sdl3RenderTarget::InitUniform(Bitmap const& bmp,
 	if (opacity.IsSplit()) {
 		frag.opacity_split = 255.0f - static_cast<float>(opacity.split) / src_rect.height * 255.0f;
 	}
+
+	frag.transparent = bmp.GetTransparent() ? 1.0f : 0.0f;
 
 	Tone tone;
 	frag.tone = {
