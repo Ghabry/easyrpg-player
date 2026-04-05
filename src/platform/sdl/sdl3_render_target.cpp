@@ -851,10 +851,6 @@ bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp, bool is_rendertarget) {
 		SDL_ReleaseGPUTransferBuffer(gpu_device, tex_transfer_buf);
 
 		bmp.SetGpuTexture(texture, [this](Bitmap const& bmp) {
-			if (!gpu_device) {
-				// FIXME: Leaks textures on exit (device is destroyed before all textures are freed)
-				return;
-			}
 			EndRenderPass();
 			SDL_ReleaseGPUTexture(gpu_device, reinterpret_cast<SDL_GPUTexture*>(bmp.GetGpuTexture()));
 		});

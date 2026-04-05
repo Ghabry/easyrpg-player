@@ -482,7 +482,16 @@ void Transition::Update(RenderTarget* dst) {
 			return;
 		}
 	}
-	//Update current_frame:
+	// Update current_frame:
 	current_frame++;
+
+	// Free the resources when the transition is finished
+	// Otherwise they stay active until the app is shut down which will crash
+	// because the GPU textures are dangling
+	if (!IsActive()) {
+		screen1.reset();
+		screen2.reset();
+		random_block_transition.reset();
+	}
 }
 
