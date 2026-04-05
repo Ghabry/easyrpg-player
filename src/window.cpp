@@ -155,6 +155,7 @@ void Window::Draw(RenderTarget& dst) {
 			Rect src_rect(-min(-ox, 0), -min(-oy, 0),
 						  min(width - 2 * border_x, width - 2 * border_x + ox),
 						  min(height - 2 * border_y, height - 2 * border_y + oy));
+			src_rect.height = min(src_rect.height, contents->GetHeight());
 
 			dst.Blit(max(x + border_x, x + border_x - ox),
 					  max(y + border_y, y + border_y - oy),
