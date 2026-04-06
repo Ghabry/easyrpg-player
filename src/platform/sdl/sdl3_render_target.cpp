@@ -61,10 +61,6 @@ Sdl3RenderTarget::~Sdl3RenderTarget() {
 		SDL_ReleaseGPUGraphicsPipeline(gpu_device, sprite_pipeline);
 	}
 
-	if (blend_pipeline) {
-		SDL_ReleaseGPUGraphicsPipeline(gpu_device, blend_pipeline);
-	}
-
 	if (texture_game) {
 		SDL_ReleaseGPUTexture(gpu_device, texture_game);
 	}
@@ -574,17 +570,10 @@ bool Sdl3RenderTarget::Init() {
 		return false;
 	}
 
-	SDL_GPUShader* sprite_fragment_shader = LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "sprite.frag", 1, 1, 0, 0);
+	SDL_GPUShader* sprite_fragment_shader = LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "sprite.frag", 2, 1, 0, 0);
 	if (!sprite_fragment_shader) {
 		Output::Debug("SDL GPU: Loading fragment shader failed: {}", SDL_GetError());
 		SDL_ReleaseGPUShader(gpu_device, sprite_vertex_shader);
-		return false;
-	}
-
-	SDL_GPUShader* blend_fragment_shader = LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "blend.frag", 2, 1, 0, 0);
-	if (!blend_fragment_shader) {
-		Output::Debug("SDL GPU: Loading blend fragment shader failed: {}", SDL_GetError());
-		SDL_ReleaseGPUShader(gpu_device, blend_fragment_shader);
 		return false;
 	}
 
@@ -646,19 +635,9 @@ bool Sdl3RenderTarget::Init() {
 		return false;
 	}
 
-	// Blend pipeline is fortunately the same just with a different shader and no alpha blending
-	pipeline_info.fragment_shader = blend_fragment_shader;
-	color_target_desc[0].blend_state.enable_blend = false;
-	blend_pipeline = SDL_CreateGPUGraphicsPipeline(gpu_device, &pipeline_info);
-	if (!blend_pipeline) {
-		Output::Debug("SDL_CreateGPUGraphicsPipeline failed: {}", SDL_GetError());
-		return false;
-	}
-
 	// Shaders can be deleted after creating the pipelines
 	SDL_ReleaseGPUShader(gpu_device, sprite_vertex_shader);
 	SDL_ReleaseGPUShader(gpu_device, sprite_fragment_shader);
-	SDL_ReleaseGPUShader(gpu_device, blend_fragment_shader);
 
 	// Texture Sampler
 	SDL_GPUSamplerCreateInfo sampler_create_info{};
@@ -874,15 +853,14 @@ void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
 
 	// Determine which blending to do
 	auto blend_mode = static_cast<int>(uniform.fragment.blend_mode);
-	bool is_complex_blend = (blend_mode > static_cast<int>(Bitmap::BlendMode::NormalWithoutAlpha));
 
 	// Sprite sampler
 	std::array<SDL_GPUTextureSamplerBinding, 2> sampler_bindings;
 	sampler_bindings[0].texture = reinterpret_cast<SDL_GPUTexture*>(bmp.GetGpuTexture());
 	sampler_bindings[0].sampler = sprite_sampler;
-	Uint32 num_samplers = 1;
 
 	// Handle the blend modes
+	bool is_complex_blend = (blend_mode > static_cast<int>(Bitmap::BlendMode::NormalWithoutAlpha));
 	if (is_complex_blend) {
 		EndRenderPass();
 
@@ -912,34 +890,23 @@ void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
 		SDL_CopyGPUTextureToTexture(copy_pass, &src_loc, &dst_loc, GetWidth(), GetHeight(), 1, false);
 		SDL_EndGPUCopyPass(copy_pass);
 
-		BeginOrContinueRenderPass(blend_pipeline);
-
-		// Update the Uniform
-		SDL_PushGPUVertexUniformData(command_buf, 0, &uniform.vertex, sizeof(SpriteUniform::vertex));
-		SDL_PushGPUFragmentUniformData(command_buf, 0, &uniform.fragment, sizeof(SpriteUniform::fragment));
-
 		// Sprite sampler (with the scene provided in texture_blend)
 		sampler_bindings[1].texture = texture_blend;
 		sampler_bindings[1].sampler = sprite_sampler;
-		SDL_BindGPUFragmentSamplers(render_pass, 0, sampler_bindings.data(), 2);
-
-		// Issue a draw call
-		SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);
-
-		EndRenderPass();
-
-		BeginOrContinueRenderPass(blend_pipeline);
-
-		num_samplers = 2;
 	} else {
-		BeginOrContinueRenderPass(sprite_pipeline);
+		// Both samplers must be bound even when they are unused.
+		// In case of no complex blending simply bind the sprite again.
+		sampler_bindings[1].texture = sampler_bindings[0].texture;
+		sampler_bindings[1].sampler = sampler_bindings[0].sampler;
 	}
+
+	BeginOrContinueRenderPass(sprite_pipeline);
 
 	// Update the Uniform
 	SDL_PushGPUVertexUniformData(command_buf, 0, &uniform.vertex, sizeof(SpriteUniform::vertex));
 	SDL_PushGPUFragmentUniformData(command_buf, 0, &uniform.fragment, sizeof(SpriteUniform::fragment));
 
-    SDL_BindGPUFragmentSamplers(render_pass, 0, sampler_bindings.data(), num_samplers);
+    SDL_BindGPUFragmentSamplers(render_pass, 0, sampler_bindings.data(), sampler_bindings.size());
 
 	// Issue a draw call
 	SDL_DrawGPUIndexedPrimitives(render_pass, 6, 1, 0, 0, 0);

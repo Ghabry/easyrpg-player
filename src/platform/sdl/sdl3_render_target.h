@@ -181,7 +181,6 @@ private:
 
 	Sdl3Ui* ui = nullptr;
 	SDL_GPUGraphicsPipeline* sprite_pipeline = nullptr;
-	SDL_GPUGraphicsPipeline* blend_pipeline = nullptr;
 	SDL_GPUGraphicsPipeline* bound_pipeline = nullptr;
 
 	SDL_GPUSampler* sprite_sampler = nullptr;
