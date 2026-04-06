@@ -73,8 +73,15 @@ public:
 			std::array<std::array<float, 4>, 4> proj_matrix{};
 			std::array<std::array<float, 4>, 4> model_matrix{};
 			std::array<float, 4> uv_rect{};
+			/** flip (Sprite flipping) */
 			float flip_x = 0.0f, flip_y = 0.0f;
-			float padding = 0.0f, padding2 = 0.0f;
+			/**
+			 * The waver effect draws outside of the sprite bounds.
+			 * This would be clipped when rendering.
+			 * Expand defines how far the model is to be stretched by the vertex
+			 * shader to prevent this clipping.
+			 */
+			float expand_x = 0.0f, expand_y = 0.0f;
 		} vertex;
 
 		struct {
@@ -85,9 +92,9 @@ public:
 			/** opacity (top and bottom opacity to apply), whether image has transparency */
 			float opacity_top, opacity_bottom, opacity_split, transparent;
 			/** waver (wave magnitude and phase) */
-			float waver_depth = -1.0, waver_phase;
+			float waver_depth = -1.0, waver_phase = 0.0;
 			/** blend_mode (Blend mode to use for the blit) */
-			float blend_mode = -1.0, padding2;
+			float blend_mode = 0.0, padding = 0.0;
 		} fragment;
 	};
 

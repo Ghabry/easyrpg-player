@@ -72,9 +72,30 @@ float3 softLight(float3 src, float3 dst) {
 	return lerp(r1, r2, step(0.5, src));
 }
 
+float2 applyWaver(float2 texCoord, float2 localCoord, float4 uv_rect, float depth, float phase) {
+	uint tex_w, tex_h;
+	tex_src.GetDimensions(tex_w, tex_h);
+
+	float height = uv_rect.w * tex_h;
+
+	float sy = (localCoord.y * height) * (6.28318530718 / 32.0);
+	float offset = round(-2.0 * depth * sin(phase + sy));
+
+	float2 wave_uv = texCoord;
+	wave_uv.x += offset / (float)tex_w;
+
+	return wave_uv;
+}
+
 float4 main(PSInput input) : SV_TARGET
 {
-	float4 srcColor = tex_src.Sample(sampler_src, input.texCoord);
+	float2 sampleCoord = input.texCoord;
+
+	if (ubo.waver_depth > 0.0) {
+		sampleCoord = applyWaver(input.texCoord, input.localCoord, input.uv_rect, ubo.waver_depth, ubo.waver_phase);
+	}
+
+	float4 srcColor = tex_src.Sample(sampler_src, sampleCoord);
 
 	int3 bgCoord = int3(input.position.xy, 0);
 	float4 dstColor = tex_bg.Load(bgCoord);

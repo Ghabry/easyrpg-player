@@ -320,6 +320,10 @@ void Sdl3RenderTarget::BlendBlit(int x, int y, Bitmap const& src, Rect const& sr
 void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 		Bitmap const& src, Rect const& src_rect,
 		Opacity const& opacity, const GpuBlitOps& ops) {
+	if (src_rect.width <= 0 || src_rect.height <= 0) {
+		return;
+	}
+
 	auto uniform = InitUniform(src, src_rect, opacity);
 	auto& vertex = uniform.vertex;
 
@@ -330,6 +334,11 @@ void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 	if (ops.flipy) {
 		vertex.flip_y = 1.0f;
 	}
+
+	if (ops.waver_depth > 0) {
+		vertex.expand_x = 2.0f * ops.waver_depth / src_rect.width;
+	}
+
 
 	double zx = (ops.zoom_x == 0.0) ? 1.0 : ops.zoom_x;
 	double zy = (ops.zoom_y == 0.0) ? 1.0 : ops.zoom_y;

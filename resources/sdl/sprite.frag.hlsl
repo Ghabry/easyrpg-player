@@ -47,8 +47,34 @@ float3 blendHardLight(float3 base, float3 blend) {
 	return lerp(multiplyResult, screenResult, step(0.5, blend));
 }
 
+float2 applyWaver(float2 texCoord, float2 localCoord, float4 uv_rect, float depth, float phase) {
+	uint tex_w, tex_h;
+	main_tex.GetDimensions(tex_w, tex_h);
+
+	float height = uv_rect.w * tex_h;
+
+	float sy = (localCoord.y * height) * (6.28318530718 / 32.0);
+	float offset = round(-2.0 * depth * sin(phase + sy));
+
+	float2 wave_uv = texCoord;
+	wave_uv.x += offset / (float)tex_w;
+
+	return wave_uv;
+}
+
 float4 main(PSInput input) : SV_TARGET {
-	float4 texColor = main_tex.Sample(tex_sampler, input.texCoord);
+	float2 sampleCoord = input.texCoord;
+
+	if (ubo.waver_depth > 0.0) {
+		sampleCoord = applyWaver(input.texCoord, input.localCoord, input.uv_rect, ubo.waver_depth, ubo.waver_phase);
+		if (sampleCoord.x < input.uv_rect.x || sampleCoord.x > input.uv_rect.x + input.uv_rect.z ||
+			sampleCoord.y < input.uv_rect.y || sampleCoord.y > input.uv_rect.y + input.uv_rect.w) {
+			// Prevent that other pixels of the spritesheet "leak"
+			return float4(0.0, 0.0, 0.0, 0.0);
+		}
+	}
+
+	float4 texColor = main_tex.Sample(tex_sampler, sampleCoord);
 
 	// Image is opaque
 	if (ubo.opacity.a == 0.0) {
