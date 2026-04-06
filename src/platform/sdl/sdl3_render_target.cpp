@@ -324,13 +324,11 @@ void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
 	auto& vertex = uniform.vertex;
 
 	if (ops.flipx) {
-		vertex.uv_rect[0] += vertex.uv_rect[2];
-		vertex.uv_rect[2] = -vertex.uv_rect[2];
+		vertex.flip_x = 1.0f;
 	}
 
 	if (ops.flipy) {
-		vertex.uv_rect[1] += vertex.uv_rect[3];
-		vertex.uv_rect[3] = -vertex.uv_rect[3];
+		vertex.flip_y = 1.0f;
 	}
 
 	double zx = (ops.zoom_x == 0.0) ? 1.0 : ops.zoom_x;

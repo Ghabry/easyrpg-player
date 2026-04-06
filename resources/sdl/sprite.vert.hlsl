@@ -7,15 +7,16 @@ struct VSInput {
 
 struct VSOutput {
 	float4 position : SV_POSITION;
-	float2 texCoord : TEXCOORD0;
-	float2 localCoord : TEXCOORD1;
-	float4 uv_rect : TEXCOORD2;
+	float2 texCoord : TEXCOORD0; // Coordinates of the sprite on the spritesheet to be sampled
+	float2 localCoord : TEXCOORD1; // Coordinates relative to the spritesheet
+	float4 uv_rect : TEXCOORD2; // Offset (xy) and size (zw) of sprite
 };
 
 struct SpriteUniforms {
 	float4x4 proj_matrix;
 	float4x4 model_matrix;
 	float4 uv_rect; // x, y, width, height
+	float2 flip;
 };
 
 cbuffer UniformBlock : register(b0, space1) {
@@ -30,7 +31,8 @@ VSOutput main(VSInput input) {
 	float4 world_pos = mul(ubo.model_matrix, pos);
 	output.position = mul(ubo.proj_matrix, world_pos);
 
-	output.texCoord = input.texCoord * ubo.uv_rect.zw + ubo.uv_rect.xy;
+	float2 sampleCoord = abs(ubo.flip - input.texCoord);
+	output.texCoord = sampleCoord * ubo.uv_rect.zw + ubo.uv_rect.xy;
 
 	output.localCoord = input.texCoord;
 	output.uv_rect = ubo.uv_rect;

@@ -73,7 +73,8 @@ public:
 			std::array<std::array<float, 4>, 4> proj_matrix{};
 			std::array<std::array<float, 4>, 4> model_matrix{};
 			std::array<float, 4> uv_rect{};
-			std::array<float, 4> padding{};
+			float flip_x = 0.0f, flip_y = 0.0f;
+			float padding = 0.0f, padding2 = 0.0f;
 		} vertex;
 
 		struct {
