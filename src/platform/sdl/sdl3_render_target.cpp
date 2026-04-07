@@ -19,6 +19,7 @@
 #include "sdl3_ui.h"
 #include "output.h"
 #include <SDL3/SDL_gpu.h>
+#include "generated/shader_sprite.h"
 
 Sdl3RenderTarget* Sdl3RenderTarget::Create(Sdl3Ui& ui) {
 	auto gpu = new Sdl3RenderTarget(ui);
@@ -531,6 +532,64 @@ bool Sdl3RenderTarget::CopyToBitmap(Bitmap& target) {
 	return true;
 }
 
+
+static SDL_GPUShader* LoadEmbeddedShader(
+	SDL_GPUDevice* gpu_device,
+	SDL_GPUShaderStage stage,
+	const Uint8* spirv_code, size_t spirv_size,
+	const char* msl_code,
+	int num_sampler, int num_uniform, int num_storage, int num_texture)
+{
+	SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(gpu_device);
+	SDL_GPUShaderCreateInfo shader_info{};
+	shader_info.stage = stage;
+	shader_info.num_samplers = num_sampler;
+	shader_info.num_uniform_buffers = num_uniform;
+	shader_info.num_storage_buffers = num_storage;
+	shader_info.num_storage_textures = num_texture;
+
+	if (format & SDL_GPU_SHADERFORMAT_SPIRV) {
+		shader_info.format = SDL_GPU_SHADERFORMAT_SPIRV;
+		shader_info.entrypoint = "main";
+		shader_info.code_size = spirv_size;
+		shader_info.code = spirv_code;
+	} else if (format & SDL_GPU_SHADERFORMAT_MSL) {
+		shader_info.format = SDL_GPU_SHADERFORMAT_MSL;
+		shader_info.entrypoint = "main0";
+		shader_info.code_size = strlen(msl_code);
+		shader_info.code = reinterpret_cast<const Uint8*>(msl_code);
+	} else if (format & SDL_GPU_SHADERFORMAT_DXIL) {
+		/*TODO shader_info.format = SDL_GPU_SHADERFORMAT_DXIL;
+		shader_info.entrypoint = "main";
+		shader_info.code_size =
+		shader_info.code =*/
+	} else {
+		Output::Debug("Unrecognized backend shader format {}", format);
+		return nullptr;
+	}
+
+	SDL_GPUShader* shader = SDL_CreateGPUShader(gpu_device, &shader_info);
+	if (!shader) {
+		Output::Debug("SDL GPU: Failed to create shader!");
+	}
+	return shader;
+}
+
+// Load shader from the byte array shader_NAME_[vert|frag]_[spirv|metal]
+#define LOAD_VERTEX_SHADER(name, num_sampler, num_uniform, num_storage, num_texture) \
+	LoadEmbeddedShader(gpu_device, SDL_GPU_SHADERSTAGE_VERTEX, \
+		reinterpret_cast<const Uint8*>(shader_##name##_vert_spirv), \
+		sizeof(shader_##name##_vert_spirv), \
+		shader_##name##_vert_metal, \
+		num_sampler, num_uniform, num_storage, num_texture)
+
+#define LOAD_FRAGMENT_SHADER(name, num_sampler, num_uniform, num_storage, num_texture) \
+	LoadEmbeddedShader(gpu_device, SDL_GPU_SHADERSTAGE_FRAGMENT, \
+		reinterpret_cast<const Uint8*>(shader_##name##_frag_spirv), \
+		sizeof(shader_##name##_frag_spirv), \
+		shader_##name##_frag_metal, \
+		num_sampler, num_uniform, num_storage, num_texture)
+
 /*
 Based on TexturedQuad.c and TexturedAnimatedQuad.c from
 https://github.com/TheSpydog/SDL_gpu_examples by
@@ -564,13 +623,13 @@ bool Sdl3RenderTarget::Init() {
 		return false;
 	}
 
-	SDL_GPUShader* sprite_vertex_shader = LoadShader(SDL_GPU_SHADERSTAGE_VERTEX, "sprite.vert", 0, 1, 0, 0);
+	SDL_GPUShader* sprite_vertex_shader = LOAD_VERTEX_SHADER(sprite, 0, 1, 0, 0);
 	if (!sprite_vertex_shader) {
 		Output::Debug("SDL GPU: Loading vertex shader failed: {}", SDL_GetError());
 		return false;
 	}
 
-	SDL_GPUShader* sprite_fragment_shader = LoadShader(SDL_GPU_SHADERSTAGE_FRAGMENT, "sprite.frag", 2, 1, 0, 0);
+	SDL_GPUShader* sprite_fragment_shader = LOAD_FRAGMENT_SHADER(sprite, 2, 1, 0, 0);
 	if (!sprite_fragment_shader) {
 		Output::Debug("SDL GPU: Loading fragment shader failed: {}", SDL_GetError());
 		SDL_ReleaseGPUShader(gpu_device, sprite_vertex_shader);
@@ -725,59 +784,6 @@ bool Sdl3RenderTarget::Init() {
 	SDL_ReleaseGPUTransferBuffer(gpu_device, sprite_transfer_buf);
 
 	return true;
-}
-
-SDL_GPUShader* Sdl3RenderTarget::LoadShader(SDL_GPUShaderStage stage, const char* filename, int num_sampler, int num_uniform, int num_storage, int num_texture) {
-	// TODO: Load from buffer instead
-	std::string fullname = filename;
-	SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(gpu_device);
-	const char *entrypoint;
-
-	if (format & SDL_GPU_SHADERFORMAT_SPIRV) {
-		fullname += ".spv";
-		format = SDL_GPU_SHADERFORMAT_SPIRV;
-		entrypoint = "main";
-	} else if (format & SDL_GPU_SHADERFORMAT_MSL) {
-		fullname += ".msl";
-		format = SDL_GPU_SHADERFORMAT_MSL;
-		entrypoint = "main0";
-	} else if (format & SDL_GPU_SHADERFORMAT_DXIL) {
-		fullname += ".dxil";
-		format = SDL_GPU_SHADERFORMAT_DXIL;
-		entrypoint = "main";
-	} else {
-		Output::Debug("Unrecognized backend shader format {}", format);
-		return nullptr;
-	}
-
-	size_t code_size;
-	void* code = SDL_LoadFile(fullname.c_str(), &code_size);
-	if (!code) {
-		Output::Debug("Failed to load shader from disk! {}", fullname);
-		return nullptr;
-	}
-
-	SDL_GPUShaderCreateInfo shader_info;
-	shader_info.code_size = code_size;
-	shader_info.code = reinterpret_cast<const Uint8*>(code);
-	shader_info.entrypoint = entrypoint;
-	shader_info.format = format;
-	shader_info.stage = stage;
-	shader_info.num_samplers = num_sampler;
-	shader_info.num_storage_textures = num_texture;
-	shader_info.num_storage_buffers = num_storage;
-	shader_info.num_uniform_buffers = num_uniform;
-
-	SDL_GPUShader* shader = SDL_CreateGPUShader(gpu_device, &shader_info);
-	if (!shader) {
-		Output::Debug("SDL GPU: Failed to create shader!");
-		SDL_free(code);
-		return nullptr;
-	}
-
-	SDL_free(code);
-
-	return shader;
 }
 
 bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp, bool is_rendertarget) {

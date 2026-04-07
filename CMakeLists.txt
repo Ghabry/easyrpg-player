@@ -575,6 +575,7 @@ endif()
 
 if(PLAYER_TARGET_PLATFORM STREQUAL "SDL3")
 	target_sources(${PROJECT_NAME} PRIVATE
+		src/generated/shader_sprite.h
 		src/platform/sdl/sdl3_render_target.cpp
 		src/platform/sdl/sdl3_render_target.h
 		src/platform/sdl/sdl3_ui.cpp

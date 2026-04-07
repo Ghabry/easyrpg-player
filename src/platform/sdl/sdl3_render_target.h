@@ -169,7 +169,7 @@ public:
 private:
 	explicit Sdl3RenderTarget(Sdl3Ui& ui) : ui(&ui) {}
 	bool Init();
-	SDL_GPUShader* LoadShader(SDL_GPUShaderStage stage, const char* filename, int num_sampler, int num_uniform, int num_storage, int num_texture);
+
 	bool AllocTexture(Bitmap const& src, bool is_rendertarget = false);
 	void FreeTexture(Bitmap const& src);
 
