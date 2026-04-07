@@ -593,6 +593,29 @@ if(PLAYER_TARGET_PLATFORM STREQUAL "SDL3")
 
 	if(WIN32)
 		target_link_libraries(${PROJECT_NAME} "Dwmapi")
+
+		# Compile shader
+		find_program(DXC_EXECUTABLE NAMES dxc)
+		if(NOT DXC_EXECUTABLE)
+			message(WARNING "dxc not found. DXIL (DirectX) shader will be unavailable!")
+		else()
+			compile_vertex_shader_dxil(
+				resources/shader/sprite.vert.hlsl
+				generated/sprite_vert_dxil.h
+				shader_sprite_vert_dxil
+			)
+
+			compile_fragment_shader_dxil(
+				resources/shader/sprite.frag.hlsl
+				generated/sprite_frag_dxil.h
+				shader_sprite_frag_dxil
+			)
+
+			target_sources(${PROJECT_NAME} PRIVATE
+				"${CMAKE_CURRENT_BINARY_DIR}/generated/sprite_frag_dxil.h"
+				"${CMAKE_CURRENT_BINARY_DIR}/generated/sprite_vert_dxil.h")
+			target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+		endif()
 	endif()
 elseif(PLAYER_TARGET_PLATFORM STREQUAL "SDL2")
 	target_sources(${PROJECT_NAME} PRIVATE

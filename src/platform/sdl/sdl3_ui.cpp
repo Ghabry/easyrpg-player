@@ -120,7 +120,7 @@ Sdl3Ui::Sdl3Ui(long width, long height, const Game_Config& cfg) : BaseUi(cfg)
 		Output::Error("Couldn't initialize SDL.\n{}\n", SDL_GetError());
 	}
 
-	use_gpu_renderer = (cfg.video.renderer.Get() == "hardware");
+	use_gpu_renderer = (cfg.video.renderer.Get().empty() || cfg.video.renderer.Get() == "hardware");
 
 	RequestVideoMode(width, height,
 			cfg.video.window_zoom.Get(),

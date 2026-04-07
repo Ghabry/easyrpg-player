@@ -30,3 +30,21 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio" AND CMAKE_CONFIGURATION_TYPES)
 	# Remove all configuration types except the current build type
 	set(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
 endif()
+
+function(compile_vertex_shader_dxil INFILE OUTFILE VARNAME)
+	add_custom_command(
+		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${OUTFILE}"
+		COMMAND "${DXC_EXECUTABLE}" -T vs_6_0 -E main -Vn ${VARNAME} -Fh "${CMAKE_CURRENT_BINARY_DIR}/${OUTFILE}" "${CMAKE_CURRENT_SOURCE_DIR}/${INFILE}"
+		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${INFILE}"
+		VERBATIM
+	)
+endfunction()
+
+function(compile_fragment_shader_dxil INFILE OUTFILE VARNAME)
+	add_custom_command(
+		OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${OUTFILE}"
+		COMMAND "${DXC_EXECUTABLE}" -T ps_6_0 -E main -Vn ${VARNAME} -Fh "${CMAKE_CURRENT_BINARY_DIR}/${OUTFILE}" "${CMAKE_CURRENT_SOURCE_DIR}/${INFILE}"
+		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${INFILE}"
+		VERBATIM
+	)
+endfunction()

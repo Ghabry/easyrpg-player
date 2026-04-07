@@ -1441,4 +1441,9 @@ const char* const shader_sprite_vert_metal = "";
 const char* const shader_sprite_frag_metal = "";
 #endif
 
+#ifndef SHADER_SPRITE_DXIL
+const uint8_t shader_sprite_vert_dxil[] = { 0x0 };
+const uint8_t shader_sprite_frag_dxil[] = { 0x0 };
+#endif
+
 #endif

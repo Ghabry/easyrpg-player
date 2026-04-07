@@ -19,6 +19,11 @@
 #include "sdl3_ui.h"
 #include "output.h"
 #include <SDL3/SDL_gpu.h>
+#if __has_include("generated/sprite_vert_dxil.h") && __has_include("generated/sprite_frag_dxil.h")
+#  define SHADER_SPRITE_DXIL
+#  include "generated/sprite_vert_dxil.h"
+#  include "generated/sprite_frag_dxil.h"
+#endif
 #include "generated/shader_sprite.h"
 
 Sdl3RenderTarget* Sdl3RenderTarget::Create(Sdl3Ui& ui) {
@@ -44,6 +49,8 @@ Sdl3RenderTarget* Sdl3RenderTarget::Create(Sdl3Ui& ui) {
 }
 
 Sdl3RenderTarget::~Sdl3RenderTarget() {
+	fill_cache.clear();
+
 	if (sprite_vertex_buffer) {
 		SDL_ReleaseGPUBuffer(gpu_device, sprite_vertex_buffer);
 	}
@@ -115,6 +122,17 @@ void Sdl3RenderTarget::EndDrawScreen() {
 
 	assert(command_buf);
 
+	// Clear the window
+	SDL_GPUColorTargetInfo swapchain_clear_info{};
+	swapchain_clear_info.texture = swapchain_texture;
+	swapchain_clear_info.clear_color = { 0.f, 0.f, 0.f, 1.0f }; // Opaque black
+	swapchain_clear_info.load_op = SDL_GPU_LOADOP_CLEAR;
+	swapchain_clear_info.store_op = SDL_GPU_STOREOP_STORE;
+
+	SDL_GPURenderPass* clear_pass = SDL_BeginGPURenderPass(command_buf, &swapchain_clear_info, 1, nullptr);
+	SDL_EndGPURenderPass(clear_pass);
+
+	// Blit the game texture to the screen
 	SDL_GPUBlitInfo blit_info = {};
 
 	blit_info.source.texture = texture_game;
@@ -532,12 +550,12 @@ bool Sdl3RenderTarget::CopyToBitmap(Bitmap& target) {
 	return true;
 }
 
-
 static SDL_GPUShader* LoadEmbeddedShader(
 	SDL_GPUDevice* gpu_device,
 	SDL_GPUShaderStage stage,
 	const Uint8* spirv_code, size_t spirv_size,
 	const char* msl_code,
+	const Uint8* dxil_code, size_t dxil_size,
 	int num_sampler, int num_uniform, int num_storage, int num_texture)
 {
 	SDL_GPUShaderFormat format = SDL_GetGPUShaderFormats(gpu_device);
@@ -559,10 +577,10 @@ static SDL_GPUShader* LoadEmbeddedShader(
 		shader_info.code_size = strlen(msl_code);
 		shader_info.code = reinterpret_cast<const Uint8*>(msl_code);
 	} else if (format & SDL_GPU_SHADERFORMAT_DXIL) {
-		/*TODO shader_info.format = SDL_GPU_SHADERFORMAT_DXIL;
+		shader_info.format = SDL_GPU_SHADERFORMAT_DXIL;
 		shader_info.entrypoint = "main";
-		shader_info.code_size =
-		shader_info.code =*/
+		shader_info.code_size = dxil_size;
+		shader_info.code = dxil_code;
 	} else {
 		Output::Debug("Unrecognized backend shader format {}", format);
 		return nullptr;
@@ -581,6 +599,8 @@ static SDL_GPUShader* LoadEmbeddedShader(
 		reinterpret_cast<const Uint8*>(shader_##name##_vert_spirv), \
 		sizeof(shader_##name##_vert_spirv), \
 		shader_##name##_vert_metal, \
+		reinterpret_cast<const Uint8*>(shader_##name##_vert_dxil), \
+		sizeof(shader_##name##_vert_dxil), \
 		num_sampler, num_uniform, num_storage, num_texture)
 
 #define LOAD_FRAGMENT_SHADER(name, num_sampler, num_uniform, num_storage, num_texture) \
@@ -588,6 +608,8 @@ static SDL_GPUShader* LoadEmbeddedShader(
 		reinterpret_cast<const Uint8*>(shader_##name##_frag_spirv), \
 		sizeof(shader_##name##_frag_spirv), \
 		shader_##name##_frag_metal, \
+		reinterpret_cast<const Uint8*>(shader_##name##_frag_dxil), \
+		sizeof(shader_##name##_frag_dxil), \
 		num_sampler, num_uniform, num_storage, num_texture)
 
 /*

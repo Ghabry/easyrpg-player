@@ -99,6 +99,11 @@ const char* const shader_#{sym}_vert_metal = "";
 const char* const shader_#{sym}_frag_metal = "";
 #endif
 
+#ifndef SHADER_#{sym.upcase}_DXIL
+const uint8_t shader_sprite_vert_dxil[] = { 0x0 };
+const uint8_t shader_sprite_frag_dxil[] = { 0x0 };
+#endif
+
 #endif
 EOS
 end
