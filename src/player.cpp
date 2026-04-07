@@ -430,6 +430,7 @@ void Player::Exit() {
 	if (ret) Output::TakeScreenshot(ret);
 #endif
 	Player::ResetGameObjects();
+	Main_Data::Cleanup();
 	Font::Dispose();
 	Graphics::Quit();
 	Output::Quit();
