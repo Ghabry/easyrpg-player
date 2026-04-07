@@ -220,13 +220,14 @@ bool Output::TakeScreenshot(std::string_view file) {
 
 bool Output::TakeScreenshot(std::ostream& os) {
 	int scale = Player::player_config.screenshot_scale.Get();
+
+	auto disp = DisplayUi->CaptureScreen();
 	if (scale > 1) {
-		auto& disp = DisplayUi->GetDisplaySurface();
 		auto scaled_disp = Bitmap::Create(disp->GetWidth() * scale, disp->GetHeight() * scale, false);
 		scaled_disp->ZoomOpacityBlit(0, 0, 0, 0, *disp, disp->GetRect(), scale, scale, Opacity::Opaque());
 		return scaled_disp->WritePNG(os);
 	} else {
-		return DisplayUi->GetDisplaySurface()->WritePNG(os);
+		return disp->WritePNG(os);
 	}
 }
 

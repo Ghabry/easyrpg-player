@@ -89,6 +89,7 @@ public:
 
 	/**
 	 * Gets a copy of the display surface.
+	 * This is compatible with hardware renderers.
 	 *
 	 * @return bitmap a copy of the display surface.
 	 */
@@ -181,6 +182,15 @@ public:
 	 */
 	RenderTarget* GetRenderTarget();
 
+	/**
+	 * Gives access to the Display Screen Handle.
+	 * Do not modify the underlying bitmap. This will not work when a
+	 * hardware renderer is used.
+	 * Use CaptureScreen instead which will properly transfer the GPU
+	 * memory to this texture.
+	 *
+	 * @return bitmap handle of the screen
+	 */
 	BitmapRef const& GetDisplaySurface() const;
 	BitmapRef& GetDisplaySurface();
 
