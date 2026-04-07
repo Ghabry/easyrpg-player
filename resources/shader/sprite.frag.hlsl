@@ -71,14 +71,13 @@ float3 blendOverlay(float3 base, float3 blend) {
 }
 
 float3 blendColorBurn(float3 src, float3 dst) {
-	return dst >= 1.0 ? 1.0 :
-		src <= 0.0 ? 0.0 :
-			1.0 - saturate((1.0 - dst) / max(src, 0.0001));
+	float3 result = 1.0 - saturate((1.0 - dst) / max(src, 0.0001));
+	result = lerp(result, float3(0.0, 0.0, 0.0), step(src, 0.0));
+	return lerp(result, float3(1.0, 1.0, 1.0), step(1.0, dst));
 }
 
 float3 blendSoftLight(float3 src, float3 dst) {
-	float3 d = step(0.25, dst) ? sqrt(dst) :
-		((16.0 * dst - 12.0) * dst + 4.0) * dst;
+	float3 d = lerp(((16.0 * dst - 12.0) * dst + 4.0) * dst, sqrt(max(dst, 0.0)), step(0.25, dst));
 	float3 r1 = dst - (1.0 - 2.0 * src) * dst * (1.0 - dst);
 	float3 r2 = dst + (2.0 * src - 1.0) * (d - dst);
 	return lerp(r1, r2, step(0.5, src));
