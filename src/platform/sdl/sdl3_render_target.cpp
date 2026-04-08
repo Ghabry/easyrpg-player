@@ -112,8 +112,6 @@ bool Sdl3RenderTarget::BeginDrawScreen() {
 
 	texture_target = texture_game;
 
-	Clear();
-
 	return true;
 }
 
