@@ -219,8 +219,15 @@ int Sdl3RenderTarget::GetHeight() const {
 	return bitmap_target ? bitmap_target->height() : ui->current_display_mode.height;
 }
 
-void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rect,
+void Sdl3RenderTarget::Blit(int x, int y, Bitmap const& src, Rect const& src_rect_,
 		Opacity const& opacity, Bitmap::BlendMode blend_mode) {
+	// Prevent out of bounds rendering, this will repeat the texture
+	auto src_rect = src_rect_;
+	src_rect.Adjust(src.GetRect());
+	if (src_rect.IsEmpty()) {
+		return;
+	}
+
 	auto uniform = InitUniform(src, src_rect, opacity);
 
 	const float srw = static_cast<float>(src_rect.width);
@@ -333,9 +340,12 @@ void Sdl3RenderTarget::BlendBlit(int x, int y, Bitmap const& src, Rect const& sr
 }
 
 void Sdl3RenderTarget::GpuBlit(int x, int y, int ox, int oy,
-		Bitmap const& src, Rect const& src_rect,
+		Bitmap const& src, Rect const& src_rect_,
 		Opacity const& opacity, const GpuBlitOps& ops) {
-	if (src_rect.width <= 0 || src_rect.height <= 0) {
+	// Prevent out of bounds rendering, this will repeat the texture
+	auto src_rect = src_rect_;
+	src_rect.Adjust(src.GetRect());
+	if (src_rect.IsEmpty()) {
 		return;
 	}
 

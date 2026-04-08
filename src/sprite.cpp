@@ -40,8 +40,7 @@ void Sprite::BlitScreen(RenderTarget& dst) {
 	if (!bitmap || (opacity_top_effect <= 0 && opacity_bottom_effect <= 0))
 		return;
 
-	bool hardware_can_handle = dst.IsHardwareAccelerated();
-	if (hardware_can_handle) {
+	if (dst.IsHardwareAccelerated()) {
 		RenderTarget::GpuBlitOps op{};
 		op.zoom_x = zoom_x_effect;
 		op.zoom_y = zoom_y_effect;
