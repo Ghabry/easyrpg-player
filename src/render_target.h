@@ -393,19 +393,21 @@ public:
 	}
 
 	/**
-	 * Clears the bitmap with transparent pixels.
+	 * Clears the bitmap.
+	 * After this operating the area must appear black.
 	 */
 	virtual void Clear() {
-		Fill({0, 0, 0, 0});
+		Fill({0, 0, 0, 255});
 	}
 
 	/**
-	 * Clears the bitmap rect with transparent pixels.
+	 * Clears the area of the given bitmap rect.
+	 * After this operating the area must appear black.
 	 *
 	 * @param dst_rect destination rect.
 	 */
 	virtual void ClearRect(Rect const& dst_rect) {
-		FillRect(dst_rect, {0, 0, 0, 0});
+		FillRect(dst_rect, {0, 0, 0, 255});
 	}
 
 	/**
