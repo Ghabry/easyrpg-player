@@ -134,6 +134,11 @@ constexpr Game_Clock::duration Game_Clock::GetTargetGameTimeStep() {
 }
 
 constexpr Game_Clock::duration Game_Clock::TimeStepFromFps(int fps) {
+	if (fps < 10) {
+		// Prevent Player from becoming unresponsive
+		fps = 10;
+	}
+
 	auto ns = std::chrono::nanoseconds(std::chrono::seconds(1)) / fps;
 	return std::chrono::duration_cast<Game_Clock::duration>(ns);
 }
