@@ -444,7 +444,7 @@ public:
 		ConfigParamBase<std::string>(name, description, config_section, config_key, {}) {
 	}
 
-	bool vIsValid(const std::string& value) const override {
+	bool vIsValid(const std::string&) const override {
 		return true;
 	}
 

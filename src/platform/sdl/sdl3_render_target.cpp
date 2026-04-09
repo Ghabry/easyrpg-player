@@ -280,6 +280,7 @@ void Sdl3RenderTarget::FlipBlit(int x, int y, Bitmap const& src, Rect const& src
 	GpuBlitOps ops = {};
 	ops.flipx = horizontal;
 	ops.flipy = vertical;
+	ops.blend_mode = blend_mode;
 	GpuBlit(x, y, 0, 0, src, src_rect, opacity, ops);
 }
 
@@ -506,7 +507,7 @@ bool Sdl3RenderTarget::CopyToBitmap(Bitmap& target) {
 	SDL_GPUCopyPass* dl_copy_pass = SDL_BeginGPUCopyPass(command_buf);
 
 	int size = target.pitch() * target.height();
-	SDL_GPUTransferBufferCreateInfo dl_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, static_cast<Uint32>(size)};
+	SDL_GPUTransferBufferCreateInfo dl_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, static_cast<Uint32>(size), 0};
 	SDL_GPUTransferBuffer* dl_transfer_buf = SDL_CreateGPUTransferBuffer(gpu_device, &dl_buffer_info);
 	if (!dl_transfer_buf) {
 		Output::Debug("SDL_CreateGPUTransferBuffer for download failed:", SDL_GetError());
@@ -743,7 +744,7 @@ bool Sdl3RenderTarget::Init() {
 	}
 
 	// Vertices for the sprite textures
-	SDL_GPUBufferCreateInfo buffer_info{SDL_GPU_BUFFERUSAGE_VERTEX, sizeof(sprite_quad.vertices)};
+	SDL_GPUBufferCreateInfo buffer_info{SDL_GPU_BUFFERUSAGE_VERTEX, sizeof(sprite_quad.vertices), 0};
 	sprite_vertex_buffer = SDL_CreateGPUBuffer(gpu_device, &buffer_info);
 	if (!sprite_vertex_buffer) {
 		Output::Debug("SDL_CreateGPUBuffer for vertex failed: {}", SDL_GetError());
@@ -751,7 +752,7 @@ bool Sdl3RenderTarget::Init() {
 	}
 
 	// Vertex order for the triangle list
-	SDL_GPUBufferCreateInfo index_info{SDL_GPU_BUFFERUSAGE_INDEX, sizeof(sprite_quad.indices)};
+	SDL_GPUBufferCreateInfo index_info{SDL_GPU_BUFFERUSAGE_INDEX, sizeof(sprite_quad.indices), 0};
 	sprite_index_buffer = SDL_CreateGPUBuffer(gpu_device, &index_info);
 	if (!sprite_index_buffer) {
 		Output::Debug("SDL_CreateGPUBuffer for index failed: {}", SDL_GetError());
@@ -760,7 +761,7 @@ bool Sdl3RenderTarget::Init() {
 
 	// Transfer description (to GPU) for sprite quad
 	SDL_GPUTransferBufferCreateInfo transfer_create_info{
-		SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,	sizeof(sprite_quad)};
+		SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,	sizeof(sprite_quad), 0};
 	SDL_GPUTransferBuffer* sprite_transfer_buf = SDL_CreateGPUTransferBuffer(
 		gpu_device, &transfer_create_info
 	);
@@ -840,7 +841,7 @@ bool Sdl3RenderTarget::AllocTexture(Bitmap const& bmp, bool is_rendertarget) {
 
 		// Request a shared buffer fo upload to GPU
 		int size = bmp.pitch() * bmp.height();
-		SDL_GPUTransferBufferCreateInfo tex_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, static_cast<Uint32>(size)};
+		SDL_GPUTransferBufferCreateInfo tex_buffer_info{SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, static_cast<Uint32>(size), 0};
 		SDL_GPUTransferBuffer* tex_transfer_buf = SDL_CreateGPUTransferBuffer(gpu_device, &tex_buffer_info);
 		if (!tex_transfer_buf) {
 			Output::Debug("SDL_CreateGPUTransferBuffer for bitmap {} failed: {}", bmp.GetId(), SDL_GetError());
@@ -901,7 +902,7 @@ void Sdl3RenderTarget::Render(Bitmap const& bmp, SpriteUniform uniform) {
 		EndRenderPass();
 
 		// Ensure to have a blend target that is large enough
-		if (!texture_blend || blend_width < GetWidth() || blend_height < GetHeight()) {
+		if (!texture_blend || blend_width < static_cast<Uint32>(GetWidth()) || blend_height < static_cast<Uint32>(GetHeight())) {
 			if (texture_blend) {
 				SDL_ReleaseGPUTexture(gpu_device, texture_blend);
 			}

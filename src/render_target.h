@@ -310,7 +310,7 @@ public:
 	virtual void GpuTiledToneBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, Rect const& dst_rect,
 		Opacity const& opacity, const Tone &tone, Bitmap::BlendMode blend_mode = Bitmap::BlendMode::Default) {
 			(void)tone;
-			TiledBlit(0, 0, src_rect, src, dst_rect, opacity, blend_mode);
+			TiledBlit(ox, oy, src_rect, src, dst_rect, opacity, blend_mode);
 	}
 
 	// Functions with default implementations (forwarders to other functions)
