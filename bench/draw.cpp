@@ -6,14 +6,14 @@
 #include <graphics.h>
 #include <drawable_list.h>
 #include <drawable_mgr.h>
-#include <iostream>
+#include <render_target.h>
 
 constexpr int num_sprites = 5000;
 
 class TestSprite : public Drawable {
 	public:
 		TestSprite() : Drawable(0) { DrawableMgr::Register(this); }
-		void Draw(Bitmap&) override {}
+		void Draw(RenderTarget&) override {}
 };
 
 static void BM_DrawSort(benchmark::State& state) {

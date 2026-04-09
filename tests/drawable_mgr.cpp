@@ -1,6 +1,7 @@
 #include "drawable_list.h"
 #include "drawable_mgr.h"
 #include "doctest.h"
+#include "render_target.h"
 
 TEST_SUITE_BEGIN("DrawableMgr");
 
@@ -9,7 +10,7 @@ namespace {
 class TestSprite : public Drawable {
 	public:
 		TestSprite(Drawable::Flags flags) : Drawable(0, flags) { DrawableMgr::Register(this); }
-		void Draw(Bitmap&) override {}
+		void Draw(RenderTarget&) override {}
 };
 
 }

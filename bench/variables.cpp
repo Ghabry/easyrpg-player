@@ -119,7 +119,7 @@ static void BM_VariableSetRangeVariableIndirect(benchmark::State& state) {
 BENCHMARK(BM_VariableSetRangeVariableIndirect);
 
 static void BM_VariableSetRangeRandom(benchmark::State& state) {
-	BM_VariableOp(state, [](auto& v, auto, auto val) { v.SetRangeRandom(1, max_vars, -100, 100); });
+	BM_VariableOp(state, [](auto& v, auto, auto) { v.SetRangeRandom(1, max_vars, -100, 100); });
 }
 
 BENCHMARK(BM_VariableSetRangeRandom);

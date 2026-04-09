@@ -1,5 +1,6 @@
 #include <cassert>
 #include <cstdlib>
+#include "render_target_software.h"
 #include "utils.h"
 #include "drawable_list.h"
 #include "drawable_mgr.h"
@@ -13,13 +14,13 @@ namespace {
 class TestSprite : public Drawable {
 	public:
 		TestSprite(Drawable::Z_t z = 0) : Drawable(z, Drawable::Flags::Global) {}
-		void Draw(Bitmap&) override {}
+		void Draw(RenderTarget&) override {}
 };
 
 class TestFrame : public Drawable {
 	public:
 		TestFrame(Drawable::Z_t z = 0) : Drawable(z, Drawable::Flags::Global | Drawable::Flags::Shared) {}
-		void Draw(Bitmap&) override {}
+		void Draw(RenderTarget&) override {}
 };
 
 }
@@ -36,6 +37,7 @@ TEST_CASE("Default") {
 TEST_CASE("DirtyDraw") {
 	Bitmap::SetFormat(format_R8G8B8A8_a().format());
 	Bitmap bitmap(16, 16, false);
+	SoftwareRenderTarget swr(bitmap);
 
 	DrawableList list;
 
@@ -46,11 +48,11 @@ TEST_CASE("DirtyDraw") {
 	REQUIRE_EQ(list.IsDirty(), true);
 	REQUIRE_EQ(list.IsSorted(), true);
 
-	list.Draw(bitmap);
+	list.Draw(swr);
 	REQUIRE_EQ(list.IsDirty(), false);
 	REQUIRE_EQ(list.IsSorted(), true);
 
-	list.Draw(bitmap);
+	list.Draw(swr);
 	REQUIRE_EQ(list.IsDirty(), false);
 	REQUIRE_EQ(list.IsSorted(), true);
 }
@@ -106,8 +108,9 @@ TEST_CASE("AppendSort") {
 TEST_CASE("AppendDraw") {
 	Bitmap::SetFormat(format_R8G8B8A8_a().format());
 	Bitmap bitmap(16, 16, false);
+	SoftwareRenderTarget swr(bitmap);
 
-	testAppend([&](auto& list) { list.Draw(bitmap); });
+	testAppend([&](auto& list) { list.Draw(swr); });
 }
 
 TEST_CASE("AppendUnSorted") {
