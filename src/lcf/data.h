@@ -43,25 +43,25 @@ namespace Data {
 	/** Database Data (ldb) */
 	extern rpg::Database data;
 	/** @{ */
-	extern std::vector<rpg::Actor>& actors;
-	extern std::vector<rpg::Skill>& skills;
-	extern std::vector<rpg::Item>& items;
-	extern std::vector<rpg::Enemy>& enemies;
-	extern std::vector<rpg::Troop>& troops;
-	extern std::vector<rpg::Terrain>& terrains;
-	extern std::vector<rpg::Attribute>& attributes;
-	extern std::vector<rpg::State>& states;
-	extern std::vector<rpg::Animation>& animations;
-	extern std::vector<rpg::Chipset>& chipsets;
-	extern std::vector<rpg::CommonEvent>& commonevents;
+	extern DBArray<rpg::Actor>& actors;
+	extern DBArray<rpg::Skill>& skills;
+	extern DBArray<rpg::Item>& items;
+	extern DBArray<rpg::Enemy>& enemies;
+	extern DBArray<rpg::Troop>& troops;
+	extern DBArray<rpg::Terrain>& terrains;
+	extern DBArray<rpg::Attribute>& attributes;
+	extern DBArray<rpg::State>& states;
+	extern DBArray<rpg::Animation>& animations;
+	extern DBArray<rpg::Chipset>& chipsets;
+	extern DBArray<rpg::CommonEvent>& commonevents;
 	extern rpg::BattleCommands& battlecommands;
-	extern std::vector<rpg::Class>& classes;
-	extern std::vector<rpg::BattlerAnimation>& battleranimations;
+	extern DBArray<rpg::Class>& classes;
+	extern DBArray<rpg::BattlerAnimation>& battleranimations;
 	extern rpg::Terms& terms;
 	extern rpg::System& system;
-	extern std::vector<rpg::Switch>& switches;
-	extern std::vector<rpg::Variable>& variables;
-	extern std::vector<rpg::StringVariable>& maniac_string_variables;
+	extern DBArray<rpg::Switch>& switches;
+	extern DBArray<rpg::Variable>& variables;
+	extern DBArray<rpg::StringVariable>& maniac_string_variables;
 	/** @} */
 
 	/** TreeMap (lmt) */

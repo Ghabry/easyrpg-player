@@ -89,7 +89,7 @@ int Game_CommonEvent::GetTrigger() const {
 	return lcf::ReaderUtil::GetElement(lcf::Data::commonevents, common_event_id)->trigger;
 }
 
-std::vector<lcf::rpg::EventCommand>& Game_CommonEvent::GetList() {
+lcf::DBArray<lcf::rpg::EventCommand>& Game_CommonEvent::GetList() {
 	return lcf::ReaderUtil::GetElement(lcf::Data::commonevents, common_event_id)->event_commands;
 }
 

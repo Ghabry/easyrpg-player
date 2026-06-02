@@ -279,8 +279,10 @@ void Spriteset_Map::OnTilemapSpriteReady(FileRequestResult*) {
 		tilemap->SetChipset(Bitmap::Create(480, 256));
 	}
 
-	tilemap->SetMapDataDown(Game_Map::GetMapDataDown());
-	tilemap->SetMapDataUp(Game_Map::GetMapDataUp());
+	const auto& down = Game_Map::GetMapDataDown();
+	tilemap->SetMapDataDown(std::vector<short>(down.begin(), down.end()));
+	const auto& up = Game_Map::GetMapDataUp();
+	tilemap->SetMapDataUp(std::vector<short>(up.begin(), up.end()));
 	tilemap->SetPassableDown(Game_Map::GetPassagesDown());
 	tilemap->SetPassableUp(Game_Map::GetPassagesUp());
 	tilemap->SetAnimationType(Game_Map::GetAnimationType());

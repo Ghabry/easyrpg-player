@@ -218,8 +218,8 @@ const char* Interpreter::MakeString(SaveEventExecFrame& frame)
 	std::string code;
 
 	int32_t& current = frame.current_command;
-	const std::vector<EventCommand>& cmdList = frame.commands;
-	std::vector<EventCommand>::const_iterator it = cmdList.begin() + current++;
+	const auto& cmdList = frame.commands;
+	lcf::DBArray<EventCommand>::const_iterator it = cmdList.begin() + current++;
 
 	code = ToString((*it++).string);
 

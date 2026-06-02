@@ -101,7 +101,7 @@ bool Game_Interpreter::IsRunning() const {
 // Setup.
 void Game_Interpreter::PushInternal(
 	InterpreterPush push_info,
-	std::vector<lcf::rpg::EventCommand> _list,
+	lcf::DBArray<lcf::rpg::EventCommand> _list,
 	int event_id,
 	int event_page_id
 ) {
@@ -2020,7 +2020,7 @@ bool Game_Interpreter::CommandWait(lcf::rpg::EventCommand const& com) { // code 
 
 bool Game_Interpreter::CommandPlayBGM(lcf::rpg::EventCommand const& com) { // code 11510
 	lcf::rpg::Music music;
-	music.name = ToString(CommandStringOrVariableBitfield(com, 4, 0, 5));
+	music.name = lcf::DBString(CommandStringOrVariableBitfield(com, 4, 0, 5));
 
 	music.fadein = ValueOrVariableBitfield(com, 4, 1, 0);
 	music.volume = ValueOrVariableBitfield(com, 4, 2, 1);
@@ -2039,7 +2039,7 @@ bool Game_Interpreter::CommandFadeOutBGM(lcf::rpg::EventCommand const& com) { //
 
 bool Game_Interpreter::CommandPlaySound(lcf::rpg::EventCommand const& com) { // code 11550
 	lcf::rpg::Sound sound;
-	sound.name = ToString(CommandStringOrVariableBitfield(com, 3, 0, 4));
+	sound.name = lcf::DBString(CommandStringOrVariableBitfield(com, 3, 0, 4));
 
 	sound.volume = ValueOrVariableBitfield(com, 3, 1, 0);
 	sound.tempo = ValueOrVariableBitfield(com, 3, 2, 1);
@@ -2214,7 +2214,7 @@ bool Game_Interpreter::CommandChangeSystemBGM(lcf::rpg::EventCommand const& com)
 	lcf::rpg::Music music;
 	int context = com.parameters[0];
 
-	music.name = ToString(CommandStringOrVariableBitfield(com, 5, 0, 6));
+	music.name = lcf::DBString(CommandStringOrVariableBitfield(com, 5, 0, 6));
 	music.fadein = ValueOrVariableBitfield(com, 5, 1, 1);
 	music.volume = ValueOrVariableBitfield(com, 5, 2, 2);
 	music.tempo = ValueOrVariableBitfield(com, 5, 3, 3);
@@ -2228,7 +2228,7 @@ bool Game_Interpreter::CommandChangeSystemSFX(lcf::rpg::EventCommand const& com)
 	lcf::rpg::Sound sound;
 	int context = com.parameters[0];
 
-	sound.name = ToString(CommandStringOrVariableBitfield(com, 4, 0, 5));
+	sound.name = lcf::DBString(CommandStringOrVariableBitfield(com, 4, 0, 5));
 	sound.volume = ValueOrVariableBitfield(com, 4, 1, 1);
 	sound.tempo = ValueOrVariableBitfield(com, 4, 2, 2);
 	sound.balance = ValueOrVariableBitfield(com, 4, 3, 3);
@@ -3178,8 +3178,12 @@ bool Game_Interpreter::CommandMoveEvent(lcf::rpg::EventCommand const& com) { // 
 		route.repeat = repeat != 0;
 		route.skippable = com.parameters[3] != 0;
 
-		for (auto it = com.parameters.begin() + 4; it < com.parameters.end(); ) {
-			route.move_commands.push_back(DecodeMove(it));
+		{
+			std::vector<lcf::rpg::MoveCommand> cmds_vec;
+			for (auto it = com.parameters.begin() + 4; it < com.parameters.end(); ) {
+				cmds_vec.push_back(DecodeMove(it));
+			}
+			route.move_commands = lcf::DBArray<lcf::rpg::MoveCommand>(cmds_vec.begin(), cmds_vec.end());
 		}
 
 		event->ForceMoveRoute(route, move_freq);

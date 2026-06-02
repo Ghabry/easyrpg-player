@@ -69,7 +69,7 @@ public:
 
 	template<InterpreterExecutionType type_ex, InterpreterEventType type_ev>
 	void Push(
-		std::vector<lcf::rpg::EventCommand> _list,
+		lcf::DBArray<lcf::rpg::EventCommand> _list,
 		int _event_id,
 		int event_page_id = 0
 	);
@@ -364,7 +364,7 @@ protected:
 	private:
 		void PushInternal(
 			InterpreterPush push_info,
-			std::vector<lcf::rpg::EventCommand> _list,
+			lcf::DBArray<lcf::rpg::EventCommand> _list,
 			int _event_id,
 			int event_page_id = 0
 		);
@@ -393,8 +393,8 @@ public:
 };
 
 template<InterpreterExecutionType type_ex, InterpreterEventType type_ev>
-inline void Game_Interpreter::Push(std::vector<lcf::rpg::EventCommand> _list, int _event_id, int event_page_id) {
-	PushInternal({ type_ex, type_ev }, _list, _event_id, event_page_id);
+inline void Game_Interpreter::Push(lcf::DBArray<lcf::rpg::EventCommand> _list, int _event_id, int event_page_id) {
+	PushInternal({ type_ex, type_ev }, std::move(_list), _event_id, event_page_id);
 }
 
 template<InterpreterExecutionType type_ex>

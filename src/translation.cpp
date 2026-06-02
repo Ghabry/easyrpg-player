@@ -392,7 +392,9 @@ void Translation::RewriteBattleEventMessages()
 	if (battle) {
 		for (lcf::rpg::Troop& troop : lcf::Data::troops) {
 			for (lcf::rpg::TroopPage& page : troop.pages) {
-				RewriteEventCommandMessage(*battle, page.event_commands);
+				auto cmds_vec = std::vector<lcf::rpg::EventCommand>(page.event_commands.begin(), page.event_commands.end());
+				RewriteEventCommandMessage(*battle, cmds_vec);
+				page.event_commands = lcf::DBArray<lcf::rpg::EventCommand>(cmds_vec.begin(), cmds_vec.end());
 			}
 		}
 	}
@@ -404,7 +406,9 @@ void Translation::RewriteCommonEventMessages()
 	// Rewrite all event commands on all pages.
 	if (common) {
 		for (lcf::rpg::CommonEvent& ev : lcf::Data::commonevents) {
-			RewriteEventCommandMessage(*common, ev.event_commands);
+			auto cmds_vec = std::vector<lcf::rpg::EventCommand>(ev.event_commands.begin(), ev.event_commands.end());
+			RewriteEventCommandMessage(*common, cmds_vec);
+			ev.event_commands = lcf::DBArray<lcf::rpg::EventCommand>(cmds_vec.begin(), cmds_vec.end());
 		}
 	}
 }
@@ -803,7 +807,9 @@ void Translation::RewriteMapMessages(std::string_view map_name, lcf::rpg::Map& m
 	// Rewrite all event commands on all pages.
 	for (lcf::rpg::Event& ev : map.events) {
 		for (lcf::rpg::EventPage& pg : ev.pages) {
-			RewriteEventCommandMessage(*mapIt->second, pg.event_commands);
+			auto cmds_vec = std::vector<lcf::rpg::EventCommand>(pg.event_commands.begin(), pg.event_commands.end());
+			RewriteEventCommandMessage(*mapIt->second, cmds_vec);
+			pg.event_commands = lcf::DBArray<lcf::rpg::EventCommand>(cmds_vec.begin(), cmds_vec.end());
 		}
 	}
 }

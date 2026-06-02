@@ -91,7 +91,7 @@ void Scene_Menu::CreateCommandWindow() {
 		}
 		command_options.push_back(Quit);
 	} else {
-		for (std::vector<int16_t>::iterator it = lcf::Data::system.menu_commands.begin();
+		for (auto it = lcf::Data::system.menu_commands.begin();
 			it != lcf::Data::system.menu_commands.end(); ++it) {
 				switch (*it) {
 				case Row:

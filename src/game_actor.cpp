@@ -862,7 +862,8 @@ void Game_Actor::ChangeBattleCommands(bool add, int id) {
 	// If changing battle commands, that is when RPG_RT will replace the -1 list with a 'true' list.
 	// Fetch original command array.
 	if (!data.changed_battle_commands) {
-		cmds = lcf::Data::actors[GetId() - 1].battle_commands;
+		const auto& db_cmds = lcf::Data::actors[GetId() - 1].battle_commands;
+		cmds = std::vector<int32_t>(db_cmds.begin(), db_cmds.end());
 		data.changed_battle_commands = true;
 	}
 
@@ -919,7 +920,8 @@ const std::vector<const lcf::rpg::BattleCommand*> Game_Actor::GetBattleCommands(
 	std::vector<int32_t> obc = data.battle_commands;
 	if (!data.changed_battle_commands) {
 		// In this case, get it straight from the LDB.
-		obc = lcf::Data::actors[GetId() - 1].battle_commands;
+		const auto& db_obc = lcf::Data::actors[GetId() - 1].battle_commands;
+		obc = std::vector<int32_t>(db_obc.begin(), db_obc.end());
 	}
 
 	for (int command_index : obc) {
@@ -1005,7 +1007,7 @@ void Game_Actor::ChangeClass(int new_class_id,
 
 		data.battler_animation = cls->battler_animation;
 
-		data.battle_commands = cls->battle_commands;
+		data.battle_commands = std::vector<int32_t>(cls->battle_commands.begin(), cls->battle_commands.end());
 	} else {
 		data.super_guard = dbActor->super_guard;
 		data.lock_equipment = dbActor->lock_equipment;
@@ -1014,7 +1016,7 @@ void Game_Actor::ChangeClass(int new_class_id,
 
 		data.battler_animation = 0;
 
-		data.battle_commands = dbActor->battle_commands;
+		data.battle_commands = std::vector<int32_t>(dbActor->battle_commands.begin(), dbActor->battle_commands.end());
 	}
 
 	MakeExpList();

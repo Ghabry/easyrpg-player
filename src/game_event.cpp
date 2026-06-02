@@ -336,9 +336,9 @@ bool Game_Event::ScheduleForegroundExecution(bool by_decision_key, bool face_pla
 	return true;
 }
 
-static std::vector<lcf::rpg::EventCommand> _empty_list = {};
+static lcf::DBArray<lcf::rpg::EventCommand> _empty_list = {};
 
-const std::vector<lcf::rpg::EventCommand>& Game_Event::GetList() const {
+const lcf::DBArray<lcf::rpg::EventCommand>& Game_Event::GetList() const {
 	return page ? page->event_commands : _empty_list;
 }
 

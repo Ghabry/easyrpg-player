@@ -123,7 +123,7 @@ namespace Game_Map {
 	void UpdateUnderlyingEventReferences();
 	void AddEventToCache(const lcf::rpg::Event& ev);
 	void RemoveEventFromCache(const lcf::rpg::Event& ev);
-	const lcf::rpg::Event* FindEventById(const std::vector<lcf::rpg::Event>& events, int event_id);
+	const lcf::rpg::Event* FindEventById(const lcf::DBArray<lcf::rpg::Event>& events, int event_id);
 	int GetNextAvailableEventId();
 
 	/**
@@ -469,14 +469,14 @@ namespace Game_Map {
 	 *
 	 * @return lower layer map data.
 	 */
-	std::vector<short>& GetMapDataDown();
+	const lcf::DBArray<int16_t>& GetMapDataDown();
 
 	/**
 	 * Gets upper layer map data.
 	 *
 	 * @return upper layer map data.
 	 */
-	std::vector<short>& GetMapDataUp();
+	const lcf::DBArray<int16_t>& GetMapDataUp();
 
 	/** @return original map chipset ID */
 	int GetOriginalChipset();

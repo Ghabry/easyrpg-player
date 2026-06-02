@@ -38,7 +38,8 @@ Game_Party::Game_Party() {
 void Game_Party::SetupNewGame() {
 	Clear();
 
-	data.party = lcf::Data::system.party;
+	const auto& party = lcf::Data::system.party;
+	data.party = std::vector<int16_t>(party.begin(), party.end());
 	RemoveInvalidData();
 }
 

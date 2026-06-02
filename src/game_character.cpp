@@ -417,7 +417,7 @@ void Game_Character::UpdateMoveRoute(int32_t& current_index, const lcf::rpg::Mov
 				case Code::play_sound_effect: // String: File, Parameters: Volume, Tempo, Balance
 					if (move_command.parameter_string != "(OFF)" && move_command.parameter_string != "(Brak)") {
 						lcf::rpg::Sound sound;
-						sound.name = ToString(move_command.parameter_string);
+						sound.name = move_command.parameter_string;
 						sound.volume = move_command.parameter_a;
 						sound.tempo = move_command.parameter_b;
 						sound.balance = move_command.parameter_c;
@@ -1053,11 +1053,13 @@ bool Game_Character::CalculateMoveRoute(const CalculateMoveRouteArgs& args) {
 			route.skippable = args.skip_when_failed;
 			route.repeat = false;
 
+			std::vector<lcf::rpg::MoveCommand> cmds_vec;
+
 			for (SearchNode const& node2 : list_move) {
 				if (node2.direction >= 0) {
 					lcf::rpg::MoveCommand cmd;
 					cmd.command_id = node2.direction;
-					route.move_commands.push_back(cmd);
+					cmds_vec.push_back(cmd);
 					if (args.debug_print >= 1) {
 						if (debug_output_path.length() > 0)
 							debug_output_path += ",";
@@ -1070,7 +1072,9 @@ bool Game_Character::CalculateMoveRoute(const CalculateMoveRouteArgs& args) {
 
 			lcf::rpg::MoveCommand cmd;
 			cmd.command_id = 23;
-			route.move_commands.push_back(cmd);
+			cmds_vec.push_back(cmd);
+
+			route.move_commands = lcf::DBArray<lcf::rpg::MoveCommand>(cmds_vec.begin(), cmds_vec.end());
 
 			ForceMoveRoute(route, args.frequency);
 		}

@@ -15,52 +15,52 @@ namespace lcf {
 namespace Data {
 	rpg::Database data;
 
-	std::vector<rpg::Actor>& actors = data.actors;
-	std::vector<rpg::Skill>& skills = data.skills;
-	std::vector<rpg::Item>& items = data.items;
-	std::vector<rpg::Enemy>& enemies = data.enemies;
-	std::vector<rpg::Troop>& troops = data.troops;
-	std::vector<rpg::Terrain>& terrains = data.terrains;
-	std::vector<rpg::Attribute>& attributes = data.attributes;
-	std::vector<rpg::State>& states = data.states;
-	std::vector<rpg::Animation>& animations = data.animations;
-	std::vector<rpg::Chipset>& chipsets = data.chipsets;
-	std::vector<rpg::CommonEvent>& commonevents = data.commonevents;
+	DBArray<rpg::Actor>& actors = data.actors;
+	DBArray<rpg::Skill>& skills = data.skills;
+	DBArray<rpg::Item>& items = data.items;
+	DBArray<rpg::Enemy>& enemies = data.enemies;
+	DBArray<rpg::Troop>& troops = data.troops;
+	DBArray<rpg::Terrain>& terrains = data.terrains;
+	DBArray<rpg::Attribute>& attributes = data.attributes;
+	DBArray<rpg::State>& states = data.states;
+	DBArray<rpg::Animation>& animations = data.animations;
+	DBArray<rpg::Chipset>& chipsets = data.chipsets;
+	DBArray<rpg::CommonEvent>& commonevents = data.commonevents;
 	rpg::BattleCommands& battlecommands = data.battlecommands;
-	std::vector<rpg::Class>& classes = data.classes;
-	std::vector<rpg::BattlerAnimation>& battleranimations = data.battleranimations;
+	DBArray<rpg::Class>& classes = data.classes;
+	DBArray<rpg::BattlerAnimation>& battleranimations = data.battleranimations;
 	rpg::Terms& terms = data.terms;
 	rpg::System& system = data.system;
-	std::vector<rpg::Switch>& switches = data.switches;
-	std::vector<rpg::Variable>& variables = data.variables;
-	std::vector<rpg::StringVariable>& maniac_string_variables = data.maniac_string_variables;
+	DBArray<rpg::Switch>& switches = data.switches;
+	DBArray<rpg::Variable>& variables = data.variables;
+	DBArray<rpg::StringVariable>& maniac_string_variables = data.maniac_string_variables;
 
 	rpg::TreeMap treemap;
 }
 
 void Data::Clear() {
-	actors.clear();
-	skills.clear();
-	items.clear();
-	enemies.clear();
-	troops.clear();
-	terrains.clear();
-	attributes.clear();
-	states.clear();
-	animations.clear();
-	chipsets.clear();
-	commonevents.clear();
-	battlecommands = rpg::BattleCommands();
-	classes.clear();
-	battleranimations.clear();
-	terms = rpg::Terms();
-	system = rpg::System();
-	switches.clear();
-	variables.clear();
-	maniac_string_variables.clear();
+	actors = {};
+	skills = {};
+	items = {};
+	enemies = {};
+	troops = {};
+	terrains = {};
+	attributes = {};
+	states = {};
+	animations = {};
+	chipsets = {};
+	commonevents = {};
+	battlecommands = {};
+	classes = {};
+	battleranimations = {};
+	terms = {};
+	system = {};
+	switches = {};
+	variables = {};
+	maniac_string_variables = {};
 	treemap.active_node = 0;
-	treemap.maps.clear();
-	treemap.tree_order.clear();
+	treemap.maps = {};
+	treemap.tree_order = {};
 }
 
 } //namespace lcf

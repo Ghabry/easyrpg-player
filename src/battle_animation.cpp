@@ -99,9 +99,7 @@ void BattleAnimation::DrawAt(Bitmap& dst, int x, int y) {
 
 	const lcf::rpg::AnimationFrame& anim_frame = animation.frames[GetRealFrame()];
 
-	std::vector<lcf::rpg::AnimationCellData>::const_iterator it;
-	for (it = anim_frame.cells.begin(); it != anim_frame.cells.end(); ++it) {
-		const lcf::rpg::AnimationCellData& cell = *it;
+	for (const auto& cell : anim_frame.cells) {
 
 		if (!cell.valid) {
 			// Skip unused cells (they are created by deleting cells in the

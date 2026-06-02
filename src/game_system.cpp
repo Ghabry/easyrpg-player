@@ -199,7 +199,7 @@ void Game_System::SePlay(const lcf::rpg::Sound& se, bool stop_sounds) {
 	se_adj.volume = volume;
 	se_adj.tempo = tempo;
 	se_adj.balance = balance;
-	se_request_ids[se.name] = request->Bind(&Game_System::OnSeReady, this, se_adj, stop_sounds);
+	se_request_ids[std::string(se.name)] = request->Bind(&Game_System::OnSeReady, this, se_adj, stop_sounds);
 	if (EndsWith(se.name, ".script")) {
 		// Is a Ineluki Script File
 		request->SetImportantFile(true);

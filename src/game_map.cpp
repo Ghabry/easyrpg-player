@@ -476,12 +476,15 @@ bool Game_Map::CloneMapEvent(int src_map_id, int src_event_id, int target_x, int
 	}
 
 	// sorted insert
-	auto insert_it = map->events.insert(
-		std::upper_bound(map->events.begin(), map->events.end(), new_event, [](const auto& e, const auto& e2) {
+	std::vector<lcf::rpg::Event> events_vec(map->events.begin(), map->events.end());
+	auto insert_it = events_vec.insert(
+		std::upper_bound(events_vec.begin(), events_vec.end(), new_event, [](const auto& e, const auto& e2) {
 			return e.ID < e2.ID;
 		}), new_event);
+	const size_t inserted_idx = std::distance(events_vec.begin(), insert_it);
+	map->events = lcf::DBArray<lcf::rpg::Event>(events_vec.begin(), events_vec.end());
 
-	auto game_event = Game_Event(GetMapId(), &*insert_it);
+	auto game_event = Game_Event(GetMapId(), &map->events[inserted_idx]);
 	game_event.data()->easyrpg_clone_event_id = src_event_id;
 	game_event.data()->easyrpg_clone_map_id = src_map_id;
 
@@ -525,12 +528,14 @@ bool Game_Map::DestroyMapEvent(const int event_id, bool from_clone) {
 	}
 
 	// Remove event from map
-	for (auto it = map->events.begin(); it != map->events.end(); ++it) {
+	std::vector<lcf::rpg::Event> map_events_vec(map->events.begin(), map->events.end());
+	for (auto it = map_events_vec.begin(); it != map_events_vec.end(); ++it) {
 		if (it->ID == event_id) {
-			map->events.erase(it);
+			map_events_vec.erase(it);
 			break;
 		}
 	}
+	map->events = lcf::DBArray<lcf::rpg::Event>(map_events_vec.begin(), map_events_vec.end());
 
 	if (!from_clone) {
 		UpdateUnderlyingEventReferences();
@@ -559,13 +564,13 @@ void Game_Map::UpdateUnderlyingEventReferences() {
 	// Update references because modifying the vector can reallocate
 	size_t idx = 0;
 	for (auto& ev : events) {
-		ev.SetUnderlyingEvent(&map->events.at(idx++));
+		ev.SetUnderlyingEvent(&map->events[idx++]);
 	}
 
 	Main_Data::game_screen->UpdateUnderlyingEventReferences();
 }
 
-const lcf::rpg::Event* Game_Map::FindEventById(const std::vector<lcf::rpg::Event>& events, int eventId) {
+const lcf::rpg::Event* Game_Map::FindEventById(const lcf::DBArray<lcf::rpg::Event>& events, int eventId) {
 	for (const auto& ev : events) {
 		if (ev.ID == eventId) {
 			return &ev;
@@ -1691,11 +1696,11 @@ void Game_Map::SetupBattle(BattleArgs& args) {
 	}
 }
 
-std::vector<short>& Game_Map::GetMapDataDown() {
+const lcf::DBArray<int16_t>& Game_Map::GetMapDataDown() {
 	return map->lower_layer;
 }
 
-std::vector<short>& Game_Map::GetMapDataUp() {
+const lcf::DBArray<int16_t>& Game_Map::GetMapDataUp() {
 	return map->upper_layer;
 }
 
@@ -1874,8 +1879,8 @@ void Game_Map::SetChipset(int id) {
 	if (!ReloadChipset()) {
 		Output::Warning("SetChipset: Invalid chipset ID {}", map_info.chipset_id);
 	} else {
-		passages_down = chipset->passable_data_lower;
-		passages_up = chipset->passable_data_upper;
+		passages_down = std::vector<unsigned char>(chipset->passable_data_lower.begin(), chipset->passable_data_lower.end());
+		passages_up = std::vector<unsigned char>(chipset->passable_data_upper.begin(), chipset->passable_data_upper.end());
 		animation_type = chipset->animation_type;
 		animation_fast = chipset->animation_speed != 0;
 	}

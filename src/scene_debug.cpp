@@ -1186,7 +1186,7 @@ void Scene_Debug::DoCallBattleEvent() {
 
 	auto& page = troop->pages[page_idx];
 
-	Game_Battle::GetInterpreter().Push<InterpreterExecutionType::DebugCall, InterpreterEventType::BattleEvent>(page.event_commands, 0, false);
+	Game_Battle::GetInterpreter().Push<InterpreterExecutionType::DebugCall, InterpreterEventType::BattleEvent>(page.event_commands, 0, 0);
 	Scene::PopUntil(Scene::Battle);
 	Output::Debug("Debug Scene Forced execution of battle troop {} event page {} on the battle foreground interpreter.", troop->ID, page.ID);
 }

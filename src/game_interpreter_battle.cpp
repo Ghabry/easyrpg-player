@@ -651,10 +651,10 @@ bool Game_Interpreter_Battle::ManiacBattleHook(ManiacBattleHookType hook_type, i
 
 	// pushes the change variable events into the interpreters
 	// event queue, so we don't run into a race condition.
-	std::vector<lcf::rpg::EventCommand> pre_commands;
+	lcf::DBArray<lcf::rpg::EventCommand> pre_commands = lcf::DBArray<lcf::rpg::EventCommand>(6);
 	for (size_t i = 0; i < 6; i++)
 	{
-		auto event_command = lcf::rpg::EventCommand();
+		auto& event_command = pre_commands[i];
 		event_command.code = static_cast<int>(lcf::rpg::EventCommand::Code::ControlVars);
 		event_command.parameters = lcf::DBArray<int32_t>(7);
 		event_command.parameters[1] = variable_start_id + i;
@@ -681,7 +681,6 @@ bool Game_Interpreter_Battle::ManiacBattleHook(ManiacBattleHookType hook_type, i
 			default:
 				break;
 		}
-		pre_commands.push_back(event_command);
 	}
 
 	// Push is actually "push_back", so this gets added before other events.
@@ -824,15 +823,16 @@ bool Game_Interpreter_Battle::CommandManiacChangeBattleCommandEx(lcf::rpg::Event
 	// 00001 fight removed
 	int party_command_flags = com.parameters[1];
 
-	lcf::Data::system.easyrpg_battle_options.clear();
+	std::vector<int16_t> options_vec;
 	for (size_t i = 0; i < Scene_Battle::BattleOptionType::Lose + 1; i++) {
 		bool party_command_flag = party_command_flags & (1 << i);
 		bool flag_is_set = i > 2;
 
 		if (party_command_flag == flag_is_set) {
-			lcf::Data::system.easyrpg_battle_options.push_back(i);
+			options_vec.push_back(static_cast<int16_t>(i));
 		}
 	}
+	lcf::Data::system.easyrpg_battle_options = lcf::DBArray<int16_t>(options_vec.begin(), options_vec.end());
 
 	auto* scene_battle = static_cast<Scene_Battle*>(Scene::instance.get());
 

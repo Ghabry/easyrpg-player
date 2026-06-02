@@ -102,7 +102,7 @@ public:
 	 *
 	 * @return event commands list.
 	 */
-	std::vector<lcf::rpg::EventCommand>& GetList();
+	lcf::DBArray<lcf::rpg::EventCommand>& GetList();
 
 	lcf::rpg::SaveEventExecState GetSaveData();
 

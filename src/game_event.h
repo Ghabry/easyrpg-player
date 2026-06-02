@@ -107,7 +107,7 @@ public:
 	 *
 	 * @return event commands list.
 	 */
-	const std::vector<lcf::rpg::EventCommand>& GetList() const;
+	const lcf::DBArray<lcf::rpg::EventCommand>& GetList() const;
 
 	/**
 	 * Event returns to its original direction before talking to the hero.
