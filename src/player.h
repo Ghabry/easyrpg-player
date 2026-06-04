@@ -327,114 +327,87 @@ namespace Player {
 	/** Set the desired rendering frames per second */
 	void SetTargetFps(int fps);
 
-	/** Exit code (optionally indicting an error) when program terminates. */
-	extern int exit_code;
+	struct {
+		/** Exit code (optionally indicting an error) when program terminates. */
+		bool exit_code = false;
 
-	/** Exit flag, if true will exit application on next Player::Update. */
-	extern bool exit_flag;
+		/** Reset flag, if true will restart game on next Player::Update. */
+		bool reset_flag = false;
 
-	/** Reset flag, if true will restart game on next Player::Update. */
-	extern bool reset_flag;
+		/** Debug flag, if true will run game in debug mode. */
+		bool debug_flag = false;
 
-	/** Debug flag, if true will run game in debug mode. */
-	extern bool debug_flag;
+		/** Hide Title flag, if true title scene will run without image and music. */
+		bool hide_title_flag = false;
 
-	/** Hide Title flag, if true title scene will run without image and music. */
-	extern bool hide_title_flag;
+		/** The width of the screen */
+		int screen_width = SCREEN_TARGET_WIDTH;
 
-	/** The width of the screen */
-	extern int screen_width;
+		/** The height of the screen */
+		int screen_height = SCREEN_TARGET_HEIGHT;
 
-	/** The height of the screen */
-	extern int screen_height;
+		/** The X offset used to center UI in custom resolutions */
+		int menu_offset_x = (screen_width - MENU_WIDTH) / 2;
 
-	/** The X offset used to center UI in custom resolutions */
-	extern int menu_offset_x;
+		/** The Y offset used to center UI in custom resolutions */
+		int menu_offset_y = (screen_height - MENU_HEIGHT) / 2;
 
-	/** The Y offset used to center UI in custom resolutions */
-	extern int menu_offset_y;
+		/** The X offset used to center the MessageBox in custom resolutions */
+		int message_box_offset_x = (screen_width - MENU_WIDTH) / 2;
 
-	/** The X offset used to center the MessageBox in custom resolutions */
-	extern int message_box_offset_x;
+		/** Whether the game uses a custom WinW/WinH resolution */
+		bool has_custom_resolution = false;
 
-	/** Whether the game uses a custom WinW/WinH resolution */
-	extern bool has_custom_resolution;
+		/** If set, savegame is loaded directly */
+		int load_game_id = -1;
 
-	/** Overwrite party x position */
-	extern int party_x_position;
+		/** Prevent adding of RTP paths to the file finder */
+		bool no_rtp_flag = false;
 
-	/** Overwrite party y position */
-	extern int party_y_position;
+		/** Mutes audio playback */
+		bool no_audio_flag = false;
 
-	/** Overwrite starting party members */
-	extern std::vector<int> party_members;
+		/** Encoding used */
+		std::string encoding;
 
-	/** Overwrite start map */
-	extern int start_map_id;
+		/** Backslash recoded to utf8 string */
+		std::string escape_symbol;
 
-	/** If set, savegame is loaded directly */
-	extern int load_game_id;
+		/** Backslash recoded to character */
+		uint32_t escape_char = 0;
 
-	/** Prevent adding of RTP paths to the file finder */
-	extern bool no_rtp_flag;
+		/** Game title. */
+		std::string game_title;
 
-	/** Mutes audio playback */
-	extern bool no_audio_flag;
+		/** Original game title, in case it was overriden by a translation. */
+		std::string game_title_original;
 
-	/** Is this project using EasyRPG files, or the RPG_RT format? */
-	extern bool is_easyrpg_project;
+		/** Indicates whether FileFinder::Game() and Save() point to the same directory. */
+		bool shared_game_and_save_directory = false;
 
-	/** Encoding used */
-	extern std::string encoding;
+		/** Meta class containing additional external data for this game. */
+		std::shared_ptr<Meta> meta;
 
-	/** Backslash recoded to utf8 string */
-	extern std::string escape_symbol;
+		/** File extension rewriter, for non-standard extensions. */
+		FileExtGuesser::RPG2KFileExtRemap fileext_map;
 
-	/** Backslash recoded to character */
-	extern uint32_t escape_char;
+		/** Language to use on game start (set via command line) */
+		std::string startup_language;
 
-	/** Path to replay input log from */
-	extern std::string replay_input_path;
+		/** Translation manager, including list of languages and current translation. */
+		Translation translation;
 
-	/** Path to record input log to */
-	extern std::string record_input_path;
+		/** The engine game logic configuration */
+		Game_ConfigPlayer player_config;
 
-	/** The concatenated command line */
-	extern std::string command_line;
-
-	/** Game title. */
-	extern std::string game_title;
-
-	/** Original game title, in case it was overriden by a translation. */
-	extern std::string game_title_original;
-
-	/** Indicates whether FileFinder::Game() and Save() point to the same directory. */
-	extern bool shared_game_and_save_directory;
-
-	/** Meta class containing additional external data for this game. */
-	extern std::shared_ptr<Meta> meta;
-
-	/** File extension rewriter, for non-standard extensions. */
-	extern FileExtGuesser::RPG2KFileExtRemap fileext_map;
-
-	/** Language to use on game start (set via command line) */
-	extern std::string startup_language;
-
-	/** Translation manager, including list of languages and current translation. */
-	extern Translation translation;
-
-	/**
-	 * The engine game logic configuration
-	 */
-	extern Game_ConfigPlayer player_config;
-
-	/** game specific configuration */
-	extern Game_ConfigGame game_config;
+		/** game specific configuration */
+		Game_ConfigGame game_config;
 
 #ifdef __EMSCRIPTEN__
-	/** Name of game emscripten uses */
-	extern std::string emscripten_game_name;
+		/** Name of game emscripten uses */
+		std::string emscripten_game_name;
 #endif
+	} Options;
 
 #ifdef ENABLE_DYNAMIC_INTERPRETER_CONFIG
 	inline lcf::rpg::SaveEventExecState::EasyRpgStateRuntime_Flags interpreter_default_flags{};

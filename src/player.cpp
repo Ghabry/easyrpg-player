@@ -97,65 +97,49 @@
 
 using namespace std::chrono_literals;
 
-namespace Player {
-	int screen_width = SCREEN_TARGET_WIDTH;
-	int screen_height = SCREEN_TARGET_HEIGHT;
-	int menu_offset_x = (screen_width - MENU_WIDTH) / 2;
-	int menu_offset_y = (screen_height - MENU_HEIGHT) / 2;
-	int message_box_offset_x = (screen_width - MENU_WIDTH) / 2;
-	bool has_custom_resolution = false;
-	int exit_code = EXIT_SUCCESS;
-	bool exit_flag = false;
-	bool reset_flag = false;
-	bool debug_flag;
-	bool hide_title_flag;
-	int load_game_id;
-	int party_x_position;
-	int party_y_position;
-	std::vector<int> party_members;
-	int start_map_id;
-	bool no_rtp_flag;
-	std::string rtp_path;
-	bool no_audio_flag;
-	bool is_easyrpg_project;
-	std::string encoding;
-	std::string escape_symbol;
-	uint32_t escape_char;
-	std::string game_title;
-	std::string game_title_original;
-	bool shared_game_and_save_directory = false;
-	std::shared_ptr<Meta> meta;
-	FileExtGuesser::RPG2KFileExtRemap fileext_map;
-	std::string startup_language;
-	Translation translation;
-	int frames;
+struct {
+	/** Overwrite party x position */
+	int party_x_position = -1;
+
+	/** Overwrite party y position */
+	int party_y_position = -1;
+
+	/** Overwrite starting party members */
+	std::vector<int> party_members = {};
+
+	/** Overwrite start map */
+	int start_map_id = -1;
+
+	/** Is this project using EasyRPG files, or the RPG_RT format? */
+	bool is_easyrpg_project = false;
+
+	/** Path to replay input log from */
 	std::string replay_input_path;
+
+	/** Path to record input log to */
 	std::string record_input_path;
+
+	/** The concatenated command line */
 	std::string command_line;
-	int rng_seed = -1;
-	Game_ConfigPlayer player_config;
-	Game_ConfigGame game_config;
-#ifdef __EMSCRIPTEN__
-	std::string emscripten_game_name;
-#endif
-	Game_Clock::time_point last_auto_screenshot;
-}
 
-namespace {
-	std::vector<std::string> arguments;
-
-	// Overwritten by --encoding
+	/** Encoding forced through --encoding */
 	std::string forced_encoding;
+
+	Game_Clock::time_point last_auto_screenshot = {};
+
+	std::vector<std::string> arguments;
 
 	FileRequestBinding system_request_id;
 	FileRequestBinding save_request_id;
 	FileRequestBinding map_request_id;
-}
+} PrivOptions;
 
 void Player::Init(std::vector<std::string> args) {
 	lcf::LogHandler::SetHandler([](lcf::LogHandler::Level level, std::string_view message, lcf::LogHandler::UserData) {
 		Output::Debug("lcf ({}): {}", lcf::LogHandler::kLevelTags.tag(level), message);
 	});
+
+	Options.forced_encoding;
 
 	frames = 0;
 
