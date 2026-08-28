@@ -80,7 +80,7 @@ bool Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save) 
 	const auto filename = GetSaveFilename(fs, slot_id);
 	Output::Debug("Saving to {}", filename);
 
-	auto save_stream = FileFinder::Save().OpenOutputStream(filename);
+	auto save_stream = fs.OpenOutputStream(filename);
 
 	if (!save_stream) {
 		Output::Warning("Failed saving to {}", filename);

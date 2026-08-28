@@ -76,6 +76,7 @@
 #include "game_quit.h"
 #include "scene_settings.h"
 #include "scene_title.h"
+#include "scene_save.h"
 #include "instrumentation.h"
 #include "transition.h"
 #include "ci_ui.h"
@@ -116,7 +117,6 @@ namespace Player {
 	std::vector<int> party_members;
 	int start_map_id;
 	bool no_rtp_flag;
-	bool ci_flag = false;
 	std::string rtp_path;
 	bool no_audio_flag;
 	bool is_easyrpg_project;
@@ -196,9 +196,11 @@ void Player::Init(std::vector<std::string> args) {
 
 	DisplayUi.reset();
 
-	if (ci_flag) {
+	if (CiUi::config.headless) {
 		DisplayUi = std::make_shared<CiUi>(Player::screen_width, Player::screen_height, cfg);
-	} else if (!DisplayUi) {
+	}
+
+	if (!DisplayUi) {
 		DisplayUi = BaseUi::CreateUi(Player::screen_width, Player::screen_height, cfg);
 	}
 
@@ -263,6 +265,11 @@ void Player::MainLoop() {
 		Graphics::GetMessageOverlay().Update();
 
 		++num_updates;
+
+		if (CiUi::config.ci_flag) {
+			// Disable Frameskipping
+			break;
+		}
 	}
 	if (num_updates == 0) {
 		// If no logical frames ran, we need to update the system keys only.
@@ -270,6 +277,8 @@ void Player::MainLoop() {
 	}
 
 	Player::Draw();
+
+	CiUi::ProcessCi();
 
 	Scene::old_instances.clear();
 
@@ -650,7 +659,21 @@ Game_Config Player::ParseCommandLine() {
 			continue;
 		}
 		if (cp.ParseNext(arg, 0, "--ci")) {
-			ci_flag = true;
+			CiUi::config.ci_flag = true;
+			continue;
+		}
+		if (cp.ParseNext(arg, 1, "--ci-name")) {
+			if (arg.NumValues() > 0) {
+				CiUi::config.ci_name = arg.Value(0);
+			}
+			continue;
+		}
+		if (cp.ParseNext(arg, 0, "--ci-save")) {
+			CiUi::config.ci_save = true;
+			continue;
+		}
+		if (cp.ParseNext(arg, 0, "--headless")) {
+			CiUi::config.headless = true;
 			continue;
 		}
 		if (cp.ParseNext(arg, 0, {"--no-audio", "--disable-audio"})) {

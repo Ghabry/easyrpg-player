@@ -24,6 +24,7 @@
 #include "scene_settings.h"
 #include "scene_title.h"
 #include "scene_language.h"
+#include "ci_ui.h"
 #include "audio.h"
 #include "audio_secache.h"
 #include "cache.h"
@@ -171,7 +172,7 @@ void Scene_Title::vUpdate() {
 void Scene_Title::Refresh() {
 	// Enable load game if available
 	continue_enabled = FileFinder::HasSavegame();
-	if (continue_enabled && !Player::ci_flag) {
+	if (continue_enabled && !CiUi::config.ci_flag) {
 		command_window->SetIndex(1);
 	}
 	command_window->SetItemEnabled(1, continue_enabled);

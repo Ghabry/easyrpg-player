@@ -50,6 +50,23 @@ public:
 	void UpdateDisplay() override;
 	void vGetConfig(Game_ConfigVideo& cfg) const override;
 
+	static void ProcessCi();
+
+	struct Config {
+		/** Headless execution (use CiUi) */
+		bool headless = false;
+
+		/** Enable CI features */
+		bool ci_flag = false;
+
+		/** CI output directory name for CI auto-saves/screenshots */
+		std::string ci_name;
+
+		/** CI auto-save on each frame */
+		bool ci_save = false;
+	};
+	static inline Config config;
+
 #ifdef SUPPORT_AUDIO
 	AudioInterface& GetAudio() override;
 #endif

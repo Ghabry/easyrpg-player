@@ -19,6 +19,10 @@
 #include "ci_ui.h"
 #include "bitmap.h"
 #include "pixel_format.h"
+#include "player.h"
+#include "output.h"
+#include "game_system.h"
+#include "scene_save.h"
 
 CiUi::CiUi(long width, long height, const Game_Config& cfg) : BaseUi(cfg) {
 	current_display_mode.width = width;
@@ -56,3 +60,23 @@ AudioInterface& CiUi::GetAudio() {
 	return *audio_;
 }
 #endif
+
+void CiUi::ProcessCi() {
+	if (!config.ci_flag) {
+		return;
+	}
+
+	auto fs = FileFinder::Save();
+
+	if (!config.ci_name.empty()) {
+		fs = FileFinder::Root().Subtree(config.ci_name);
+	}
+
+	if (!fs) {
+		Output::Error("Directory {} does not exist", config.ci_name);
+	}
+
+	if (config.ci_save && Scene::Find(Scene::Map)) {
+		Scene_Save::Save(fs, Main_Data::game_system->GetFrameCounter());
+	}
+}

@@ -19,6 +19,7 @@
 #include <cassert>
 #include "async_handler.h"
 #include "scene.h"
+#include "ci_ui.h"
 #include "graphics.h"
 #include "input.h"
 #include "player.h"
@@ -375,7 +376,7 @@ void Scene::PushTitleScene(bool pop_stack_top) {
 
 	if (!Player::startup_language.empty()) {
 		Player::translation.SelectLanguage(Player::startup_language);
-	} else if (!Player::ci_flag && Player::translation.HasTranslations()) {
+	} else if (!CiUi::config.ci_flag && Player::translation.HasTranslations()) {
 		if (Player::player_config.lang_select_on_start.Get() == ConfigEnum::StartupLangSelect::Always
 			|| (!FileFinder::HasSavegame() && Player::player_config.lang_select_on_start.Get() == ConfigEnum::StartupLangSelect::FirstStartup)) {
 			Scene::Push(std::make_shared<Scene_Language>(), pop_stack_top);
