@@ -378,6 +378,9 @@ namespace Player {
 	/** Prevent adding of RTP paths to the file finder */
 	extern bool no_rtp_flag;
 
+	/** CI / Headless execution flag */
+	extern bool ci_flag;
+
 	/** Mutes audio playback */
 	extern bool no_audio_flag;
 

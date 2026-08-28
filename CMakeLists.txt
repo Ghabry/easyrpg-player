@@ -80,6 +80,8 @@ add_library(${PROJECT_NAME} OBJECT
 	src/cache.cpp
 	src/cache.h
 	src/callback.h
+	src/ci_ui.cpp
+	src/ci_ui.h
 	src/cmdline_parser.cpp
 	src/cmdline_parser.h
 	src/color.h

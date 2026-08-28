@@ -78,6 +78,7 @@
 #include "scene_title.h"
 #include "instrumentation.h"
 #include "transition.h"
+#include "ci_ui.h"
 #include <lcf/scope_guard.h>
 #include <lcf/log_handler.h>
 #include "baseui.h"
@@ -115,6 +116,7 @@ namespace Player {
 	std::vector<int> party_members;
 	int start_map_id;
 	bool no_rtp_flag;
+	bool ci_flag = false;
 	std::string rtp_path;
 	bool no_audio_flag;
 	bool is_easyrpg_project;
@@ -194,7 +196,9 @@ void Player::Init(std::vector<std::string> args) {
 
 	DisplayUi.reset();
 
-	if(! DisplayUi) {
+	if (ci_flag) {
+		DisplayUi = std::make_shared<CiUi>(Player::screen_width, Player::screen_height, cfg);
+	} else if (!DisplayUi) {
 		DisplayUi = BaseUi::CreateUi(Player::screen_width, Player::screen_height, cfg);
 	}
 
@@ -643,6 +647,10 @@ Game_Config Player::ParseCommandLine() {
 			if (arg.NumValues() > 0) {
 				forced_encoding = arg.Value(0);
 			}
+			continue;
+		}
+		if (cp.ParseNext(arg, 0, "--ci")) {
+			ci_flag = true;
 			continue;
 		}
 		if (cp.ParseNext(arg, 0, {"--no-audio", "--disable-audio"})) {
@@ -1586,6 +1594,8 @@ Debug options:
                       position (X, Y).
                       Incompatible with --load-game-id.
  --test-play          Enable TestPlay (Debug) mode.
+ --ci                 Enable CI mode (headless UI, skip translation scene,
+                      title defaults to new game).
 
 Other options:
  -v, --version        Display program version and exit.

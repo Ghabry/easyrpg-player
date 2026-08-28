@@ -171,7 +171,7 @@ void Scene_Title::vUpdate() {
 void Scene_Title::Refresh() {
 	// Enable load game if available
 	continue_enabled = FileFinder::HasSavegame();
-	if (continue_enabled) {
+	if (continue_enabled && !Player::ci_flag) {
 		command_window->SetIndex(1);
 	}
 	command_window->SetItemEnabled(1, continue_enabled);
