@@ -103,6 +103,13 @@ void Scene_Logo::vUpdate() {
 
 			Scene::PushTitleScene(true);
 
+			if (!Player::load_game.empty()) {
+				auto fs = FileFinder::Root();
+
+				Output::Debug("Loading Save {}", Player::load_game);
+				Player::LoadSavegame(fs, Player::load_game, 1);
+			}
+
 			if (Player::load_game_id > 0) {
 				auto save = FileFinder::Save();
 

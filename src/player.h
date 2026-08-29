@@ -176,6 +176,15 @@ namespace Player {
 	void LoadSavegame(const std::string& save_file, int save_id = 0);
 
 	/**
+	 * Loads savegame data.
+	 *
+	 * @param tree Filesystem to use for loading
+	 * @param save_file Savegame file to load
+	 * @param save_id ID of the savegame to load
+	 */
+	void LoadSavegame(const FilesystemView& tree, const std::string& save_file, int save_id = 0);
+
+	/**
 	 * Starts a new game
 	 */
 	void SetupNewGame();
@@ -371,6 +380,9 @@ namespace Player {
 
 	/** Overwrite start map */
 	extern int start_map_id;
+
+	/** If set, savegame is loaded by name directly */
+	extern std::string load_game;
 
 	/** If set, savegame is loaded directly */
 	extern int load_game_id;

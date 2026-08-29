@@ -111,6 +111,7 @@ namespace Player {
 	bool reset_flag = false;
 	bool debug_flag;
 	bool hide_title_flag;
+	std::string load_game;
 	int load_game_id;
 	int party_x_position;
 	int party_y_position;
@@ -450,6 +451,7 @@ Game_Config Player::ParseCommandLine() {
 	hide_title_flag = false;
 	exit_flag = false;
 	reset_flag = false;
+	load_game.clear();
 	load_game_id = -1;
 	party_x_position = -1;
 	party_y_position = -1;
@@ -599,10 +601,13 @@ Game_Config Player::ParseCommandLine() {
 			}
 			continue;
 		}
-		/*else if (*it == "--load-game") {
-			// load game by filename
+		if (cp.ParseNext(arg, 1, "--load-game")) {
+			if (arg.NumValues() > 0) {
+				load_game = arg.Value(0);
 		}
-		else if (*it == "--database") {
+			continue;
+		}
+		/*else if (*it == "--database") {
 			// overwrite database file
 		}
 		else if (*it == "--map-tree") {
@@ -1189,6 +1194,10 @@ static void OnMapSaveFileReady(FileRequestResult*, lcf::rpg::Save save) {
 }
 
 void Player::LoadSavegame(const std::string& save_name, int save_id) {
+	LoadSavegame(FileFinder::Save(), save_name, save_id);
+}
+
+void Player::LoadSavegame(const FilesystemView& tree, const std::string& save_name, int save_id) {
 	Output::Debug("Loading Save {}", save_name);
 
 	bool load_on_map = Scene::instance->type == Scene::Map;
@@ -1206,7 +1215,7 @@ void Player::LoadSavegame(const std::string& save_name, int save_id) {
 		static_cast<Scene_Title*>(title_scene.get())->OnGameStart();
 	}
 
-	auto save_stream = FileFinder::Save().OpenInputStream(save_name);
+	auto save_stream = tree.OpenInputStream(save_name);
 	if (!save_stream) {
 		Output::Error("Error loading {}", save_name);
 		return;
