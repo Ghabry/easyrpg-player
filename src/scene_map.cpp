@@ -96,7 +96,12 @@ void Scene_Map::StartFromSave(int from_save_id) {
 }
 
 void Scene_Map::Start2(MapUpdateAsyncContext actx) {
-	PreUpdate(actx);
+	if (from_save_id <= 0) {
+		// After loading a save the Player had an off-by-one error compared to
+		// RPG_RT due to events updating.
+		// Skip this event update.
+		PreUpdate(actx);
+	}
 
 	if (actx.IsActive()) {
 		OnAsyncSuspend([this,actx]() { Start2(actx); }, actx.GetAsyncOp(), true);
