@@ -86,7 +86,7 @@ void CiUi::ProcessCi() {
 
 	if (Scene::Find(Scene::Map) && frame > 0) {
 		if (config.ci_save) {
-			Scene_Save::Save(fs, frame);
+			Scene_Save::Save(fs, frame, false, true);
 		}
 
 		if (config.ci_screenshot) {

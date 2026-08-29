@@ -62,8 +62,8 @@ void Scene_Save::Start() {
 
 void Scene_Save::Action(int index) {
 	if (CiUi::config.ci_flag) {
-		// In CI Mode manual saving sets the frame counter to 0 to make them
-		// suitable for loading as tests
+		// In CI Mode manual saving sets the frame and the save counter to 0 to
+		// make them suitable for loading as tests.
 		Main_Data::game_system->ResetFrameCounter();
 		Main_Data::game_system->ResetSaveCount();
 	}
@@ -83,7 +83,7 @@ std::string Scene_Save::GetSaveFilename(const FilesystemView& fs, int slot_id) {
 	return filename;
 }
 
-bool Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save) {
+bool Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save, bool ci_autosave) {
 	const auto filename = GetSaveFilename(fs, slot_id);
 	Output::Debug("Saving to {}", filename);
 
@@ -94,10 +94,10 @@ bool Scene_Save::Save(const FilesystemView& fs, int slot_id, bool prepare_save) 
 		return false;
 	}
 
-	return Save(save_stream, slot_id, prepare_save);
+	return Save(save_stream, slot_id, prepare_save, ci_autosave);
 }
 
-bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
+bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save, bool ci_autosave) {
 	lcf::rpg::Save save;
 	auto& title = save.title;
 	// TODO: Maybe find a better place to setup the save file?
@@ -129,7 +129,10 @@ bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
 		title.hero_name = ToString(actor->GetName());
 	}
 
-	Main_Data::game_system->SetSaveSlot(slot_id);
+	if (!ci_autosave) {
+		// Do not touch the slot in CI Mode as the RPG_RT hook will not update it
+		Main_Data::game_system->SetSaveSlot(slot_id);
+	}
 	save.party_location = Main_Data::game_player->GetSaveData();
 	Game_Map::PrepareSave(save);
 
@@ -160,6 +163,16 @@ bool Scene_Save::Save(std::ostream& os, int slot_id, bool prepare_save) {
 			sme.map_id = 0;
 		}
 	}
+
+	if (ci_autosave) {
+		// Deterministic Timestamp
+		std::time_t savetime = 631152000; // 1990-01-01 00:00:00 UTC
+		const uint64_t seconds = (Main_Data::game_system->GetFrameCounter() * 16) / 1000;
+		savetime += static_cast<std::time_t>(seconds);
+
+		title.timestamp = lcf::LSD_Reader::GenerateTimestamp(savetime);
+	}
+
 	auto lcf_engine = Player::IsRPG2k3() ? lcf::EngineVersion::e2k3 : lcf::EngineVersion::e2k;
 	bool res = lcf::LSD_Reader::Save(os, save, lcf_engine, Player::encoding);
 

@@ -70,6 +70,7 @@
 #include "transition.h"
 #include "baseui.h"
 #include "algo.h"
+#include "ci_ui.h"
 
 using namespace Game_Interpreter_Shared;
 
@@ -124,15 +125,19 @@ void Game_Interpreter::PushInternal(
 	if (type_src == EventType::MapEvent) {
 		frame.event_id = event_id;
 	}
-	frame.maniac_event_id = event_id;
-	frame.maniac_event_page_id = event_page_id;
 
-	if (type_ex <= ExecutionType::BattleParallel) {
-		frame.maniac_event_info = static_cast<int>(type_ex);
-	}
+	if (!CiUi::config.ci_flag || Player::IsPatchManiac()) {
+		// Not written in CI Mode for save game similarity with RPG_RT
+		frame.maniac_event_id = event_id;
+		frame.maniac_event_page_id = event_page_id;
 
-	if (type_src <= EventType::BattleEvent) {
-		frame.maniac_event_info |= (static_cast<int>(type_src) << 4);
+		if (type_ex <= ExecutionType::BattleParallel) {
+			frame.maniac_event_info = static_cast<int>(type_ex);
+		}
+
+		if (type_src <= EventType::BattleEvent) {
+			frame.maniac_event_info |= (static_cast<int>(type_src) << 4);
+		}
 	}
 
 	if (_state.stack.empty() && main_flag && !Game_Battle::IsBattleRunning()) {
