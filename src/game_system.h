@@ -226,6 +226,7 @@ public:
 
 	int GetSaveCount();
 	void IncSaveCount();
+	void ResetSaveCount();
 
 	const lcf::rpg::Music& GetCurrentBGM();
 	void MemorizeBGM();
@@ -612,6 +613,10 @@ inline int Game_System::GetSaveCount() {
 
 inline void Game_System::IncSaveCount() {
 	++data.save_count;
+}
+
+inline void Game_System::ResetSaveCount() {
+	data.save_count = 0;
 }
 
 inline std::string_view Game_System::GetSystem2Name() {

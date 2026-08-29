@@ -64,6 +64,12 @@ public:
 
 		/** CI auto-save on each frame */
 		bool ci_save = false;
+
+		/** CI auto-screenshot on each frame */
+		bool ci_screenshot = false;
+
+		/** CI shutdown after reaching this frame */
+		int ci_exit = -1;
 	};
 	static inline Config config;
 

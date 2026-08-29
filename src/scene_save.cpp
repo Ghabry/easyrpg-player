@@ -38,6 +38,7 @@
 #include "game_screen.h"
 #include "game_pictures.h"
 #include "game_windows.h"
+#include "ci_ui.h"
 #include <lcf/lsd/reader.h>
 #include "output.h"
 #include "player.h"
@@ -60,6 +61,12 @@ void Scene_Save::Start() {
 }
 
 void Scene_Save::Action(int index) {
+	if (CiUi::config.ci_flag) {
+		// In CI Mode manual saving sets the frame counter to 0 to make them
+		// suitable for loading as tests
+		Main_Data::game_system->ResetFrameCounter();
+		Main_Data::game_system->ResetSaveCount();
+	}
 	Save(fs, index + 1);
 
 	Scene::Pop();

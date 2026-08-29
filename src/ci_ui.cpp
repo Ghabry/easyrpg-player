@@ -24,6 +24,8 @@
 #include "game_system.h"
 #include "scene_save.h"
 
+#include <fmt/format.h>
+
 CiUi::CiUi(long width, long height, const Game_Config& cfg) : BaseUi(cfg) {
 	current_display_mode.width = width;
 	current_display_mode.height = height;
@@ -76,7 +78,24 @@ void CiUi::ProcessCi() {
 		Output::Error("Directory {} does not exist", config.ci_name);
 	}
 
-	if (config.ci_save && Scene::Find(Scene::Map)) {
-		Scene_Save::Save(fs, Main_Data::game_system->GetFrameCounter());
+	if (!Main_Data::game_system) {
+		return;
+	}
+
+	auto frame = Main_Data::game_system->GetFrameCounter();
+
+	if (Scene::Find(Scene::Map) && frame > 0) {
+		if (config.ci_save) {
+			Scene_Save::Save(fs, frame);
+		}
+
+		if (config.ci_screenshot) {
+			auto os = fs.OpenOutputStream(fmt::format("frame{:02}.png", frame));
+			Output::TakeScreenshot(os);
+		}
+	}
+
+	if (config.ci_exit > 0 && frame >= config.ci_exit) {
+		Player::exit_flag = true;
 	}
 }

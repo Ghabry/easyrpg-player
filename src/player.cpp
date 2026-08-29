@@ -604,7 +604,7 @@ Game_Config Player::ParseCommandLine() {
 		if (cp.ParseNext(arg, 1, "--load-game")) {
 			if (arg.NumValues() > 0) {
 				load_game = arg.Value(0);
-		}
+			}
 			continue;
 		}
 		/*else if (*it == "--database") {
@@ -675,6 +675,16 @@ Game_Config Player::ParseCommandLine() {
 		}
 		if (cp.ParseNext(arg, 0, "--ci-save")) {
 			CiUi::config.ci_save = true;
+			continue;
+		}
+		if (cp.ParseNext(arg, 0, "--ci-screenshot")) {
+			CiUi::config.ci_screenshot = true;
+			continue;
+		}
+		if (cp.ParseNext(arg, 1, "--ci-exit")) {
+			if (arg.ParseValue(0, li_value)) {
+				CiUi::config.ci_exit = li_value;
+			}
 			continue;
 		}
 		if (cp.ParseNext(arg, 0, "--headless")) {
