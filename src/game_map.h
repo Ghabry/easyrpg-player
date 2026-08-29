@@ -697,7 +697,7 @@ namespace Game_Map {
 
 	void UpdateProcessedFlags(bool is_preupdate);
 	bool UpdateCommonEvents(MapUpdateAsyncContext& actx);
-	bool UpdateMapEvents(MapUpdateAsyncContext& actx);
+	bool UpdateMapEvents(MapUpdateAsyncContext& actx, bool is_preupdate);
 	bool UpdateMessage(MapUpdateAsyncContext& actx);
 	bool UpdateForegroundEvents(MapUpdateAsyncContext& actx);
 

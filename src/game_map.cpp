@@ -1272,7 +1272,7 @@ void Game_Map::Update(MapUpdateAsyncContext& actx, bool is_preupdate) {
 	}
 
 	if (!actx.IsActive() || actx.IsParallelMapEvent()) {
-		if (!UpdateMapEvents(actx)) {
+		if (!UpdateMapEvents(actx, is_preupdate)) {
 			// Suspend due to map event async op ...
 			return;
 		}
@@ -1360,7 +1360,7 @@ bool Game_Map::UpdateCommonEvents(MapUpdateAsyncContext& actx) {
 	return true;
 }
 
-bool Game_Map::UpdateMapEvents(MapUpdateAsyncContext& actx) {
+bool Game_Map::UpdateMapEvents(MapUpdateAsyncContext& actx, bool is_preupdate) {
 	int resume_ev = actx.GetParallelMapEvent();
 
 	for (Game_Event& ev : events) {
@@ -1375,7 +1375,7 @@ bool Game_Map::UpdateMapEvents(MapUpdateAsyncContext& actx) {
 			}
 		}
 
-		auto aop = ev.Update(resume_async);
+		auto aop = ev.Update(resume_async, is_preupdate);
 		if (aop.IsActive()) {
 			// Suspend due to this event ..
 			actx = MapUpdateAsyncContext::FromMapEvent(ev.GetId(), aop);

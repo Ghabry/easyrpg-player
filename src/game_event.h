@@ -128,9 +128,11 @@ public:
 	 * Update this for the current frame
 	 *
 	 * @param resume_async If we're resuming from an async operation.
+	 * @param is_preupdate When true (during setup/fade-in) only the parallel
+	 *                     interpreter runs, character movement is skipped.
 	 * @return async operation if we should suspend, otherwise returns AsyncOp::eNone
 	 */
-	AsyncOp Update(bool resume_async);
+	AsyncOp Update(bool resume_async, bool is_preupdate = false);
 
 	bool AreConditionsMet(const lcf::rpg::EventPage& page);
 

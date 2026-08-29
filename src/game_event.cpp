@@ -577,7 +577,7 @@ void Game_Event::MoveTypeAwayFromPlayer() {
 	MoveTypeTowardsOrAwayPlayer(false);
 }
 
-AsyncOp Game_Event::Update(bool resume_async) {
+AsyncOp Game_Event::Update(bool resume_async, bool is_preupdate) {
 	if (!data()->active || (!resume_async && page == NULL)) {
 		return {};
 	}
@@ -605,7 +605,13 @@ AsyncOp Game_Event::Update(bool resume_async) {
 		}
 	}
 
-	Game_Character::Update();
+	if (!is_preupdate) {
+		// During pre-update (map setup / teleport before fades in) RPG_RT does
+		// not advance character movement.
+		// Only parallel event interpreters run. Skipping this prevents map
+		// event characters from moving one frame too early.
+		Game_Character::Update();
+	}
 
 	return {};
 }
