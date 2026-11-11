@@ -17,6 +17,7 @@
 
 // Headers
 #include "ui.h"
+#include "ctr_render_target.h"
 #include "color.h"
 #include "graphics.h"
 #include "keys.h"
@@ -55,7 +56,7 @@ namespace {
 	u32* screen_buffer = nullptr;
 	BitmapRef screen_surface; // contains screen_buffer, linear heap allocated
 	C3D_Tex tex, keyb_tex;
-	Tex3DS_SubTexture subt3x;
+	Tex3DS_SubTexture subt3x, gpu_subt3x;
 	Tex3DS_Texture keyb_t3x;
 	struct _render_parms {
 		int top, left;
@@ -138,7 +139,8 @@ CtrUi::CtrUi(int width, int height, const Game_Config& cfg) : BaseUi(cfg) {
 	aptHook(&cookie, _aptHook, 0);
 	ptmuInit();
 
-	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
+	// Larger command buffer: The hardware renderer records the whole frame
+	C3D_Init(C3D_DEFAULT_CMDBUF_SIZE * 2);
 	C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
 	C2D_Prepare();
 	top_screen = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
@@ -147,9 +149,21 @@ CtrUi::CtrUi(int width, int height, const Game_Config& cfg) : BaseUi(cfg) {
 	current_display_mode.height = height;
 	current_display_mode.bpp = 32;
 
-	const auto format = format_B8G8R8A8_n().format();
+	// Use the native texture format of the GPU (RGBA8, memory order ABGR)
+	// so that bitmaps can be uploaded by the GX transfer engine without conversion.
+	// Bitmaps are allocated in linear memory for the same reason.
+	CtrRenderTarget::InstallPixelAllocator();
+	const auto format = format_A8B8G8R8_n().format();
 	Bitmap::SetFormat(Bitmap::ChooseFormat(format));
 	main_surface = Bitmap::Create(width, height, Color(0, 0, 0, 255));
+
+	const auto& renderer_cfg = cfg.video.renderer.Get();
+	use_gpu_renderer = (renderer_cfg.empty() || renderer_cfg == "hardware" || renderer_cfg == "auto");
+	if (use_gpu_renderer) {
+		gpu = CtrRenderTarget::Create(width, height);
+		use_gpu_renderer = (gpu != nullptr);
+	}
+	Output::Debug("3DS: Hardware rendering: {}", use_gpu_renderer);
 
 	// compute render params to center/stretch image correctly
 	renderer.top = (GSP_SCREEN_WIDTH - height) / 2;
@@ -172,10 +186,18 @@ CtrUi::CtrUi(int width, int height, const Game_Config& cfg) : BaseUi(cfg) {
 	subt3x = { (u16)width, (u16)height, 0.0f, 1.0f,
 		width/(float)tex.width, 1.0f - height/(float)tex.height };
 
+	if (gpu) {
+		const auto* gpu_tex = gpu->GetScreenTexture();
+		gpu_subt3x = { (u16)width, (u16)height, 0.0f, 1.0f,
+			width/(float)gpu_tex->width, 1.0f - height/(float)gpu_tex->height };
+	}
+
 	if (vcfg.stretch.Get()) {
 		C3D_TexSetFilter(&tex, GPU_LINEAR, GPU_LINEAR);
+		if (gpu) C3D_TexSetFilter(gpu->GetScreenTexture(), GPU_LINEAR, GPU_LINEAR);
 	} else {
 		C3D_TexSetFilter(&tex, GPU_NEAREST, GPU_NEAREST);
+		if (gpu) C3D_TexSetFilter(gpu->GetScreenTexture(), GPU_NEAREST, GPU_NEAREST);
 	}
 
 #ifdef SUPPORT_AUDIO
@@ -198,6 +220,9 @@ CtrUi::CtrUi(int width, int height, const Game_Config& cfg) : BaseUi(cfg) {
 }
 
 CtrUi::~CtrUi() {
+	// Frees all GPU textures, must happen before citro3d shuts down
+	gpu.reset();
+
 	C3D_TexDelete(&tex);
 
 #ifndef _DEBUG
@@ -329,24 +354,43 @@ bool CtrUi::ProcessEvents() {
 	return true;
 }
 
-void CtrUi::UpdateDisplay() {
-	// convert ARGB buffer to RGBA buffer
-	// required because pixman has no fast-paths for non AXXX buffers and 3DS wants RGBA
-	screen_surface->BlitFast(0, 0, *main_surface, main_surface->GetRect(), Opacity::Opaque());
-
-	GSPGPU_FlushDataCache(screen_buffer, tex.width * tex.height * 4);
+void CtrUi::UploadSoftwareSurface() {
+	// Using RGB8 as output format is faster and improves framerate ¯\_(ツ)_/¯
+	const u32 flags = (GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(1) | GX_TRANSFER_RAW_COPY(0) |
+		GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) |
+		GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO));
 
 	// Convert the texture before starting a frame, so this uses a safe transfer
-	// Using RGB8 as output format is faster and improves framerate ¯\_(ツ)_/¯
-	u32 dim = GX_BUFFER_DIM(tex.width, tex.height);
-	C3D_SyncDisplayTransfer(screen_buffer, dim, (u32*)tex.data, dim,
-		(GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(1) | GX_TRANSFER_RAW_COPY(0) |
-		GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGB8) |
-		GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO))
-	 );
+	if (main_surface->IsCustomAllocated() && main_surface->pitch() == static_cast<int>(tex.width) * 4) {
+		// main_surface is in linear memory and has the native format: Transfer directly
+		const int rows = (main_surface->height() + 7) & ~7;
+		GSPGPU_FlushDataCache(main_surface->pixels(), main_surface->pitch() * rows);
+		u32 dim = GX_BUFFER_DIM(tex.width, rows);
+		C3D_SyncDisplayTransfer((u32*)main_surface->pixels(), dim, (u32*)tex.data, dim, flags);
+		return;
+	}
 
-	// start frame, clear targets
-	C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+	screen_surface->BlitFast(0, 0, *main_surface, main_surface->GetRect(), Opacity::Opaque());
+	GSPGPU_FlushDataCache(screen_buffer, tex.width * tex.height * 4);
+	u32 dim = GX_BUFFER_DIM(tex.width, tex.height);
+	C3D_SyncDisplayTransfer(screen_buffer, dim, (u32*)tex.data, dim, flags);
+}
+
+void CtrUi::UpdateDisplay() {
+	// The hardware renderer started the frame in BeginDrawScreen and rendered into its screen texture.
+	// When nothing was rendered by it (software renderer or direct drawing on the
+	// display surface) the display surface is shown.
+	const bool gpu_frame = gpu && use_gpu_renderer && gpu->IsInFrame();
+
+	if (!gpu_frame) {
+		UploadSoftwareSurface();
+		C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+	}
+
+	// The hardware renderer changes the GPU state
+	C2D_Prepare();
+
+	// clear targets
 	C2D_TargetClear(top_screen, C2D_Color32f(0, 0, 0, 1));
 #ifndef _DEBUG
 	// only clear if needed
@@ -357,7 +401,7 @@ void CtrUi::UpdateDisplay() {
 	// top screen
 	C2D_SceneBegin(top_screen);
 
-	C2D_Image img = { &tex, &subt3x };
+	C2D_Image img = gpu_frame ? C2D_Image{ gpu->GetScreenTexture(), &gpu_subt3x } : C2D_Image{ &tex, &subt3x };
 	if (vcfg.stretch.Get()) {
 		C2D_DrawImageAt(img, 0, 0, z, nullptr, renderer.stretch_x, renderer.stretch_y);
 	} else {
@@ -429,16 +473,20 @@ void CtrUi::UpdateDisplay() {
 #endif
 
 	// show everything
-	C3D_FrameEnd(0);
+	if (gpu_frame) {
+		gpu->EndFrame();
+	} else {
+		C3D_FrameEnd(0);
+	}
 }
 
 void CtrUi::ToggleStretch() {
 	vcfg.stretch.Toggle();
 
-	if (vcfg.stretch.Get()) {
-		C3D_TexSetFilter(&tex, GPU_LINEAR, GPU_LINEAR);
-	} else {
-		C3D_TexSetFilter(&tex, GPU_NEAREST, GPU_NEAREST);
+	auto filter = vcfg.stretch.Get() ? GPU_LINEAR : GPU_NEAREST;
+	C3D_TexSetFilter(&tex, filter, filter);
+	if (gpu) {
+		C3D_TexSetFilter(gpu->GetScreenTexture(), filter, filter);
 	}
 }
 
@@ -447,7 +495,13 @@ void CtrUi::ToggleTouchUi() {
 }
 
 void CtrUi::vGetConfig(Game_ConfigVideo& cfg) const {
-	cfg.renderer.SetValues({{"3DS Citro (Software)", "auto"}});
+	std::vector<StringListConfigParam::Item> renderers;
+	if (gpu) {
+		renderers.push_back({"3DS Citro (Hardware)", "hardware", "Hardware rendering (faster)"});
+	}
+	renderers.push_back({"3DS Citro (Software)", "software", "Software rendering (slower, more accurate)"});
+	cfg.renderer.SetValues(std::move(renderers));
+	cfg.renderer.Set(use_gpu_renderer ? "hardware" : "software");
 
 	cfg.stretch.SetOptionVisible(true);
 	cfg.touch_ui.SetOptionVisible(true);
@@ -466,4 +520,42 @@ bool CtrUi::HandleErrorOutput(const std::string &message) {
 	errorDisp(&errCnf);
 
 	return true;
+}
+
+void CtrUi::SetRenderer(std::string_view tag) {
+	bool want_gpu = (tag == "hardware");
+
+	if (want_gpu && !gpu) {
+		gpu = CtrRenderTarget::Create(current_display_mode.width, current_display_mode.height);
+		if (gpu) {
+			const auto* gpu_tex = gpu->GetScreenTexture();
+			gpu_subt3x = { (u16)current_display_mode.width, (u16)current_display_mode.height, 0.0f, 1.0f,
+				current_display_mode.width/(float)gpu_tex->width, 1.0f - current_display_mode.height/(float)gpu_tex->height };
+			auto filter = vcfg.stretch.Get() ? GPU_LINEAR : GPU_NEAREST;
+			C3D_TexSetFilter(gpu->GetScreenTexture(), filter, filter);
+		}
+	}
+
+	want_gpu = want_gpu && gpu;
+	if (want_gpu != use_gpu_renderer) {
+		Output::Debug("3DS: Set renderer to {}", want_gpu ? "hardware" : "software");
+	}
+
+	use_gpu_renderer = want_gpu;
+	if (gpu) {
+		gpu->SetEnabled(use_gpu_renderer);
+	}
+}
+
+RenderTarget* CtrUi::vGetRenderTarget() {
+	if (gpu && use_gpu_renderer) {
+		return gpu.get();
+	}
+	return nullptr;
+}
+
+void CtrUi::vCaptureScreen() {
+	if (gpu && use_gpu_renderer) {
+		gpu->CopyScreenToBitmap(*main_surface);
+	}
 }

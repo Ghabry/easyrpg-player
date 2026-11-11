@@ -29,9 +29,11 @@
 #include "output.h"
 
 /* 8 MB required for booting and need extra linear memory for the sound
- * effect cache and frame buffers
+ * effect cache and frame buffers.
+ * Bitmaps and GPU textures are allocated in linear memory, too
+ * (falls back to the normal heap when the linear heap is exhausted).
  */
-u32 __ctru_linear_heap_size = 22*1024*1024;
+u32 __ctru_linear_heap_size = 32*1024*1024;
 
 namespace {
 	u32 old_time_limit;

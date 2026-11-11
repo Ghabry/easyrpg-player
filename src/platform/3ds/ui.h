@@ -25,6 +25,9 @@
 #include "system.h"
 #include <citro3d.h>
 #include <citro2d.h>
+#include <memory>
+
+class CtrRenderTarget;
 
 /**
  * CtrUi class.
@@ -55,15 +58,25 @@ public:
 	void ToggleTouchUi() override;
 	void vGetConfig(Game_ConfigVideo& cfg) const override;
 	bool HandleErrorOutput(const std::string &message) override;
+	void SetRenderer(std::string_view tag) override;
 
 #ifdef SUPPORT_AUDIO
 	AudioInterface& GetAudio();
 #endif
 	/** @} */
 
+protected:
+	RenderTarget* vGetRenderTarget() override;
+	void vCaptureScreen() override;
+
 private:
 	C3D_RenderTarget *top_screen, *bottom_screen;
 	void ToggleBottomScreen(bool state);
+	void UploadSoftwareSurface();
+
+	/** Hardware renderer, nullptr when not available */
+	std::unique_ptr<CtrRenderTarget> gpu;
+	bool use_gpu_renderer = true;
 
 #ifdef SUPPORT_AUDIO
 	std::unique_ptr<AudioInterface> audio_;

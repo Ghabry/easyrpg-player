@@ -1,0 +1,44 @@
+; SPDX-License-Identifier: MIT-0
+;
+; Vertex shader of the 3DS hardware renderer (CtrRenderTarget).
+; All effects (opacity, tone, flash) are done in the texture combiners (TEV).
+; Vertices are already transformed to target pixel coordinates on the CPU.
+
+; Uniforms
+.fvec projection[4]
+
+; Constants
+.constf myconst(0.0, 1.0, 0.00392156862745098, 0.0)
+.alias  zeros  myconst.xxxx
+.alias  ones   myconst.yyyy
+.alias  inv255 myconst.zzzz
+
+; Outputs
+.out outpos position
+.out outtc0 texcoord0
+.out outclr color
+
+; Inputs
+.alias inpos v0 ; x, y (pixels)
+.alias intex v1 ; u, v
+.alias inclr v2 ; r, g, b, a (0 - 255)
+
+.proc main
+	; r0 = (x, y, 0, 1)
+	mov r0.xy, inpos
+	mov r0.z,  zeros
+	mov r0.w,  ones
+
+	; outpos = projection * r0
+	dp4 outpos.x, projection[0], r0
+	dp4 outpos.y, projection[1], r0
+	dp4 outpos.z, projection[2], r0
+	dp4 outpos.w, projection[3], r0
+
+	mov outtc0, intex
+
+	; Unsigned byte attributes are not normalized
+	mul outclr, inv255, inclr
+
+	end
+.end

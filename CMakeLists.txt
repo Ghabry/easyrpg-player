@@ -693,13 +693,16 @@ elseif(PLAYER_TARGET_PLATFORM STREQUAL "3ds")
 			${CMAKE_CURRENT_SOURCE_DIR}/resources/3ds/battery/full.png
 			${CMAKE_CURRENT_SOURCE_DIR}/resources/3ds/battery/adapter.png
 		OPTIONS -f rgba)
-	dkp_add_embedded_binary_library(3ds-assets keyboard battery)
+	ctr_add_shader_library(sprite_shader ${CMAKE_CURRENT_SOURCE_DIR}/resources/3ds/sprite.v.pica)
+	dkp_add_embedded_binary_library(3ds-assets keyboard battery sprite_shader)
 	target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 	target_sources(${PROJECT_NAME} INTERFACE
 		$<TARGET_OBJECTS:3ds-assets> PRIVATE
 		src/platform/3ds/audio.cpp
 		src/platform/3ds/audio.h
 		src/platform/3ds/clock.h
+		src/platform/3ds/ctr_render_target.cpp
+		src/platform/3ds/ctr_render_target.h
 		src/platform/3ds/input_buttons.cpp
 		src/platform/3ds/ui.cpp
 		src/platform/3ds/ui.h)
