@@ -222,11 +222,11 @@ ImageOpacity Bitmap::ComputeImageOpacity() const {
 		const auto* row = p + y * stride;
 		for (int x = 0; x < w; ++x) {
 			auto px = row[x] & mask;
-		bool transp = (px == 0);
-		bool opaque = (px == mask);
-		all_transp &= transp;
-		all_opaque &= opaque;
-		alpha_1bit &= (transp | opaque);
+			bool transp = (px == 0);
+			bool opaque = (px == mask);
+			all_transp &= transp;
+			all_opaque &= opaque;
+			alpha_1bit &= (transp | opaque);
 		}
 	}
 
@@ -548,6 +548,20 @@ static void destroy_func(pixman_image_t * /* image */, void *data) {
 	free(data);
 }
 
+static Bitmap::PixelAllocator* pixel_allocator = nullptr;
+
+static void custom_destroy_func(pixman_image_t * /* image */, void *data) {
+	pixel_allocator->Free(data);
+}
+
+void Bitmap::SetPixelAllocator(PixelAllocator* allocator) {
+	pixel_allocator = allocator;
+}
+
+bool Bitmap::IsCustomAllocated() const {
+	return custom_allocated;
+}
+
 static pixman_indexed_t palette;
 static bool palette_initialized = false;
 
@@ -562,6 +576,16 @@ static void initialize_palette() {
 }
 
 void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
+	custom_allocated = false;
+	if (!data && pixel_allocator) {
+		int custom_pitch = 0;
+		data = pixel_allocator->Allocate(width, height, format.bytes, custom_pitch);
+		if (data) {
+			custom_allocated = true;
+			pitch = custom_pitch;
+		}
+	}
+
 	if (!pitch)
 		pitch = width * format.bytes;
 
@@ -576,8 +600,15 @@ void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
 		pixman_image_set_indexed(bitmap.get(), &palette);
 	}
 
-	if (data != NULL && destroy)
+	if (custom_allocated) {
+		if (bitmap) {
+			pixman_image_set_destroy_function(bitmap.get(), custom_destroy_func, data);
+		} else {
+			pixel_allocator->Free(data);
+		}
+	} else if (data != NULL && destroy) {
 		pixman_image_set_destroy_function(bitmap.get(), destroy_func, data);
+	}
 }
 
 void Bitmap::ConvertImage(int& width, int& height, void*& pixels, bool transparent, uint32_t flags) {

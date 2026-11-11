@@ -622,6 +622,45 @@ public:
 	void SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn) const;
 	void ClearGpuTexture();
 
+	/**
+	 * Custom allocator for the pixel memory of bitmaps.
+	 * Used by platforms that want the pixels in a special memory region,
+	 * e.g. memory that is directly accessible by the GPU.
+	 */
+	class PixelAllocator {
+	public:
+		virtual ~PixelAllocator() = default;
+
+		/**
+		 * Allocates zero-initialized pixel memory.
+		 *
+		 * @param width bitmap width
+		 * @param height bitmap height
+		 * @param bytes bytes per pixel
+		 * @param[out] pitch pitch of the allocated memory in bytes
+		 * @return pixel memory or nullptr to use the default allocation
+		 */
+		virtual void* Allocate(int width, int height, int bytes, int& pitch) = 0;
+
+		/**
+		 * Frees memory returned by Allocate.
+		 *
+		 * @param pixels pixel memory
+		 */
+		virtual void Free(void* pixels) = 0;
+	};
+
+	/**
+	 * Sets the allocator used for the pixel memory of all bitmaps created afterwards.
+	 * Must be called once at startup before any bitmap is created and must outlive all bitmaps.
+	 *
+	 * @param allocator allocator to use
+	 */
+	static void SetPixelAllocator(PixelAllocator* allocator);
+
+	/** @return Whether the pixel memory was provided by the custom PixelAllocator */
+	bool IsCustomAllocated() const;
+
 protected:
 	DynamicFormat format;
 
@@ -670,6 +709,7 @@ protected:
 	 */
 	pixman_op_t GetOperator(pixman_image_t* mask = nullptr, BlendMode blend_mode = BlendMode::Default) const;
 	bool read_only = false;
+	bool custom_allocated = false;
 
 	mutable void* gpu_texture = nullptr;
 	mutable GpuTextureReleaseFn gpu_texture_release_fn;
