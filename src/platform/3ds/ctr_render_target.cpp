@@ -77,10 +77,12 @@ namespace {
 	constexpr u32 linear_bitmap_reserve = 6 * 1024 * 1024;
 	constexpr int num_tev_stages = 6;
 
-	constexpr u32 gx_upload_flags =
-		GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(1) | GX_TRANSFER_RAW_COPY(0) |
-		GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(GX_TRANSFER_FMT_RGBA8) |
-		GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO);
+	/** Upload: linear RGBA8 bitmap -> tiled texture. The output format converts to 16 bit. */
+	constexpr u32 GxUploadFlags(GX_TRANSFER_FORMAT out_format) {
+		return GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(1) | GX_TRANSFER_RAW_COPY(0) |
+			GX_TRANSFER_IN_FORMAT(GX_TRANSFER_FMT_RGBA8) | GX_TRANSFER_OUT_FORMAT(out_format) |
+			GX_TRANSFER_SCALING(GX_TRANSFER_SCALE_NO);
+	}
 
 	constexpr u32 gx_download_flags =
 		GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) |
@@ -216,38 +218,138 @@ namespace {
 	}
 	constexpr auto morton_table = MakeMortonTable();
 
-	/** Converts a part of a bitmap into the tiled texture format on the CPU */
-	void SwizzleToTexture(Bitmap const& bmp, const Rect& rect, C3D_Tex& tex) {
-		const auto* src = reinterpret_cast<const u32*>(bmp.pixels());
-		const int stride = bmp.pitch() / 4;
-		auto* dst = reinterpret_cast<u32*>(tex.data);
-		const int tiles_x = tex.width / 8;
+	/*
+	 * Texel conversion. Bitmap pixels are u32 0xRRGGBBAA (premultiplied alpha).
+	 * RGB565:   RRRRRGGG GGGBBBBB
+	 * RGBA5551: RRRRRGGG GGBBBBBA
+	 */
+	inline u16 ToRgb565(u32 p) {
+		return static_cast<u16>(((p >> 16) & 0xF800) | ((p >> 13) & 0x07E0) | ((p >> 11) & 0x001F));
+	}
 
+	inline u16 ToRgba5551(u32 p) {
+		return static_cast<u16>(((p >> 16) & 0xF800) | ((p >> 13) & 0x07C0) | ((p >> 10) & 0x003E) | ((p >> 7) & 0x0001));
+	}
+
+	inline u32 Expand5(u32 v) {
+		return (v << 3) | (v >> 2);
+	}
+
+	inline u32 Expand6(u32 v) {
+		return (v << 2) | (v >> 4);
+	}
+
+	inline u32 FromRgb565(u16 t) {
+		return (Expand5(t >> 11) << 24) | (Expand6((t >> 5) & 0x3F) << 16) | (Expand5(t & 0x1F) << 8) | 0xFF;
+	}
+
+	inline u32 FromRgba5551(u16 t) {
+		if ((t & 1) == 0) {
+			// Premultiplied alpha: transparent pixels are black
+			return 0;
+		}
+		return (Expand5(t >> 11) << 24) | (Expand5((t >> 6) & 0x1F) << 16) | (Expand5((t >> 1) & 0x1F) << 8) | 0xFF;
+	}
+
+	/** Visits all pixels of rect in tiled order: fn(texel index, bitmap row pointer, x) */
+	template <typename Fn>
+	void ForEachTexel(const C3D_Tex& tex, const Rect& rect, Fn&& fn) {
+		const int tiles_x = tex.width / 8;
 		for (int y = 0; y < rect.height; ++y) {
-			const u32* row = src + (rect.y + y) * stride + rect.x;
-			u32* tile_row = dst + (y >> 3) * tiles_x * 64;
+			const int tile_row = (y >> 3) * tiles_x * 64;
 			const uint8_t* mt = &morton_table[(y & 7) * 8];
 			for (int x = 0; x < rect.width; ++x) {
-				tile_row[((x >> 3) << 6) + mt[x & 7]] = row[x];
+				fn(tile_row + ((x >> 3) << 6) + mt[x & 7], y, x);
+			}
+		}
+	}
+
+	/** Converts a part of a bitmap into the tiled texture format on the CPU */
+	void SwizzleToTexture(Bitmap const& bmp, const Rect& rect, C3D_Tex& tex) {
+		const auto* src = reinterpret_cast<const u32*>(bmp.pixels()) + rect.y * (bmp.pitch() / 4) + rect.x;
+		const int stride = bmp.pitch() / 4;
+
+		switch (tex.fmt) {
+			case GPU_RGB565: {
+				auto* dst = static_cast<u16*>(tex.data);
+				ForEachTexel(tex, rect, [&](int i, int y, int x) { dst[i] = ToRgb565(src[y * stride + x]); });
+				break;
+			}
+			case GPU_RGBA5551: {
+				auto* dst = static_cast<u16*>(tex.data);
+				ForEachTexel(tex, rect, [&](int i, int y, int x) { dst[i] = ToRgba5551(src[y * stride + x]); });
+				break;
+			}
+			default: {
+				auto* dst = static_cast<u32*>(tex.data);
+				ForEachTexel(tex, rect, [&](int i, int y, int x) { dst[i] = src[y * stride + x]; });
+				break;
 			}
 		}
 	}
 
 	/** Converts a tiled texture back into the linear bitmap layout on the CPU */
 	void UnswizzleFromTexture(const C3D_Tex& tex, const Rect& rect, void* pixels, int pitch) {
-		const auto* src = reinterpret_cast<const u32*>(tex.data);
-		auto* dst = reinterpret_cast<u32*>(pixels);
 		const int stride = pitch / 4;
-		const int tiles_x = tex.width / 8;
+		auto* dst = static_cast<u32*>(pixels) + rect.y * stride + rect.x;
 
-		for (int y = 0; y < rect.height; ++y) {
-			u32* row = dst + (rect.y + y) * stride + rect.x;
-			const u32* tile_row = src + (y >> 3) * tiles_x * 64;
-			const uint8_t* mt = &morton_table[(y & 7) * 8];
-			for (int x = 0; x < rect.width; ++x) {
-				row[x] = tile_row[((x >> 3) << 6) + mt[x & 7]];
+		switch (tex.fmt) {
+			case GPU_RGB565: {
+				const auto* src = static_cast<const u16*>(tex.data);
+				ForEachTexel(tex, rect, [&](int i, int y, int x) { dst[y * stride + x] = FromRgb565(src[i]); });
+				break;
+			}
+			case GPU_RGBA5551: {
+				const auto* src = static_cast<const u16*>(tex.data);
+				ForEachTexel(tex, rect, [&](int i, int y, int x) { dst[y * stride + x] = FromRgba5551(src[i]); });
+				break;
+			}
+			default: {
+				const auto* src = static_cast<const u32*>(tex.data);
+				ForEachTexel(tex, rect, [&](int i, int y, int x) { dst[y * stride + x] = src[i]; });
+				break;
 			}
 		}
+	}
+
+	/**
+	 * Texture format for a bitmap.
+	 * Read-only bitmaps (game assets) with opaque or 1 bit alpha are stored in 16 bit.
+	 * Their pixels never change and their opacity is known from loading.
+	 */
+	GPU_TEXCOLOR ChooseTextureFormat(Bitmap const& bmp) {
+		if (!bmp.IsReadOnly()) {
+			return GPU_RGBA8;
+		}
+
+		if (!bmp.GetTransparent()) {
+			return GPU_RGB565;
+		}
+
+		switch (bmp.GetImageOpacity()) {
+			case ImageOpacity::Opaque:
+				return GPU_RGB565;
+			case ImageOpacity::Alpha_1Bit:
+			case ImageOpacity::Transparent:
+				return GPU_RGBA5551;
+			default:
+				return GPU_RGBA8;
+		}
+	}
+
+	GX_TRANSFER_FORMAT ToTransferFormat(GPU_TEXCOLOR fmt) {
+		switch (fmt) {
+			case GPU_RGB565:
+				return GX_TRANSFER_FMT_RGB565;
+			case GPU_RGBA5551:
+				return GX_TRANSFER_FMT_RGB5A1;
+			default:
+				return GX_TRANSFER_FMT_RGBA8;
+		}
+	}
+
+	int BytesPerTexel(GPU_TEXCOLOR fmt) {
+		return (fmt == GPU_RGB565 || fmt == GPU_RGBA5551) ? 2 : 4;
 	}
 
 	/**
@@ -280,15 +382,15 @@ namespace {
 		gpu.discard_candidates.clear();
 	}
 
-	bool InitTexture(C3D_Tex& tex, int width, int height, bool try_vram) {
+	bool InitTexture(C3D_Tex& tex, int width, int height, GPU_TEXCOLOR format, bool try_vram) {
 		C3D_TexInitParams params{};
 		params.width = static_cast<u16>(width);
 		params.height = static_cast<u16>(height);
 		params.maxLevel = 0;
-		params.format = GPU_RGBA8;
+		params.format = format;
 		params.type = GPU_TEX_2D;
 
-		const u32 size = static_cast<u32>(width) * height * 4;
+		const u32 size = static_cast<u32>(width) * height * BytesPerTexel(format);
 
 		if (try_vram && vramSpaceFree() > size + vram_reserve) {
 			params.onVram = true;
@@ -645,10 +747,11 @@ CtrTexture* CtrRenderTarget::GetTexture(Bitmap const& bmp) {
 
 	// Fast path: The GX transfer engine converts the bitmap
 	const bool use_gx = new_tex->chunks.size() == 1 && bmp.IsCustomAllocated() && bmp.pitch() == NextPow2(w) * 4;
+	const GPU_TEXCOLOR format = ChooseTextureFormat(bmp);
 
 	for (size_t i = 0; i < new_tex->chunks.size(); ++i) {
 		auto& chunk = new_tex->chunks[i];
-		if (!InitTexture(chunk.tex, NextPow2(chunk.rect.width), NextPow2(chunk.rect.height), use_gx)) {
+		if (!InitTexture(chunk.tex, NextPow2(chunk.rect.width), NextPow2(chunk.rect.height), format, use_gx)) {
 			static bool warned = false;
 			if (!warned) {
 				Output::Debug("3DS: Out of texture memory ({}x{}, {})", w, h, bmp.GetId());
@@ -667,7 +770,7 @@ CtrTexture* CtrRenderTarget::GetTexture(Bitmap const& bmp) {
 			// Queued in the frame: Executed by the GPU before the draws that use the texture
 			const int rows = AlignRows(h);
 			C3D_SyncDisplayTransfer(static_cast<u32*>(const_cast<void*>(bmp.pixels())), GX_BUFFER_DIM(chunk.tex.width, rows),
-				static_cast<u32*>(chunk.tex.data), GX_BUFFER_DIM(chunk.tex.width, rows), gx_upload_flags);
+				static_cast<u32*>(chunk.tex.data), GX_BUFFER_DIM(chunk.tex.width, rows), GxUploadFlags(ToTransferFormat(format)));
 			new_tex->pixel_access_frame = gpu.frame;
 		} else {
 			SwizzleToTexture(bmp, chunk.rect, chunk.tex);
