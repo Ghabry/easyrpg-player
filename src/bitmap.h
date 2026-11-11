@@ -33,6 +33,7 @@
 #include "tone.h"
 #include "text.h"
 #include "pixman_image_ptr.h"
+#include "compiler.h"
 #include "opacity.h"
 #include "filesystem_stream.h"
 #include "string_view.h"
@@ -618,9 +619,42 @@ public:
 	ImageOpacity ComputeImageOpacity(Rect rect) const;
 
 	using GpuTextureReleaseFn = std::function<void(Bitmap const&)>;
+
+	/**
+	 * Restores the pixels of a bitmap whose pixels were discarded (see DiscardPixels)
+	 * by writing them into the provided memory.
+	 */
+	using GpuTextureRestoreFn = std::function<void(Bitmap const&, void* pixels, int pitch)>;
+
 	void* GetGpuTexture() const;
-	void SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn) const;
+
+	/**
+	 * Attaches a GPU texture.
+	 *
+	 * @param gpu_texture texture handle of the renderer
+	 * @param gpu_release_fn called when the texture must be released
+	 * @param gpu_restore_fn when provided the pixels can be discarded (see DiscardPixels)
+	 */
+	void SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn, GpuTextureRestoreFn gpu_restore_fn = {}) const;
 	void ClearGpuTexture();
+
+	/** @return Whether the bitmap was created with Flag_ReadOnly */
+	bool IsReadOnly() const;
+
+	/**
+	 * Frees the CPU pixels of a read-only bitmap whose GPU texture can restore them.
+	 * Any CPU access to the pixels restores them (slow). Once restored the pixels
+	 * are never discarded again because the bitmap is obviously used by the CPU.
+	 *
+	 * @return Whether the pixels were discarded
+	 */
+	bool DiscardPixels() const;
+
+	/** @return Whether the pixels are currently discarded */
+	bool IsPixelsDiscarded() const;
+
+	/** Restores the pixels when they were discarded. */
+	void EnsurePixels() const;
 
 	/**
 	 * Custom allocator for the pixel memory of bitmaps.
@@ -674,9 +708,25 @@ protected:
 	/** Bpp of the source image */
 	int original_bpp;
 
-	/** Bitmap data. */
-	PixmanImagePtr bitmap;
+	/**
+	 * Bitmap data. Do not access directly, use Image() which restores discarded pixels.
+	 * Is nullptr when the pixels are discarded.
+	 */
+	mutable PixmanImagePtr bitmap;
 	pixman_format_code_t pixman_format;
+
+	/** @return pixman image, restores discarded pixels */
+	pixman_image_t* Image() const;
+
+	/** Allocates the pixel memory and creates the pixman image */
+	bool CreateImage(int width, int height, void* data, int pitch, bool destroy) const;
+	void RestorePixels() const;
+	void ReleaseGpuTexture() const;
+
+	int bitmap_width = 0;
+	int bitmap_height = 0;
+	mutable int bitmap_pitch = 0;
+	size_t bitmap_size = 0;
 
 	void Init(int width, int height, void* data, int pitch = 0, bool destroy = true);
 	void ConvertImage(int& width, int& height, void*& pixels, bool transparent, uint32_t flags);
@@ -709,10 +759,13 @@ protected:
 	 */
 	pixman_op_t GetOperator(pixman_image_t* mask = nullptr, BlendMode blend_mode = BlendMode::Default) const;
 	bool read_only = false;
-	bool custom_allocated = false;
+	mutable bool custom_allocated = false;
+	mutable bool pixels_discarded = false;
+	mutable bool pixels_restored = false;
 
 	mutable void* gpu_texture = nullptr;
 	mutable GpuTextureReleaseFn gpu_texture_release_fn;
+	mutable GpuTextureRestoreFn gpu_texture_restore_fn;
 };
 
 struct ImageOut {
@@ -773,6 +826,13 @@ inline void Bitmap::SetFont(FontRef font) {
 
 inline int Bitmap::GetOriginalBpp() const {
 	return original_bpp;
+}
+
+inline pixman_image_t* Bitmap::Image() const {
+	if (EP_UNLIKELY(pixels_discarded)) {
+		RestorePixels();
+	}
+	return bitmap.get();
 }
 
 #endif

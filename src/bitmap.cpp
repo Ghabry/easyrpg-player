@@ -91,7 +91,8 @@ Bitmap::Bitmap(void *pixels, int width, int height, int pitch, const DynamicForm
 }
 
 Bitmap::~Bitmap() {
-	ClearGpuTexture();
+	// No restore of discarded pixels, they are not needed anymore
+	ReleaseGpuTexture();
 }
 
 Bitmap::Bitmap(Filesystem_Stream::InputStream stream, bool transparent, uint32_t flags) {
@@ -189,18 +190,15 @@ bool Bitmap::WritePNG(std::ostream& os) const {
 #endif
 
 	auto dst = PixmanImagePtr{pixman_image_create_bits(format, width, height, &data.front(), stride)};
-	pixman_image_composite32(PIXMAN_OP_SRC, bitmap.get(), NULL, dst.get(),
+	pixman_image_composite32(PIXMAN_OP_SRC, Image(), NULL, dst.get(),
 							 0, 0, 0, 0, 0, 0, width, height);
 
 	return ImagePNG::Write(os, width, height, &data.front());
 }
 
 size_t Bitmap::GetSize() const {
-	if (!bitmap) {
-		return 0;
-	}
-
-	return pitch() * height();
+	// Constant, also when the pixels are discarded
+	return bitmap_size;
 }
 
 ImageOpacity Bitmap::ComputeImageOpacity() const {
@@ -277,15 +275,48 @@ void* Bitmap::GetGpuTexture() const {
 	return gpu_texture;
 }
 
-void Bitmap::SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn) const {
+void Bitmap::SetGpuTexture(void* gpu_texture, GpuTextureReleaseFn gpu_release_fn, GpuTextureRestoreFn gpu_restore_fn) const {
 	this->gpu_texture = gpu_texture;
-	this->gpu_texture_release_fn = gpu_release_fn;
+	this->gpu_texture_release_fn = std::move(gpu_release_fn);
+	this->gpu_texture_restore_fn = std::move(gpu_restore_fn);
 }
 
 void Bitmap::ClearGpuTexture() {
+	// The texture is the only copy of discarded pixels
+	EnsurePixels();
+	ReleaseGpuTexture();
+}
+
+void Bitmap::ReleaseGpuTexture() const {
 	if (this->gpu_texture && this->gpu_texture_release_fn) {
 		this->gpu_texture_release_fn(*this);
-		this->gpu_texture = nullptr;
+	}
+	this->gpu_texture = nullptr;
+	this->gpu_texture_release_fn = nullptr;
+	this->gpu_texture_restore_fn = nullptr;
+}
+
+bool Bitmap::IsReadOnly() const {
+	return read_only;
+}
+
+bool Bitmap::DiscardPixels() const {
+	if (!read_only || pixels_discarded || pixels_restored || !bitmap || !gpu_texture || !gpu_texture_restore_fn) {
+		return false;
+	}
+
+	bitmap.reset();
+	pixels_discarded = true;
+	return true;
+}
+
+bool Bitmap::IsPixelsDiscarded() const {
+	return pixels_discarded;
+}
+
+void Bitmap::EnsurePixels() const {
+	if (pixels_discarded) {
+		RestorePixels();
 	}
 }
 
@@ -294,10 +325,10 @@ void Bitmap::CheckPixels(uint32_t flags) {
 		DynamicFormat format(32,8,24,8,16,8,8,8,0,PF::Alpha);
 		uint32_t pixel;
 		Bitmap bmp(reinterpret_cast<void*>(&pixel), 1, 1, 4, format);
-		pixman_image_composite32(PIXMAN_OP_SRC, bitmap.get(), (pixman_image_t*) NULL, bmp.bitmap.get(),
+		pixman_image_composite32(PIXMAN_OP_SRC, Image(), (pixman_image_t*) NULL, bmp.Image(),
 								 0, 32,  0, 0,  0, 0,  1, 1);
 		bg_color = Color((int)(pixel>>24)&0xFF, (int)(pixel>>16)&0xFF, (int)(pixel>>8)&0xFF, (int)pixel&0xFF);
-		pixman_image_composite32(PIXMAN_OP_SRC, bitmap.get(), (pixman_image_t*) NULL, bmp.bitmap.get(),
+		pixman_image_composite32(PIXMAN_OP_SRC, Image(), (pixman_image_t*) NULL, bmp.Image(),
 								 16, 32,  0, 0,  0, 0,  1, 1);
 		sh_color = Color((int)(pixel>>24)&0xFF, (int)(pixel>>16)&0xFF, (int)(pixel>>8)&0xFF, (int)pixel&0xFF);
 	}
@@ -575,7 +606,7 @@ static void initialize_palette() {
 	palette_initialized = true;
 }
 
-void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
+bool Bitmap::CreateImage(int width, int height, void* data, int pitch, bool destroy) const {
 	custom_allocated = false;
 	if (!data && pixel_allocator) {
 		int custom_pitch = 0;
@@ -592,7 +623,12 @@ void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
 	bitmap.reset(pixman_image_create_bits(pixman_format, width, height, (uint32_t*) data, pitch));
 
 	if (bitmap == NULL) {
-		Output::Error("Couldn't create {}x{} image.", width, height);
+		if (custom_allocated) {
+			pixel_allocator->Free(data);
+			custom_allocated = false;
+		}
+		bitmap_pitch = 0;
+		return false;
 	}
 
 	if (format.bits == 8) {
@@ -601,13 +637,36 @@ void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
 	}
 
 	if (custom_allocated) {
-		if (bitmap) {
-			pixman_image_set_destroy_function(bitmap.get(), custom_destroy_func, data);
-		} else {
-			pixel_allocator->Free(data);
-		}
+		pixman_image_set_destroy_function(bitmap.get(), custom_destroy_func, data);
 	} else if (data != NULL && destroy) {
 		pixman_image_set_destroy_function(bitmap.get(), destroy_func, data);
+	}
+
+	bitmap_pitch = pixman_image_get_stride(bitmap.get());
+	return true;
+}
+
+void Bitmap::Init(int width, int height, void* data, int pitch, bool destroy) {
+	if (!CreateImage(width, height, data, pitch, destroy)) {
+		Output::Error("Couldn't create {}x{} image.", width, height);
+	}
+
+	bitmap_width = width;
+	bitmap_height = height;
+	bitmap_size = static_cast<size_t>(bitmap_pitch) * height;
+}
+
+void Bitmap::RestorePixels() const {
+	pixels_discarded = false;
+	// The bitmap is used by the CPU, never discard it again
+	pixels_restored = true;
+
+	if (!CreateImage(bitmap_width, bitmap_height, nullptr, 0, true)) {
+		Output::Error("Couldn't restore {}x{} image {}.", bitmap_width, bitmap_height, id);
+	}
+
+	if (gpu_texture_restore_fn) {
+		gpu_texture_restore_fn(*this, pixman_image_get_data(bitmap.get()), bitmap_pitch);
 	}
 }
 
@@ -652,14 +711,13 @@ void Bitmap::ConvertImage(int& width, int& height, void*& pixels, bool transpare
 }
 
 void* Bitmap::pixels() {
-	if (!bitmap) {
-		return nullptr;
-	}
-
-	return (void*) pixman_image_get_data(bitmap.get());
+	auto* img = Image();
+	return img ? (void*) pixman_image_get_data(img) : nullptr;
 }
+
 void const* Bitmap::pixels() const {
-	return (void const*) pixman_image_get_data(bitmap.get());
+	auto* img = Image();
+	return img ? (void const*) pixman_image_get_data(img) : nullptr;
 }
 
 int Bitmap::bpp() const {
@@ -667,15 +725,15 @@ int Bitmap::bpp() const {
 }
 
 int Bitmap::width() const {
-	return pixman_image_get_width(bitmap.get());
+	return bitmap_width;
 }
 
 int Bitmap::height() const {
-	return pixman_image_get_height(bitmap.get());
+	return bitmap_height;
 }
 
 int Bitmap::pitch() const {
-	return pixman_image_get_stride(bitmap.get());
+	return bitmap_pitch;
 }
 
 namespace {
@@ -716,8 +774,8 @@ void Bitmap::Blit(int x, int y, Bitmap const& src, Rect const& src_rect, Opacity
 	auto mask = CreateMask(opacity, src_rect);
 
 	pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
-							 src.bitmap.get(),
-							 mask.get(), bitmap.get(),
+							 src.Image(),
+							 mask.get(), Image(),
 							 src_rect.x, src_rect.y,
 							 0, 0,
 							 x, y,
@@ -732,8 +790,8 @@ void Bitmap::BlitFast(int x, int y, Bitmap const & src, Rect const & src_rect, O
 	ClearGpuTexture();
 
 	pixman_image_composite32(PIXMAN_OP_SRC,
-		src.bitmap.get(),
-		nullptr, bitmap.get(),
+		src.Image(),
+		nullptr, Image(),
 		src_rect.x, src_rect.y,
 		0, 0,
 		x, y,
@@ -769,7 +827,7 @@ void Bitmap::TiledBlit(int ox, int oy, Rect const& src_rect, Bitmap const& src, 
 	auto mask = CreateMask(opacity, src_rect);
 
 	pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
-							 src_bm.get(), mask.get(), bitmap.get(),
+							 src_bm.get(), mask.get(), Image(),
 							 ox, oy,
 							 0, 0,
 							 dst_rect.x, dst_rect.y,
@@ -792,18 +850,18 @@ void Bitmap::StretchBlit(Rect const& dst_rect, Bitmap const& src, Rect const& sr
 
 	Transform xform = Transform::Scale(zoom_x, zoom_y);
 
-	pixman_image_set_transform(src.bitmap.get(), &xform.matrix);
+	pixman_image_set_transform(src.Image(), &xform.matrix);
 
 	auto mask = CreateMask(opacity, src_rect, &xform);
 
 	pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
-							 src.bitmap.get(), mask.get(), bitmap.get(),
+							 src.Image(), mask.get(), Image(),
 							 src_rect.x / zoom_x, src_rect.y / zoom_y,
 							 0, 0,
 							 dst_rect.x, dst_rect.y,
 							 dst_rect.width, dst_rect.height);
 
-	pixman_image_set_transform(src.bitmap.get(), nullptr);
+	pixman_image_set_transform(src.Image(), nullptr);
 }
 
 void Bitmap::WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const& src, Rect const& src_rect, int depth, double phase, Opacity const& opacity, Bitmap::BlendMode blend_mode) {
@@ -815,7 +873,7 @@ void Bitmap::WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const&
 
 	Transform xform = Transform::Scale(1.0 / zoom_x, 1.0 / zoom_y);
 
-	pixman_image_set_transform(src.bitmap.get(), &xform.matrix);
+	pixman_image_set_transform(src.Image(), &xform.matrix);
 
 	auto mask = CreateMask(opacity, src_rect, &xform);
 
@@ -834,14 +892,14 @@ void Bitmap::WaverBlit(int x, int y, double zoom_x, double zoom_y, Bitmap const&
 		const int offset = 2 * zoom_x * depth * std::sin(phase + sy);
 
 		pixman_image_composite32(src.GetOperator(mask.get(), blend_mode),
-								 src.bitmap.get(), mask.get(), bitmap.get(),
+								 src.Image(), mask.get(), Image(),
 								 xoff, yoff + i,
 								 0, i,
 								 x + offset, dy,
 								 width, 1);
 	}
 
-	pixman_image_set_transform(src.bitmap.get(), nullptr);
+	pixman_image_set_transform(src.Image(), nullptr);
 }
 
 static pixman_color_t PixmanColor(const Color &color) {
@@ -861,7 +919,7 @@ void Bitmap::Fill(const Color &color) {
 
 	pixman_box32_t box = { 0, 0, width(), height() };
 
-	pixman_image_fill_boxes(PIXMAN_OP_SRC, bitmap.get(), &pcolor, 1, &box);
+	pixman_image_fill_boxes(PIXMAN_OP_SRC, Image(), &pcolor, 1, &box);
 }
 
 void Bitmap::FillRect(Rect const& dst_rect, const Color &color) {
@@ -873,7 +931,7 @@ void Bitmap::FillRect(Rect const& dst_rect, const Color &color) {
 	auto timage = PixmanImagePtr{pixman_image_create_solid_fill(&pcolor)};
 
 	pixman_image_composite32(PIXMAN_OP_OVER,
-			timage.get(), nullptr, bitmap.get(),
+			timage.get(), nullptr, Image(),
 			0, 0,
 			0, 0,
 			dst_rect.x, dst_rect.y,
@@ -907,7 +965,7 @@ void Bitmap::ClearRect(Rect const& dst_rect) {
 	box.x2 = Utils::Clamp<int32_t>(box.x2, 0, width());
 	box.y2 = Utils::Clamp<int32_t>(box.y2, 0, height());
 
-	pixman_image_fill_boxes(PIXMAN_OP_CLEAR, bitmap.get(), &pcolor, 1, &box);
+	pixman_image_fill_boxes(PIXMAN_OP_CLEAR, Image(), &pcolor, 1, &box);
 }
 
 // Hard light lookup table mapping source color to destination color
@@ -1006,7 +1064,7 @@ void Bitmap::ToneBlit(int x, int y, Bitmap const& src, Rect const& src_rect, con
 
 	if (&src != this) {
 		pixman_image_composite32(src.GetOperator(),
-		src.bitmap.get(), nullptr, bitmap.get(),
+		src.Image(), nullptr, Image(),
 		src_rect.x, src_rect.y,
 		0, 0,
 		x, y,
@@ -1145,7 +1203,7 @@ void Bitmap::BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, co
 
 	if (&src != this)
 		pixman_image_composite32(src.GetOperator(),
-								 src.bitmap.get(), nullptr, bitmap.get(),
+								 src.Image(), nullptr, Image(),
 								 src_rect.x, src_rect.y,
 								 0, 0,
 								 x, y,
@@ -1155,7 +1213,7 @@ void Bitmap::BlendBlit(int x, int y, Bitmap const& src, Rect const& src_rect, co
 	auto timage = PixmanImagePtr{ pixman_image_create_solid_fill(&tcolor) };
 
 	pixman_image_composite32(PIXMAN_OP_OVER,
-							 timage.get(), src.bitmap.get(), bitmap.get(),
+							 timage.get(), src.Image(), Image(),
 							 0, 0,
 							 src_rect.x, src_rect.y,
 							 x, y,
@@ -1178,7 +1236,7 @@ void Bitmap::FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, boo
 		Transform xform = Transform::Scale(horizontal ? -1 : 1, vertical ? -1 : 1);
 		xform *= Transform::Translation(horizontal ? -img_w : 0, vertical ? -img_h : 0);
 
-		pixman_image_set_transform(src.bitmap.get(), &xform.matrix);
+		pixman_image_set_transform(src.Image(), &xform.matrix);
 		const auto src_x = horizontal ? img_w - src_rect.x - src_rect.width : src_rect.x;
 		const auto src_y = vertical ? img_h - src_rect.y - src_rect.height : src_rect.y;
 
@@ -1188,7 +1246,7 @@ void Bitmap::FlipBlit(int x, int y, Bitmap const& src, Rect const& src_rect, boo
 	Blit(x, y, src, rect, opacity, blend_mode);
 
 	if (has_xform) {
-		pixman_image_set_transform(src.bitmap.get(), nullptr);
+		pixman_image_set_transform(src.Image(), nullptr);
 	}
 }
 
@@ -1206,7 +1264,7 @@ void Bitmap::Flip(bool horizontal, bool vertical) {
 	auto temp = PixmanImagePtr{ pixman_image_create_bits(pixman_format, w, h, nullptr, p) };
 
 	std::memcpy(pixman_image_get_data(temp.get()),
-			pixman_image_get_data(bitmap.get()),
+			pixman_image_get_data(Image()),
 			p * h);
 
 	Transform xform = Transform::Scale(horizontal ? -1 : 1, vertical ? -1 : 1);
@@ -1215,7 +1273,7 @@ void Bitmap::Flip(bool horizontal, bool vertical) {
 	pixman_image_set_transform(temp.get(), &xform.matrix);
 
 	pixman_image_composite32(PIXMAN_OP_SRC,
-							 temp.get(), nullptr, bitmap.get(),
+							 temp.get(), nullptr, Image(),
 							 0, 0, 0, 0, 0, 0, w, h);
 }
 
@@ -1232,7 +1290,7 @@ void Bitmap::MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my
 	auto source = PixmanImagePtr{ pixman_image_create_solid_fill(&tcolor) };
 
 	pixman_image_composite32(PIXMAN_OP_OVER,
-							 source.get(), mask.bitmap.get(), bitmap.get(),
+							 source.get(), mask.Image(), Image(),
 							 0, 0,
 							 mx, my,
 							 dst_rect.x, dst_rect.y,
@@ -1244,7 +1302,7 @@ void Bitmap::MaskedBlit(Rect const& dst_rect, Bitmap const& mask, int mx, int my
 	ClearGpuTexture();
 
 	pixman_image_composite32(PIXMAN_OP_OVER,
-							 src.bitmap.get(), mask.bitmap.get(), bitmap.get(),
+							 src.Image(), mask.Image(), Image(),
 							 sx, sy,
 							 mx, my,
 							 dst_rect.x, dst_rect.y,
@@ -1257,16 +1315,16 @@ void Bitmap::Blit2x(Rect const& dst_rect, Bitmap const& src, Rect const& src_rec
 
 	Transform xform = Transform::Scale(0.5, 0.5);
 
-	pixman_image_set_transform(src.bitmap.get(), &xform.matrix);
+	pixman_image_set_transform(src.Image(), &xform.matrix);
 
 	pixman_image_composite32(PIXMAN_OP_SRC,
-							 src.bitmap.get(), nullptr, bitmap.get(),
+							 src.Image(), nullptr, Image(),
 							 src_rect.x, src_rect.y,
 							 0, 0,
 							 dst_rect.x, dst_rect.y,
 							 dst_rect.width, dst_rect.height);
 
-	pixman_image_set_transform(src.bitmap.get(), nullptr);
+	pixman_image_set_transform(src.Image(), nullptr);
 }
 
 void Bitmap::EffectsBlit(int x, int y, int ox, int oy,
@@ -1309,7 +1367,7 @@ void Bitmap::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 	}
 	ClearGpuTexture();
 
-	auto* src_img = src.bitmap.get();
+	auto* src_img = src.Image();
 
 	Transform fwd = Transform::Translation(x, y);
 	fwd *= Transform::Rotation(angle);
@@ -1338,7 +1396,7 @@ void Bitmap::RotateZoomOpacityBlit(int x, int y, int ox, int oy,
 	// OP_SRC draws a black rectangle around the rotated image making this operator unusable here
 	blend_mode = (blend_mode == BlendMode::Default ? BlendMode::Normal : blend_mode);
 	pixman_image_composite32(GetOperator(mask.get(), blend_mode),
-							 src_img, mask.get(), bitmap.get(),
+							 src_img, mask.get(), Image(),
 							 dst_rect.x, dst_rect.y,
 							 dst_rect.x, dst_rect.y,
 							 dst_rect.x, dst_rect.y,
@@ -1426,8 +1484,8 @@ void Bitmap::EdgeMirrorBlit(int x, int y, Bitmap const& src, Rect const& src_rec
 
 	auto draw = [&](int x, int y) {
 		pixman_image_composite32(src.GetOperator(mask.get()),
-				src.bitmap.get(),
-				mask.get(), bitmap.get(),
+				src.Image(),
+				mask.get(), Image(),
 				src_rect.x, src_rect.y,
 				0, 0,
 				x, y,

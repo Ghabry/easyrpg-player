@@ -60,6 +60,9 @@ struct CtrTexture {
 	C3D_RenderTarget* target = nullptr;
 	// Frame in which the GPU reads or writes the pixels of the bitmap
 	uint32_t pixel_access_frame = 0;
+	// Bitmap of the texture, valid until released
+	const Bitmap* owner = nullptr;
+	bool released = false;
 };
 
 namespace {
@@ -99,6 +102,8 @@ namespace {
 		uint32_t frame = 1;
 		std::vector<void*> pixel_frees;
 		std::vector<CtrTexture*> texture_frees;
+		// Textures of read-only bitmaps whose CPU pixels can be discarded after the upload finished
+		std::vector<CtrTexture*> discard_candidates;
 		std::vector<std::pair<void*, u32>> invalidations;
 	};
 	GpuState gpu;
@@ -226,6 +231,53 @@ namespace {
 				tile_row[((x >> 3) << 6) + mt[x & 7]] = row[x];
 			}
 		}
+	}
+
+	/** Converts a tiled texture back into the linear bitmap layout on the CPU */
+	void UnswizzleFromTexture(const C3D_Tex& tex, const Rect& rect, void* pixels, int pitch) {
+		const auto* src = reinterpret_cast<const u32*>(tex.data);
+		auto* dst = reinterpret_cast<u32*>(pixels);
+		const int stride = pitch / 4;
+		const int tiles_x = tex.width / 8;
+
+		for (int y = 0; y < rect.height; ++y) {
+			u32* row = dst + (rect.y + y) * stride + rect.x;
+			const u32* tile_row = src + (y >> 3) * tiles_x * 64;
+			const uint8_t* mt = &morton_table[(y & 7) * 8];
+			for (int x = 0; x < rect.width; ++x) {
+				row[x] = tile_row[((x >> 3) << 6) + mt[x & 7]];
+			}
+		}
+	}
+
+	/**
+	 * Restores discarded pixels of a read-only bitmap from its texture.
+	 * Works at any time: Textures of read-only bitmaps are immutable and
+	 * pixels are only discarded after the upload finished.
+	 */
+	void RestoreHook(Bitmap const& bmp, void* pixels, int pitch) {
+		auto* tex = static_cast<CtrTexture*>(bmp.GetGpuTexture());
+		if (!tex) {
+			return;
+		}
+
+		for (auto& chunk: tex->chunks) {
+			// Written by the GPU, drop stale cache lines
+			GSPGPU_InvalidateDataCache(chunk.tex.data, chunk.tex.size);
+			UnswizzleFromTexture(chunk.tex, chunk.rect, pixels, pitch);
+		}
+	}
+
+	/** Discards the CPU pixels of read-only bitmaps. GPU must be idle (uploads finished). */
+	void ProcessDiscards() {
+		assert(!gpu.gpu_busy);
+
+		for (auto* tex: gpu.discard_candidates) {
+			if (!tex->released && tex->owner) {
+				tex->owner->DiscardPixels();
+			}
+		}
+		gpu.discard_candidates.clear();
 	}
 
 	bool InitTexture(C3D_Tex& tex, int width, int height, bool try_vram) {
@@ -361,7 +413,17 @@ CtrRenderTarget::~CtrRenderTarget() {
 		EndFrame();
 	}
 	WaitGpuIdle();
+	gpu.discard_candidates.clear();
 	ProcessDeferred();
+
+	// Textures are the only copy of discarded pixels.
+	// Copy the set: Restoring does not release textures, but be safe.
+	std::vector<CtrTexture*> textures(live_textures.begin(), live_textures.end());
+	for (auto* tex: textures) {
+		if (tex->owner) {
+			tex->owner->EnsurePixels();
+		}
+	}
 
 	for (auto* tex: live_textures) {
 		FreeTextureNow(tex);
@@ -399,6 +461,11 @@ void CtrRenderTarget::SetEnabled(bool enabled) {
 		EndFrame();
 	}
 	WaitGpuIdle();
+	if (enabled) {
+		ProcessDiscards();
+	} else {
+		gpu.discard_candidates.clear();
+	}
 	ProcessDeferred();
 	gpu.defer_free = enabled;
 }
@@ -412,6 +479,8 @@ void CtrRenderTarget::BeginFrame(bool sync_draw) {
 	// Must happen outside of a frame (render targets cannot be deleted in a frame).
 	// C3D_FrameBegin waits for the GPU anyway, so this does not cost extra time.
 	WaitGpuIdle();
+	// Before ProcessDeferred: Released textures in the candidate list are still allocated
+	ProcessDiscards();
 	ProcessDeferred();
 
 	C3D_FrameBegin(sync_draw ? C3D_FRAME_SYNCDRAW : 0);
@@ -606,8 +675,16 @@ CtrTexture* CtrRenderTarget::GetTexture(Bitmap const& bmp) {
 	}
 
 	tex = new_tex.release();
+	tex->owner = &bmp;
 	live_textures.insert(tex);
-	bmp.SetGpuTexture(tex, ReleaseHook);
+
+	if (bmp.IsReadOnly()) {
+		// Read-only bitmaps are immutable: The texture can be the only copy of the pixels
+		bmp.SetGpuTexture(tex, ReleaseHook, RestoreHook);
+		gpu.discard_candidates.push_back(tex);
+	} else {
+		bmp.SetGpuTexture(tex, ReleaseHook);
+	}
 	return tex;
 }
 
@@ -632,6 +709,7 @@ CtrTexture* CtrRenderTarget::CreateRenderTexture(Bitmap& bmp) {
 	}
 
 	auto* t = tex.release();
+	t->owner = &bmp;
 	live_textures.insert(t);
 	bmp.SetGpuTexture(t, ReleaseHook);
 	return t;
@@ -647,6 +725,11 @@ void CtrRenderTarget::ReleaseTexture(CtrTexture* tex) {
 	}
 
 	live_textures.erase(tex);
+	tex->released = true;
+	tex->owner = nullptr;
+
+	auto& candidates = gpu.discard_candidates;
+	candidates.erase(std::remove(candidates.begin(), candidates.end(), tex), candidates.end());
 
 	if (gpu.in_frame || gpu.gpu_busy) {
 		gpu.texture_frees.push_back(tex);
