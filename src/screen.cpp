@@ -30,7 +30,10 @@ Screen::Screen() : Drawable(Priority_Screen)
 
 void Screen::Draw(RenderTarget& dst) {
 	auto flash_color = Main_Data::game_screen->GetFlashColor();
-	if (flash_color.alpha > 0) {
+	if (flash_color.alpha > 0 && dst.IsHardwareAccelerated()) {
+		// Avoid filling and uploading a screen sized bitmap every frame
+		dst.FillRect(dst.GetRect(), flash_color);
+	} else if (flash_color.alpha > 0) {
 		if (!flash) {
 			flash = Bitmap::Create(dst.GetWidth(), dst.GetHeight(), flash_color);
 		} else {

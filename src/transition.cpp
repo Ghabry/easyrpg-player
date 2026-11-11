@@ -396,8 +396,8 @@ void Transition::Draw(RenderTarget& dst) {
 
 			for (int col = 0; col < w + rand; ++col) {
 				int src_col = std::clamp(((col + off) / m_size) * m_size - off, 0, w - 1);
-				m_pointer = static_cast<uint32_t*>(screen_pointer1->pixels()) + src_row * w + src_col;
-				dst.GetBitmap()->pixel_format.uint32_to_rgba(*m_pointer, m_r, m_g, m_b, m_a);
+				m_pointer = static_cast<uint32_t*>(screen_pointer1->pixels()) + src_row * (screen_pointer1->pitch() / 4) + src_col;
+				Bitmap::pixel_format.uint32_to_rgba(*m_pointer, m_r, m_g, m_b, m_a);
 
 				Rect r(col - rand, row - rand, 1, 1);
 				temp->FillRect(r, Color(m_r, m_g, m_b, 255));

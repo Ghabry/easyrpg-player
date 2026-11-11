@@ -159,11 +159,12 @@ void Weather::CreateRainParticle() {
 	const auto pixel = Bitmap::pixel_format.rgba_to_uint32_t(255,255,255,255);
 
 	auto* img = reinterpret_cast<uint32_t*>(rain_bitmap->pixels());
+	const int pitch = rain_bitmap->pitch() / 4;
 
 	for (int y = 0; y < h; ++y) {
 		int x = w - (y / 4) - 1;
 
-		img[y * w + x] = pixel;
+		img[y * pitch + x] = pixel;
 	}
 }
 
@@ -183,9 +184,12 @@ void Weather::CreateSnowParticle() {
 	const auto pixel = Bitmap::pixel_format.rgba_to_uint32_t(255,255,255,255);
 
 	auto* img = reinterpret_cast<uint32_t*>(snow_bitmap->pixels());
+	const int pitch = snow_bitmap->pitch() / 4;
 
-	for (int i = 0; i < w * h; ++i) {
-		img[i] = pixel;
+	for (int y = 0; y < h; ++y) {
+		for (int x = 0; x < w; ++x) {
+			img[y * pitch + x] = pixel;
+		}
 	}
 }
 
@@ -266,9 +270,10 @@ void Weather::CreateSandParticle() {
 	}};
 
 	auto* img = reinterpret_cast<uint32_t*>(sand_particle_bitmap->pixels());
+	const int pitch = sand_particle_bitmap->pitch() / 4;
 
 	for (int i = 0; i < w * h; ++i) {
-		img[i] = pixels[i / 2];
+		img[(i / w) * pitch + (i % w)] = pixels[i / 2];
 	}
 }
 
@@ -322,12 +327,14 @@ void Weather::CreateFogOverlay() {
 
 	auto* fog_img = reinterpret_cast<uint32_t*>(fog_bitmap->pixels());
 	auto* sand_img = reinterpret_cast<uint32_t*>(sand_bitmap->pixels());
+	const int fog_pitch = fog_bitmap->pitch() / 4;
+	const int sand_pitch = sand_bitmap->pitch() / 4;
 
 	for (int i = 0; i < w * h; ++i) {
 		int px = Rand::GetRandomNumber(0, num_overlay_colors - 1);
 		// FIXME: This only works for 32bit pixel formats
-		fog_img[i] = fog_pixels[px];
-		sand_img[i] = sand_pixels[px];
+		fog_img[(i / w) * fog_pitch + (i % w)] = fog_pixels[px];
+		sand_img[(i / w) * sand_pitch + (i % w)] = sand_pixels[px];
 	}
 }
 

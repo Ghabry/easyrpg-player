@@ -499,13 +499,14 @@ Font::GlyphRet FTFont::vRenderShaped(char32_t glyph) const {
 	} else {
 		bm = Bitmap::Create(width, height);
 		auto* data = reinterpret_cast<uint32_t*>(bm->pixels());
+		const int bm_pitch = bm->pitch() / 4;
 
 		for (int row = 0; row < height; ++row) {
 			for (int col = 0; col < width; ++col) {
 				unsigned c = ft_bitmap->buffer[pitch * row + (col / 8)];
 				unsigned bit = 7 - (col % 8);
 				c = c & (0x01 << bit) ? 255 : 0;
-				data[row * width + col] = (c << 24) + (c << 16) + (c << 8) + c;
+				data[row * bm_pitch + col] = (c << 24) + (c << 16) + (c << 8) + c;
 			}
 		}
 	}
@@ -981,13 +982,17 @@ Font::GlyphRet ExFont::vRender(char32_t glyph) const {
 
 	// EasyRPG Extension: Support for colored ExFont
 	bool has_color = false;
-	const auto* pixels = reinterpret_cast<uint8_t*>(bm->pixels());
+	const auto* pixels = reinterpret_cast<const uint32_t*>(bm->pixels());
+	const int stride = bm->pitch() / 4;
 	// For performance reasons only check the red channel of every pixel for color
-	for (int i = 0; i < bm->pitch() * bm->height(); i += 4) {
-		auto pixel = pixels[i];
-		if (pixel != 0 && pixel != 255) {
-			has_color = true;
-			break;
+	for (int y = 0; y < bm->height() && !has_color; ++y) {
+		for (int x = 0; x < bm->width(); ++x) {
+			uint8_t r, g, b, a;
+			Bitmap::pixel_format.uint32_to_rgba(pixels[y * stride + x], r, g, b, a);
+			if (r != 0 && r != 255) {
+				has_color = true;
+				break;
+			}
 		}
 	}
 

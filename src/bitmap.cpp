@@ -215,14 +215,19 @@ ImageOpacity Bitmap::ComputeImageOpacity() const {
 	auto* p = reinterpret_cast<const uint32_t*>(pixels());
 	const auto mask = format.rgba_to_uint32_t(0, 0, 0, 0xFF);
 
-	int n = GetSize() / sizeof(uint32_t);
-	for (int i = 0; i < n; ++i ) {
-		auto px = p[i] & mask;
+	const int stride = pitch() / sizeof(uint32_t);
+	const int w = width();
+	const int h = height();
+	for (int y = 0; y < h; ++y) {
+		const auto* row = p + y * stride;
+		for (int x = 0; x < w; ++x) {
+			auto px = row[x] & mask;
 		bool transp = (px == 0);
 		bool opaque = (px == mask);
 		all_transp &= transp;
 		all_opaque &= opaque;
 		alpha_1bit &= (transp | opaque);
+		}
 	}
 
 	return
