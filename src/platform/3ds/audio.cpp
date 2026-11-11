@@ -17,6 +17,8 @@
 
 #ifdef SUPPORT_AUDIO
 
+#include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <cstring>
 
@@ -36,65 +38,166 @@ Game_Clock::time_point dsp_tick;
 #define DebugLog(...)
 #endif
 
+/*
+ * Audio on the 3DS is handled by the DSP:
+ *  - Sound effects: The whole (cached) PCM data is handed to the DSP.
+ *  - Music: Streamed by a thread that decodes into a ring of wave buffers.
+ *  - Pitch: RPG Maker pitch changes speed and pitch together. This is done by
+ *    changing the DSP sample rate, which costs no CPU time.
+ */
+
 namespace {
-	int fill_block = 0;
 	bool is_new_3ds = false;
 	bool dsp_inited = false;
 
 	struct _se {
-		constexpr static int channels = 23; // 24 channels available
-		ndspWaveBuf buf[channels] = {0};
+		// Channels 0 - 22, channel 23 is used by the music
+		constexpr static int channels = 23;
+		ndspWaveBuf buf[channels] = {};
+		// Capacity of the linear memory buffer of each channel
+		size_t capacity[channels] = {};
 	} se;
+
 	struct _bgm {
-		constexpr static int buf_size = 8192;
-		constexpr static int channel = se.channels; // last, after SE channels
-		constexpr static int num_bufs = 3;
-		ndspWaveBuf buf[num_bufs] = {0};
-		Game_Clock::time_point starttick;
-		uint32_t* audio_buffer;
+		constexpr static int channel = se.channels;
+		// 4 x 16 KiB: ~370 ms at 44.1 kHz stereo, enough to survive decoding hiccups
+		constexpr static int buf_size = 16384;
+		constexpr static int num_bufs = 4;
+		ndspWaveBuf buf[num_bufs] = {};
+		// Next buffer to refill (buffers finish in the order they were queued)
+		int next_buf = 0;
+		uint8_t* audio_buffer = nullptr;
 		std::unique_ptr<AudioDecoderBase> decoder;
+		Game_Clock::time_point starttick;
+		int frequency = 0;
+		int pitch = 100;
+		bool paused = false;
+		// Read by the DSP callback: true while the stream thread must refill buffers
+		std::atomic<bool> streaming{false};
 	} bgm;
 
 	LightLock audio_mutex;
 	LightEvent audio_event;
 	Thread audio_thread;
-	bool term_stream = false;
-}
+	std::atomic<bool> term_stream{false};
 
-bool set_channel_format(int dsp_chn, AudioDecoder::Format format, int channels, AudioDecoder::Format &out_format) {
-	// false case tries to set to a close format
-	out_format = format;
-	bool res = true;
-
-	if (channels < 1 || channels > 2) {
-		Output::Warning("Unsupported number of channels!");
-		return false;
+	bool IsDspFormat(AudioDecoder::Format format, int channels) {
+		return (channels == 1 || channels == 2) &&
+			(format == AudioDecoder::Format::S8 || format == AudioDecoder::Format::S16);
 	}
 
-	switch (format) {
-		case AudioDecoder::Format::U8:
-			res = false;
-			out_format = AudioDecoder::Format::S8;
-		case AudioDecoder::Format::S8:
+	/**
+	 * Ensures the decoder outputs a format the DSP can play.
+	 *
+	 * @return false when the decoder cannot be converted
+	 */
+	bool SetupDecoderFormat(AudioDecoderBase& dec, int& frequency, AudioDecoder::Format& format, int& channels) {
+		dec.GetFormat(frequency, format, channels);
+		if (IsDspFormat(format, channels)) {
+			return true;
+		}
+
+		const bool is_8bit = (format == AudioDecoder::Format::U8 || format == AudioDecoder::Format::S8);
+		const int target_channels = std::clamp(channels, 1, 2);
+		// Prefer S8 for 8 bit data, but not all decoders can output it
+		if (!(is_8bit && dec.SetFormat(frequency, AudioDecoder::Format::S8, target_channels)) &&
+				!dec.SetFormat(frequency, AudioDecoder::Format::S16, target_channels)) {
+			return false;
+		}
+
+		// The decoder may have chosen something else
+		dec.GetFormat(frequency, format, channels);
+		return IsDspFormat(format, channels);
+	}
+
+	/**
+	 * Converts PCM data into a format the DSP can play (S8 or S16).
+	 * Used for cached sound effects, their decoder does not convert formats.
+	 *
+	 * @return false when the format is not supported
+	 */
+	bool ConvertToDspFormat(const std::vector<uint8_t>& in, AudioDecoder::Format& format, std::vector<uint8_t>& out) {
+		using Format = AudioDecoder::Format;
+
+		switch (format) {
+			case Format::U8:
+				out.resize(in.size());
+				for (size_t i = 0; i < in.size(); ++i) {
+					out[i] = in[i] ^ 0x80;
+				}
+				format = Format::S8;
+				return true;
+			case Format::U16:
+			case Format::S32:
+			case Format::U32:
+			case Format::F32: {
+				const size_t in_size = AudioDecoder::GetSamplesizeForFormat(format);
+				const size_t n = in.size() / in_size;
+				out.resize(n * 2);
+				auto* dst = reinterpret_cast<int16_t*>(out.data());
+				for (size_t i = 0; i < n; ++i) {
+					const uint8_t* p = &in[i * in_size];
+					int32_t v = 0;
+					if (format == Format::U16) {
+						uint16_t u;
+						memcpy(&u, p, 2);
+						v = static_cast<int32_t>(u) - 0x8000;
+					} else if (format == Format::S32) {
+						int32_t x;
+						memcpy(&x, p, 4);
+						v = x >> 16;
+					} else if (format == Format::U32) {
+						uint32_t x;
+						memcpy(&x, p, 4);
+						v = static_cast<int32_t>(x >> 16) - 0x8000;
+					} else {
+						float f;
+						memcpy(&f, p, 4);
+						v = static_cast<int32_t>(std::clamp(f, -1.0f, 1.0f) * 32767.0f);
+					}
+					dst[i] = static_cast<int16_t>(v);
+				}
+				format = Format::S16;
+				return true;
+			}
+			default:
+				return false;
+		}
+	}
+
+	void SetDspFormat(int dsp_chn, AudioDecoder::Format format, int channels) {
+		if (format == AudioDecoder::Format::S8) {
 			ndspChnSetFormat(dsp_chn, channels == 1 ? NDSP_FORMAT_MONO_PCM8 : NDSP_FORMAT_STEREO_PCM8);
-			break;
-
-		case AudioDecoder::Format::U16:
-		case AudioDecoder::Format::U32:
-		case AudioDecoder::Format::S32:
-		case AudioDecoder::Format::F32:
-			res = false;
-			out_format = AudioDecoder::Format::S16;
-		case AudioDecoder::Format::S16:
+		} else {
 			ndspChnSetFormat(dsp_chn, channels == 1 ? NDSP_FORMAT_MONO_PCM16 : NDSP_FORMAT_STEREO_PCM16);
-			break;
-
-		default:
-			Output::Warning("Unhandled audio channel format!");
-			res = false;
+		}
 	}
 
-	return res;
+	float PitchedRate(int frequency, int pitch) {
+		return frequency * (pitch / 100.0f);
+	}
+
+	void ResetBgmChannel() {
+		// Marks all queued buffers as done
+		ndspChnWaveBufClear(bgm.channel);
+		ndspChnReset(bgm.channel);
+		ndspChnSetInterp(bgm.channel, NDSP_INTERP_LINEAR);
+
+		for (auto& buf: bgm.buf) {
+			buf.status = NDSP_WBUF_DONE;
+		}
+		bgm.next_buf = 0;
+	}
+
+	class AudioLock {
+	public:
+		explicit AudioLock(const CtrAudio& audio) : audio(audio) { audio.LockMutex(); }
+		~AudioLock() { audio.UnlockMutex(); }
+		AudioLock(const AudioLock&) = delete;
+		AudioLock& operator=(const AudioLock&) = delete;
+	private:
+		const CtrAudio& audio;
+	};
 }
 
 void CtrAudio::BGM_Play(Filesystem_Stream::InputStream filestream, int volume, int pitch, int fadein, int balance) {
@@ -107,44 +210,63 @@ void CtrAudio::BGM_Play(Filesystem_Stream::InputStream filestream, int volume, i
 		return;
 	}
 
-	LockMutex();
-	bgm.decoder = AudioDecoder::Create(filestream);
-	if (bgm.decoder && bgm.decoder->Open(std::move(filestream))) {
-		// Fixme: music volume setting unsupported
-		int frequency;
-		AudioDecoder::Format format, out_format;
-		int channels;
+	AudioLock lock(*this);
 
-		bgm.decoder->SetPitch(is_new_3ds ? pitch : 100);
-		bgm.decoder->GetFormat(frequency, format, channels);
-		bgm.decoder->SetVolume(0);
-		bgm.decoder->SetFade(volume, std::chrono::milliseconds(fadein));
-		bgm.decoder->SetLooping(true);
-		bgm.decoder->SetBalance(balance);
+	// Stop the old stream: Its buffers have a different format
+	bgm.streaming = false;
+	bgm.decoder.reset();
+	ResetBgmChannel();
 
-		if (!set_channel_format(bgm.channel, format, channels, out_format)) {
-			DebugLog("{} has unsupported format, using close format.", name);
-			bgm.decoder->SetFormat(frequency, out_format, channels);
-		}
-		ndspChnSetRate(bgm.channel, frequency);
-
-		const int samplesize = AudioDecoder::GetSamplesizeForFormat(out_format);
-		const int nsamples = bgm.buf_size / (samplesize * channels);
-		for (int i = 0; i < bgm.num_bufs; ++i) {
-			bgm.buf[i].nsamples = nsamples;
-		}
-	} else {
+	auto decoder = AudioDecoder::Create(filestream);
+	if (!decoder || !decoder->Open(std::move(filestream))) {
 		Output::Warning("Couldn't play BGM {}: Format not supported", name);
+		return;
 	}
 
-	UnlockMutex();
-	return;
+	int frequency;
+	AudioDecoder::Format format;
+	int channels;
+
+	// Pitch is done by the DSP
+	decoder->SetPitch(100);
+
+	if (!SetupDecoderFormat(*decoder, frequency, format, channels)) {
+		Output::Warning("Couldn't play BGM {}: Unsupported sample format", name);
+		return;
+	}
+
+	decoder->SetVolume(0);
+	decoder->SetFade(volume, std::chrono::milliseconds(fadein));
+	decoder->SetLooping(true);
+	decoder->SetBalance(balance);
+
+	SetDspFormat(bgm.channel, format, channels);
+	bgm.frequency = frequency;
+	bgm.pitch = pitch;
+	ndspChnSetRate(bgm.channel, PitchedRate(frequency, pitch));
+
+	const int samplesize = AudioDecoder::GetSamplesizeForFormat(format);
+	const int nsamples = bgm.buf_size / (samplesize * channels);
+	for (auto& buf: bgm.buf) {
+		buf.nsamples = nsamples;
+	}
+
+	bgm.decoder = std::move(decoder);
+	bgm.paused = false;
+	bgm.starttick = Game_Clock::now();
+	ndspChnSetPaused(bgm.channel, false);
+
+	// Start filling the buffers
+	bgm.streaming = true;
+	LightEvent_Signal(&audio_event);
 }
 
 void CtrAudio::BGM_Pause()  {
 	if (!dsp_inited)
 		return;
 
+	AudioLock lock(*this);
+	bgm.paused = true;
 	ndspChnSetPaused(bgm.channel, true);
 }
 
@@ -152,6 +274,8 @@ void CtrAudio::BGM_Resume()  {
 	if (!dsp_inited)
 		return;
 
+	AudioLock lock(*this);
+	bgm.paused = false;
 	bgm.starttick = Game_Clock::now();
 	ndspChnSetPaused(bgm.channel, false);
 }
@@ -160,12 +284,14 @@ void CtrAudio::BGM_Stop() {
 	if (!dsp_inited)
 		return;
 
-	LockMutex();
+	AudioLock lock(*this);
+	bgm.streaming = false;
 	bgm.decoder.reset();
-	UnlockMutex();
+	ResetBgmChannel();
 }
 
 bool CtrAudio::BGM_PlayedOnce() const {
+	AudioLock lock(*this);
 	if (!bgm.decoder)
 		return false;
 
@@ -173,6 +299,7 @@ bool CtrAudio::BGM_PlayedOnce() const {
 }
 
 bool CtrAudio::BGM_IsPlaying() const {
+	AudioLock lock(*this);
 	if (!bgm.decoder)
 		return false;
 
@@ -180,6 +307,7 @@ bool CtrAudio::BGM_IsPlaying() const {
 }
 
 int CtrAudio::BGM_GetTicks() const {
+	AudioLock lock(*this);
 	if (!bgm.decoder)
 		return 0;
 
@@ -187,6 +315,7 @@ int CtrAudio::BGM_GetTicks() const {
 }
 
 void CtrAudio::BGM_Fade(int fade) {
+	AudioLock lock(*this);
 	if (!bgm.decoder)
 		return;
 
@@ -195,6 +324,7 @@ void CtrAudio::BGM_Fade(int fade) {
 }
 
 void CtrAudio::BGM_Volume(int volume) {
+	AudioLock lock(*this);
 	if (!bgm.decoder)
 		return;
 
@@ -202,12 +332,16 @@ void CtrAudio::BGM_Volume(int volume) {
 }
 
 void CtrAudio::BGM_Pitch(int pitch) {
-	if (is_new_3ds && bgm.decoder) {
-		bgm.decoder->SetPitch(pitch);
-	}
+	AudioLock lock(*this);
+	if (!bgm.decoder)
+		return;
+
+	bgm.pitch = pitch;
+	ndspChnSetRate(bgm.channel, PitchedRate(bgm.frequency, pitch));
 }
 
 void CtrAudio::BGM_Balance(int balance) {
+	AudioLock lock(*this);
 	if (!bgm.decoder)
 		return;
 
@@ -215,6 +349,7 @@ void CtrAudio::BGM_Balance(int balance) {
 }
 
 std::string CtrAudio::BGM_GetType() const {
+	AudioLock lock(*this);
 	if (bgm.decoder) {
 		return bgm.decoder->GetType();
 	}
@@ -230,11 +365,15 @@ void CtrAudio::SE_Play(std::unique_ptr<AudioSeCache> se_cache, int volume, int p
 		return;
 	}
 
+	// A channel is free when the DSP is not playing it and no buffer is pending.
+	// ndspChnIsPlaying alone is not enough: It is updated by the DSP once per
+	// audio frame (~5 ms), so a buffer queued in the same game frame is not
+	// reported as playing yet.
 	int chan = -1;
-	for (int i = 0; i <= se.channels; ++i) {
-		if (!ndspChnIsPlaying(i)) {
+	for (int i = 0; i < se.channels; ++i) {
+		const auto status = se.buf[i].status;
+		if (!ndspChnIsPlaying(i) && status != NDSP_WBUF_QUEUED && status != NDSP_WBUF_PLAYING) {
 			chan = i;
-			//DebugLog("Using channel {} for SE {}", chan, se_cache->GetName());
 			break;
 		}
 	}
@@ -244,89 +383,108 @@ void CtrAudio::SE_Play(std::unique_ptr<AudioSeCache> se_cache, int volume, int p
 	}
 
 	auto dec = se_cache->CreateSeDecoder();
-	dec->SetPitch(pitch);
+	// Pitch is done by the DSP
+	dec->SetPitch(100);
+	dec->SetVolume(volume);
 	dec->SetBalance(balance);
 
 	int frequency;
-	AudioDecoder::Format format, out_format;
+	AudioDecoder::Format format;
 	int channels;
 
-	std::vector<uint8_t> dec_buf;
-	std::vector<uint8_t>* out_buf = nullptr;
-	AudioSeRef se_ref;
-	bool use_raw_buf = false;
-
 	dec->GetFormat(frequency, format, channels);
-	if (set_channel_format(chan, format, channels, out_format)) {
-		// When the DSP supports the format and the audio is not pitched the raw
-		// buffer can be used directly
-		use_raw_buf = pitch == 100;
-	} else {
-		DebugLog("{} has unsupported format, using close format.", se_cache->GetName());
-		dec->SetFormat(frequency, out_format, channels);
-	}
-	if (use_raw_buf) {
-		se_ref = se_cache->GetSeData();
+
+	std::vector<uint8_t> dec_buf;
+	AudioSeRef se_ref;
+	const std::vector<uint8_t>* out_buf = nullptr;
+
+	se_ref = se_cache->GetSeData();
+	if (IsDspFormat(format, channels)) {
+		// The DSP can play the cached data directly
 		out_buf = &se_ref->buffer;
 	} else {
-		dec_buf = dec->DecodeAll();
+		if ((channels != 1 && channels != 2) || !ConvertToDspFormat(se_ref->buffer, format, dec_buf)) {
+			Output::Warning("Couldn't play SE {}: Unsupported sample format", se_cache->GetName());
+			return;
+		}
 		out_buf = &dec_buf;
 	}
 
-	ndspChnSetRate(chan, frequency);
-
-	if (se.buf[chan].data_pcm16 != nullptr) {
-		linearFree(se.buf[chan].data_pcm16);
+	const size_t bsize = out_buf->size();
+	const int samplesize = AudioDecoder::GetSamplesizeForFormat(format);
+	const int nsamples = static_cast<int>(bsize / (samplesize * channels));
+	if (nsamples <= 0) {
+		return;
 	}
 
-	size_t bsize = out_buf->size();
-	size_t aligned_bsize = 8192;
-	// Buffer must be correctly aligned to prevent audio glitches
-	for (; ; aligned_bsize *= 2) {
-		if (aligned_bsize > bsize) {
-			se.buf[chan].data_pcm16 = reinterpret_cast<s16*>(linearAlloc(aligned_bsize));
-			memset(se.buf[chan].data_pcm16 + bsize, '\0', aligned_bsize - bsize);
-			break;
+	auto& wbuf = se.buf[chan];
+
+	// Reuse the buffer of the channel when it is large enough (the channel is idle)
+	if (se.capacity[chan] < bsize) {
+		if (wbuf.data_pcm8) {
+			linearFree(wbuf.data_pcm8);
+		}
+		// Round up to reduce reallocations and fragmentation of the linear heap
+		const size_t capacity = (bsize + 0xFFF) & ~static_cast<size_t>(0xFFF);
+		wbuf.data_pcm8 = static_cast<s8*>(linearAlloc(capacity));
+		se.capacity[chan] = wbuf.data_pcm8 ? capacity : 0;
+		if (!wbuf.data_pcm8) {
+			Output::Debug("Couldn't play SE {}: Out of memory", se_cache->GetName());
+			return;
 		}
 	}
 
-	const int samplesize = AudioDecoder::GetSamplesizeForFormat(out_format);
-	se.buf[chan].nsamples = bsize / (samplesize * channels);
+	memcpy(wbuf.data_pcm8, out_buf->data(), bsize);
+	DSP_FlushDataCache(wbuf.data_pcm8, bsize);
+	wbuf.nsamples = nsamples;
+	wbuf.looping = false;
 
-	memcpy(se.buf[chan].data_pcm16, out_buf->data(), out_buf->size());
-	DSP_FlushDataCache(se.buf[chan].data_pcm16, aligned_bsize);
+	SetDspFormat(chan, format, channels);
+	ndspChnSetRate(chan, PitchedRate(frequency, pitch));
 
-	float mix[12] = {0};
-	mix[0] = mix[1] = volume / 100.0f * cfg.sound_volume.Get() / 100.0f;
+	// Volume and balance as calculated by the decoder (same as GenericAudio)
+	StereoVolume vol = dec->GetVolume();
+	const float master = cfg.sound_volume.Get() / 100.0f;
+	float mix[12] = {};
+	mix[0] = vol.left_volume / 100.0f * master;
+	mix[1] = vol.right_volume / 100.0f * master;
 	ndspChnSetMix(chan, mix);
-	ndspChnWaveBufAdd(chan, &se.buf[chan]);
+
+	ndspChnWaveBufAdd(chan, &wbuf);
 }
 
 void CtrAudio::SE_Stop() {
 	if (!dsp_inited)
 		return;
 
-	for (int i = 0; i <= se.channels; ++i) {
+	// Only the SE channels, the music channel is not affected
+	for (int i = 0; i < se.channels; ++i) {
 		ndspChnWaveBufClear(i);
 	}
 }
 
 void CtrAudio::Update() {
+	AudioLock lock(*this);
 	if (!bgm.decoder)
 		return;
 
 	auto t = Game_Clock::now();
-	auto us = std::chrono::duration_cast<std::chrono::microseconds>(t - bgm.starttick);
-	bgm.decoder->Update(us);
+	if (!bgm.paused) {
+		auto us = std::chrono::duration_cast<std::chrono::microseconds>(t - bgm.starttick);
+		bgm.decoder->Update(us);
+	}
 	bgm.starttick = t;
 }
 
-void n3ds_dsp_callback(void* userdata) {
-	CtrAudio* audio = static_cast<CtrAudio*>(userdata);
-
-	if (bgm.buf[fill_block].status == NDSP_WBUF_DONE) {
-		bgm.buf[fill_block].status = NDSP_WBUF_FREE;
-		LightEvent_Signal(&audio_event);
+void n3ds_dsp_callback(void*) {
+	// Called by the DSP once per audio frame: Wake the stream thread when a buffer finished
+	if (bgm.streaming) {
+		for (const auto& buf: bgm.buf) {
+			if (buf.status == NDSP_WBUF_DONE || buf.status == NDSP_WBUF_FREE) {
+				LightEvent_Signal(&audio_event);
+				break;
+			}
+		}
 	}
 
 #ifdef EP_DEBUG_CTRAUDIO
@@ -345,36 +503,49 @@ void n3ds_dsp_callback(void* userdata) {
 
 void n3ds_audio_thread(void* userdata) {
 	CtrAudio* audio = static_cast<CtrAudio*>(userdata);
-	float mix[12] = {0};
+	float mix[12] = {};
 
 	while (!term_stream) {
 		LightEvent_Wait(&audio_event);
-
-		int target_block = fill_block;
-		++fill_block;
-		fill_block %= bgm.num_bufs;
-
-		audio->LockMutex();
-		if (bgm.decoder) {
-			bgm.decoder->Decode(
-				reinterpret_cast<uint8_t*>(bgm.buf[target_block].data_pcm16),
-				bgm.buf_size);
-			DSP_FlushDataCache(bgm.buf[target_block].data_pcm16, bgm.buf_size);
-			StereoVolume volume = bgm.decoder->GetVolume();
-			mix[0] = volume.left_volume / 100.0f * audio->GetConfig().music_volume.Get() / 100.0f;
-			mix[1] = volume.right_volume / 100.0f * audio->GetConfig().music_volume.Get() / 100.0f;
-			ndspChnSetMix(bgm.channel, mix);
-			ndspChnWaveBufAdd(bgm.channel, &bgm.buf[target_block]);
-		} else {
-			bgm.buf[target_block].status = NDSP_WBUF_DONE;
+		if (term_stream) {
+			break;
 		}
-		audio->UnlockMutex();
+
+		AudioLock lock(*audio);
+		if (!bgm.decoder || !bgm.streaming) {
+			continue;
+		}
+
+		// Refill all finished buffers in queue order
+		for (int n = 0; n < bgm.num_bufs; ++n) {
+			auto& buf = bgm.buf[bgm.next_buf];
+			if (buf.status != NDSP_WBUF_DONE && buf.status != NDSP_WBUF_FREE) {
+				break;
+			}
+
+			int written = bgm.decoder->Decode(reinterpret_cast<uint8_t*>(buf.data_pcm8), bgm.buf_size);
+			if (written < 0) {
+				// Decoder error: Play silence
+				memset(buf.data_pcm8, 0, bgm.buf_size);
+			}
+			DSP_FlushDataCache(buf.data_pcm8, bgm.buf_size);
+
+			StereoVolume volume = bgm.decoder->GetVolume();
+			const float master = audio->GetConfig().music_volume.Get() / 100.0f;
+			mix[0] = volume.left_volume / 100.0f * master;
+			mix[1] = volume.right_volume / 100.0f * master;
+			ndspChnSetMix(bgm.channel, mix);
+			ndspChnWaveBufAdd(bgm.channel, &buf);
+
+			bgm.next_buf = (bgm.next_buf + 1) % bgm.num_bufs;
+		}
 	}
 	threadExit(0);
 }
 
 CtrAudio::CtrAudio(const Game_ConfigAudio& cfg) : AudioInterface(cfg) {
 	LightLock_Init(&audio_mutex);
+	LightEvent_Init(&audio_event, RESET_ONESHOT);
 
 	Result res = ndspInit();
 	if (R_FAILED(res)) {
@@ -385,29 +556,46 @@ CtrAudio::CtrAudio(const Game_ConfigAudio& cfg) : AudioInterface(cfg) {
 			Output::Warning("Error code: {:#X}", res);
 		return;
 	}
+
+	bgm.audio_buffer = static_cast<uint8_t*>(linearAlloc(bgm.buf_size * bgm.num_bufs));
+	if (!bgm.audio_buffer) {
+		Output::Warning("Couldn't allocate audio buffer");
+		ndspExit();
+		return;
+	}
+	memset(bgm.audio_buffer, 0, bgm.buf_size * bgm.num_bufs);
+	DSP_FlushDataCache(bgm.audio_buffer, bgm.buf_size * bgm.num_bufs);
+
 	ndspSetOutputCount(1);
 	ndspSetOutputMode(NDSP_OUTPUT_STEREO);
-	ndspSetClippingMode(NDSP_CLIP_NORMAL);
+	// Music and sound effects are mixed at full volume: Avoid hard clipping
+	ndspSetClippingMode(NDSP_CLIP_SOFT);
 	for (int i = 0; i <= bgm.channel; ++i) {
 		ndspChnSetInterp(i, NDSP_INTERP_LINEAR);
 	}
 	dsp_inited = true;
 
-	LightLock_Init(&audio_mutex);
-	LightEvent_Init(&audio_event, RESET_ONESHOT);
 	APT_CheckNew3DS(&is_new_3ds);
 
-	bgm.audio_buffer = reinterpret_cast<uint32_t*>(linearAlloc(bgm.buf_size * bgm.num_bufs));
 	for (int i = 0; i < bgm.num_bufs; ++i) {
-		bgm.buf[i].data_vaddr = &bgm.audio_buffer[i * bgm.buf_size];
+		bgm.buf[i].data_pcm8 = reinterpret_cast<s8*>(bgm.audio_buffer + i * bgm.buf_size);
 		bgm.buf[i].nsamples = bgm.buf_size / 4;
 		bgm.buf[i].status = NDSP_WBUF_DONE;
 	}
 
 	ndspSetCallback(n3ds_dsp_callback, this);
-	audio_thread = threadCreate(n3ds_audio_thread, this, 32768, 0x18, 1, true);
-	if(!audio_thread)
+
+	// Decoding runs on the system core (core 1) or, on the New 3DS, on the otherwise unused core 2.
+	// Core 0 is reserved for the game logic.
+	if (is_new_3ds) {
+		audio_thread = threadCreate(n3ds_audio_thread, this, 32768, 0x18, 2, true);
+	}
+	if (!audio_thread) {
+		audio_thread = threadCreate(n3ds_audio_thread, this, 32768, 0x18, 1, true);
+	}
+	if (!audio_thread) {
 		Output::Warning("Couldn't create bgm thread!");
+	}
 
 #ifdef EP_DEBUG_CTRAUDIO
 	dsp_tick = Game_Clock::now();
@@ -418,16 +606,20 @@ CtrAudio::~CtrAudio() {
 	if (!dsp_inited)
 		return;
 
+	bgm.streaming = false;
 	term_stream = true;
 	LightEvent_Signal(&audio_event);
-	threadJoin(audio_thread, U64_MAX);
+	if (audio_thread) {
+		threadJoin(audio_thread, U64_MAX);
+	}
 	LightEvent_Clear(&audio_event);
 	ndspExit();
 
+	bgm.decoder.reset();
 	linearFree(bgm.audio_buffer);
 	for (int i = 0; i < se.channels; ++i) {
-		if (se.buf[i].data_pcm16 != nullptr) {
-			linearFree(se.buf[i].data_pcm16);
+		if (se.buf[i].data_pcm8 != nullptr) {
+			linearFree(se.buf[i].data_pcm8);
 		}
 	}
 }
