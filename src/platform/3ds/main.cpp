@@ -126,8 +126,14 @@ int main(int argc, char* argv[]) {
 	start3DSLink();
 	Output::SetLogCallback(LogCallback);
 
+	// Time limit of the system core (core 1) for the audio thread.
+	// The remaining time is reserved for the system modules.
 	APT_GetAppCpuTimeLimit(&old_time_limit);
-	APT_SetAppCpuTimeLimit(30);
+	for (u32 limit: {80, 50, 30}) {
+		if (R_SUCCEEDED(APT_SetAppCpuTimeLimit(limit))) {
+			break;
+		}
+	}
 
 	// Enable 804 Mhz mode if on N3DS
 	bool isN3DS;
